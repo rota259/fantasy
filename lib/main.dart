@@ -1,58 +1,65 @@
-import 'package:fantasy_5omasi/fantasy_hub_manager.dart';
-import 'package:fantasy_5omasi/fantasy_hub_user.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:fantasy_5omasi/repositories/auth_repository.dart';
-import 'package:fantasy_5omasi/cubits/auth/auth_cubit.dart';
-import 'package:fantasy_5omasi/cubits/regestire/regestire_cubit.dart';
-import 'package:fantasy_5omasi/screens/auth/auth_screen.dart';
-import 'package:fantasy_5omasi/screens/register/register_screen.dart';
-import 'package:fantasy_5omasi/screens/manager/home/home_screen.dart';
+import 'package:flutter/services.dart';
 
+import 'core/supabase/supabase_config.dart';
+import 'core/supabase/supabase_service.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/app_theme.dart';
+import 'features/shell/view/app_root.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
 
-  final authRepo = AuthRepository();
-
-  runApp(Fantasy5omasiApp(
-    initialRoute: '/auth', // ← دايمًا يروح على صفحة تسجيل الدخول
-    authRepository: authRepo,
+  // شريط حالة شفّاف بأيقونات فاتحة (خلفياتنا غامقة فوق).
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
   ));
+
+  // تهيئة Supabase فقط لو المفاتيح ممرّرة بـ --dart-define.
+  if (SupabaseConfig.isConfigured) {
+    await SupabaseService.init();
+  }
+
+  runApp(const FantasyApp());
 }
 
-class Fantasy5omasiApp extends StatelessWidget {
-  final String initialRoute;
-  final AuthRepository authRepository;
-
-  const Fantasy5omasiApp({
-    super.key,
-    required this.initialRoute,
-    required this.authRepository,
-  });
+class FantasyApp extends StatelessWidget {
+  const FantasyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider.value(
-      value: authRepository,
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider(create: (_) => AuthCubit(authRepository)),
-          BlocProvider(create: (_) => RegisterCubit(authRepository)),
-        ],
-        child: MaterialApp(
-          title: 'Fantasy 5omasi',
-          debugShowCheckedModeBanner: false,
-          initialRoute: initialRoute,
-          routes: {
-            '/auth': (_) => const AuthScreen(),
-            '/register': (_) => const RegisterScreen(),
-            '/home': (_) => const HomeScreen(),
-            '/userHub': (_) => const FantasyHubUser(),
-            '/managerHub': (_) => const FantasyHubManager(),
-          },
+    return MaterialApp(
+      title: 'الخماسي',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.theme,
+      builder: (context, child) => _responsiveShell(context, child!),
+      home: const AppRoot(),
+    );
+  }
+
+  /// يجعل التطبيق responsive:
+  /// - النص/الأحجام تتناسب مع عرض الجهاز (التصميم معمول على 390px).
+  /// - RTL للعربية.
+  /// - على الشاشات العريضة (تابلت) يتوسّط في عمود بعرض موبايل.
+  Widget _responsiveShell(BuildContext context, Widget child) {
+    final media = MediaQuery.of(context);
+    final width = media.size.width;
+    // معامل التحجيم بالنسبة لعرض التصميم (390) مع حدود آمنة.
+    final scale = (width / 390).clamp(0.85, 1.15);
+
+    final scaled = MediaQuery(
+      data: media.copyWith(textScaler: TextScaler.linear(scale)),
+      child: Directionality(textDirection: TextDirection.rtl, child: child),
+    );
+
+    // على الموبايل (عرض < 640) مفيش أثر؛ على الأعرض نتوسّط.
+    return ColoredBox(
+      color: AppColors.ink,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: scaled,
         ),
       ),
     );
