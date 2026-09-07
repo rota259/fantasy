@@ -19,4 +19,9 @@ class SupabaseProfileRepository implements ProfileRepository {
         await SupabaseService.table(_table).select().eq('id', userId).maybeSingle();
     return row == null ? null : AppUser.fromMap(row);
   }
+
+  @override
+  Future<void> saveFcmToken(String userId, String token) async {
+    await SupabaseService.table(_table).update({'fcm_token': token}).eq('id', userId);
+  }
 }

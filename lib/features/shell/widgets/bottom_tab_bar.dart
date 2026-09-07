@@ -14,7 +14,7 @@ class BottomTabBar extends StatelessWidget {
   static const _items = [
     (AppTab.home, Icons.home_outlined, 'الرئيسية'),
     (AppTab.team, Icons.grid_view_outlined, 'فريقي'),
-    (AppTab.market, Icons.swap_horiz, 'السوق'),
+    (AppTab.market, Icons.people_outline, 'اللاعيبة'),
     (AppTab.leagues, Icons.bar_chart, 'الدوريات'),
     (AppTab.account, Icons.person_outline, 'حسابي'),
   ];

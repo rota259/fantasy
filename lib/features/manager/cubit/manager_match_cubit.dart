@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/supabase_service.dart';
 import '../../events/data/events_repository.dart';
 import '../../events/data/models/match_event.dart';
 import '../../matches/data/models/game_match.dart';
@@ -34,6 +35,16 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
       ));
     } catch (_) {
       emit(const ManagerMatchState(status: ManagerMatchStatus.ready));
+    }
+  }
+
+  /// (مدير) إبلاغ كل اليوزرز إن التشكيلة نزلت (عبر Edge Function).
+  Future<String> notifyUsers() async {
+    try {
+      await SupabaseService.client.functions.invoke('notify-match', body: {'match_id': match.id});
+      return 'اتبعت إشعار لليوزرز ✓';
+    } catch (_) {
+      return 'تعذّر إرسال الإشعار';
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/notifications/notification_service.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../auction/data/auction_repository.dart';
 import '../../auction/data/supabase_auction_repository.dart';
@@ -27,6 +28,8 @@ import '../../players/data/players_repository.dart';
 import '../../players/data/supabase_players_repository.dart';
 import '../../splash/view/splash_screen.dart';
 import '../../squad/cubit/squad_cubit.dart';
+import '../../week/data/supabase_week_repository.dart';
+import '../../week/data/week_repository.dart';
 import '../../squad/data/profile_repository.dart';
 import '../../squad/data/supabase_profile_repository.dart';
 import '../cubit/app_nav_cubit.dart';
@@ -50,6 +53,7 @@ class AppRoot extends StatelessWidget {
         RepositoryProvider<AuctionRepository>(create: (_) => SupabaseAuctionRepository()),
         RepositoryProvider<LineupRepository>(create: (_) => SupabaseLineupRepository()),
         RepositoryProvider<PicksRepository>(create: (_) => SupabasePicksRepository()),
+        RepositoryProvider<WeekRepository>(create: (_) => SupabaseWeekRepository()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -100,6 +104,9 @@ class AppRoot extends StatelessWidget {
     final nav = context.read<AppNavCubit>();
     if (s.status == AuthStatus.authenticated) {
       context.read<SquadCubit>().loadForUser(s.user);
+      if (s.user != null) {
+        NotificationService.registerToken(s.user!.id, context.read<ProfileRepository>());
+      }
       nav.login();
     } else if (s.status == AuthStatus.unauthenticated && nav.state.route == AppRoute.app) {
       nav.logout();

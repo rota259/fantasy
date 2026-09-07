@@ -7,4 +7,7 @@ abstract interface class ProfileRepository {
 
   /// جلب بروفايل أي مستخدم (لخصم التحدّي مثلًا).
   Future<AppUser?> fetchProfile(String userId);
+
+  /// حفظ توكن الإشعارات (FCM) للمستخدم.
+  Future<void> saveFcmToken(String userId, String token);
 }

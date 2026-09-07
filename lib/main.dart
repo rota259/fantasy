@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'core/notifications/notification_service.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/supabase/supabase_service.dart';
 import 'core/theme/app_colors.dart';
@@ -20,6 +21,8 @@ void main() async {
   if (SupabaseConfig.isConfigured) {
     await SupabaseService.init();
   }
+
+  await NotificationService.init();
 
   runApp(const FantasyApp());
 }

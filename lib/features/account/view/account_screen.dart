@@ -12,6 +12,8 @@ import '../../manager/data/lineup_repository.dart';
 import '../../manager/view/manager_hub_screen.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../week/data/week_repository.dart';
+import '../../week/view/team_of_week_screen.dart';
 import '../cubit/account_cubit.dart';
 import '../widgets/account_widgets.dart';
 
@@ -40,6 +42,13 @@ class AccountScreen extends StatelessWidget {
                   ),
                 ),
                 const Divider(color: AppColors.divider, height: 2, thickness: 2),
+                _settingRow(Icons.star_border, 'تشكيلة الأسبوع',
+                    onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TeamOfWeekScreen(weekRepo: context.read<WeekRepository>()),
+                          ),
+                        )),
                 if (user?.isManager == true)
                   _settingRow(Icons.admin_panel_settings_outlined, 'لوحة المدير',
                       onTap: () => Navigator.push(

@@ -3,48 +3,35 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/supabase_config.dart';
 import '../../auth/data/models/app_user.dart';
-import '../../events/data/events_repository.dart';
 import '../../leagues/data/leagues_repository.dart';
-import '../../players/data/models/player.dart';
-import '../../players/data/players_repository.dart';
-import '../../points/points_engine.dart';
-import '../../squad/data/profile_repository.dart';
 
 part 'challenge_state.dart';
 
-/// نتيجة المواجهة.
+/// نتيجة المواجهة (نقاط إجمالية).
 class ChallengeResult {
   const ChallengeResult({
     required this.meName,
     required this.mePoints,
-    required this.meCaptainPts,
     required this.oppName,
     required this.oppPoints,
-    required this.oppCaptainPts,
   });
 
   final String meName;
   final int mePoints;
-  final int meCaptainPts;
   final String oppName;
   final int oppPoints;
-  final int oppCaptainPts;
 
   bool get meWins => mePoints >= oppPoints;
 }
 
-/// ViewModel للتحدّي — يقارن نقاط جولتك بأول خصم في دوريك.
+/// ViewModel للتحدّي — يقارن نقاطك بأقرب خصم في دوريك (من الترتيب).
 class ChallengeCubit extends Cubit<ChallengeState> {
-  ChallengeCubit(this._leagues, this._profiles, this._players, this._events)
-      : super(const ChallengeState());
+  ChallengeCubit(this._leagues) : super(const ChallengeState());
 
   final LeaguesRepository _leagues;
-  final ProfileRepository _profiles;
-  final PlayersRepository _players;
-  final EventsRepository _events;
 
-  Future<void> load(AppUser? me, List<Player> mySquad, String? myCaptainId) async {
-    if (!SupabaseConfig.isConfigured || me == null || mySquad.isEmpty) {
+  Future<void> load(AppUser? me) async {
+    if (!SupabaseConfig.isConfigured || me == null) {
       emit(const ChallengeState(status: ChallengeStatus.loaded));
       return;
     }
@@ -57,32 +44,22 @@ class ChallengeCubit extends Cubit<ChallengeState> {
       final rivals = standings.where((s) => s.userId != me.id).toList();
       if (rivals.isEmpty) return emit(const ChallengeState(status: ChallengeStatus.loaded));
 
-      final opp = await _profiles.fetchProfile(rivals.first.userId);
-      if (opp == null) return emit(const ChallengeState(status: ChallengeStatus.loaded));
+      final myPoints = standings
+          .where((s) => s.userId == me.id)
+          .map((s) => s.points)
+          .fold<int>(me.totalPoints, (_, p) => p);
 
-      final oppSquad = await _players.fetchByIds(opp.team);
-      final myEvents = await _events.fetchForPlayers(mySquad.map((p) => p.id).toList());
-      final oppEvents = await _events.fetchForPlayers(oppSquad.map((p) => p.id).toList());
-
-      final result = ChallengeResult(
-        meName: me.name,
-        mePoints: PointsEngine.squadPoints(mySquad, myCaptainId, myEvents),
-        meCaptainPts: PointsEngine.captainContribution(_find(mySquad, myCaptainId), myEvents),
-        oppName: opp.name,
-        oppPoints: PointsEngine.squadPoints(oppSquad, opp.captainId, oppEvents),
-        oppCaptainPts: PointsEngine.captainContribution(_find(oppSquad, opp.captainId), oppEvents),
-      );
-      emit(ChallengeState(status: ChallengeStatus.loaded, result: result));
+      emit(ChallengeState(
+        status: ChallengeStatus.loaded,
+        result: ChallengeResult(
+          meName: me.name,
+          mePoints: myPoints,
+          oppName: rivals.first.name,
+          oppPoints: rivals.first.points,
+        ),
+      ));
     } catch (_) {
       emit(const ChallengeState(status: ChallengeStatus.loaded));
     }
-  }
-
-  Player? _find(List<Player> squad, String? id) {
-    if (id == null) return null;
-    for (final p in squad) {
-      if (p.id == id) return p;
-    }
-    return null;
   }
 }

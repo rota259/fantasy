@@ -144,7 +144,23 @@ class _ViewState extends State<_View> {
       ..._teamBlock(cubit, s, widget.match.teamA, a),
       const SizedBox(height: 18),
       ..._teamBlock(cubit, s, widget.match.teamB, b),
+      const SizedBox(height: 20),
+      GestureDetector(
+        onTap: () => _notify(cubit),
+        child: Container(
+          padding: const EdgeInsets.all(13),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+          child: Text('🔔 أبلغ اليوزرز إن التشكيلة نزلت', style: AppText.h(13)),
+        ),
+      ),
     ];
+  }
+
+  Future<void> _notify(ManagerMatchCubit cubit) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final msg = await cubit.notifyUsers();
+    messenger.showSnackBar(SnackBar(content: Text(msg)));
   }
 
   List<Widget> _teamBlock(ManagerMatchCubit cubit, ManagerMatchState s, String team, List<Player> players) {

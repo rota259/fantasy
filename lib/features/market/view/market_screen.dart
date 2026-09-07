@@ -3,16 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/initials_tile.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/cubit/players_cubit.dart';
 import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
-import '../../squad/cubit/squad_cubit.dart';
-import '../widgets/market_widgets.dart';
 
-/// تبويب السوق — التحويلات. بيانات حقيقية من Supabase مع fallback للـ mock.
+/// تبويب اللاعيبة — تصفّح كل اللاعيبة ونقاطهم (بلا ميزانية/تحويلات).
 class MarketScreen extends StatelessWidget {
   const MarketScreen({super.key});
 
@@ -20,13 +19,13 @@ class MarketScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (c) => PlayersCubit(c.read<PlayersRepository>())..load(),
-      child: const _MarketView(),
+      child: const _PlayersView(),
     );
   }
 }
 
-class _MarketView extends StatelessWidget {
-  const _MarketView();
+class _PlayersView extends StatelessWidget {
+  const _PlayersView();
 
   @override
   Widget build(BuildContext context) {
@@ -34,85 +33,46 @@ class _MarketView extends StatelessWidget {
     return Column(
       children: [
         const StatusArea(),
-        Masthead(
-          title: 'السوق',
-          subtitle: 'TRANSFERS',
-          trailing: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('1.6م', style: AppText.h(16, color: AppColors.white)),
-              Text('الرصيد',
-                  style: AppText.body(8, color: AppColors.white.withValues(alpha: 0.85))),
-            ],
-          ),
-        ),
-        const MarketSearch(),
-        const MarketFilters(),
+        const Masthead(title: 'اللاعيبة', subtitle: 'PLAYERS'),
         Expanded(
           child: BlocBuilder<PlayersCubit, PlayersState>(
             builder: (context, s) {
               if (s.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(color: AppColors.accent),
-                );
+                return const Center(child: CircularProgressIndicator(color: AppColors.accent));
               }
-              final squad = context.watch<SquadCubit>();
-              // بيانات حقيقية لو موجودة (إضافة فعّالة)، وإلا الـ mock.
-              final rows = s.players.isNotEmpty
-                  ? [
-                      for (final pl in s.players)
-                        MarketRow(
-                          p: MarketPlayer.fromPlayer(pl),
-                          onTap: () => nav.openPlayer(pl),
-                          inSquad: squad.state.players.any((x) => x.id == pl.id),
-                          onAdd: () => _add(context, pl),
-                        ),
-                    ]
-                  : [
-                      for (final m in marketPlayers)
-                        MarketRow(p: m, onTap: () => nav.openPlayer(null)),
-                    ];
-              return ListView(padding: EdgeInsets.zero, children: rows);
+              final players = [...s.players]..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
+              if (players.isEmpty) {
+                return Center(child: Text('لسه مفيش لاعيبة', style: AppText.body(13, color: AppColors.neutral600)));
+              }
+              return ListView(
+                padding: EdgeInsets.zero,
+                children: [for (final p in players) _row(p, () => nav.openPlayer(p))],
+              );
             },
           ),
         ),
-        _actionBar(),
       ],
     );
   }
 
-  void _add(BuildContext context, Player pl) {
-    final err = context.read<SquadCubit>().addPlayer(pl);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(err ?? 'اتضاف ${pl.name} لفريقك'),
-      duration: const Duration(milliseconds: 1400),
-    ));
-  }
-
-  Widget _actionBar() {
-    return Container(
-      width: double.infinity,
-      color: AppColors.black,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('تحويل واحد · التالي −4 نقاط',
-                  style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7), weight: FontWeight.w600)),
-              Text('1 مجاني', style: AppText.h(13, color: AppColors.accent400)),
-            ],
+  Widget _row(Player p, VoidCallback onTap) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
+        child: Row(children: [
+          InitialsTile(p.initials),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(p.name, style: AppText.h(14)),
+              Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
+            ]),
           ),
-          const SizedBox(height: 9),
-          Container(
-            width: double.infinity,
-            color: AppColors.accent,
-            padding: const EdgeInsets.all(11),
-            alignment: Alignment.center,
-            child: Text('أكّد التحويلات', style: AppText.h(14, color: AppColors.white)),
-          ),
-        ],
+          Text('${p.totalPoints}', style: AppText.h(18)),
+        ]),
       ),
     );
   }
