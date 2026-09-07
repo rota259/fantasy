@@ -15,6 +15,6 @@ abstract interface class MatchesRepository {
     required int week,
   });
 
-  /// (مدير) حذف ماتش.
-  Future<void> deleteMatch(String id);
+  /// (مدير) حذف ماتش — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
+  Future<int> deleteMatch(String id);
 }

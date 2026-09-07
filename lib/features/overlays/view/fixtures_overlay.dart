@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/blink_dot.dart';
@@ -31,43 +30,50 @@ class _FixturesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nav = context.read<AppNavCubit>();
-    return OverlayShell(
-      title: 'الماتشات',
-      subtitle: 'FIXTURES · GAMEWEEK 07',
-      onBack: nav.back,
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text('‹  ', style: AppText.h(18, color: AppColors.white)),
-        Text('GW7', style: AppText.h(13, color: AppColors.white)),
-        Text('  ›', style: AppText.h(18, color: AppColors.white)),
-      ]),
-      children: [
-        _deadline(),
-        BlocBuilder<MatchesCubit, MatchesState>(
-          builder: (context, s) {
-            if (s.isLoading) {
-              return const Padding(
+    return BlocBuilder<MatchesCubit, MatchesState>(
+      builder: (context, s) {
+        final gw = s.matches.isNotEmpty ? s.matches.first.week : null;
+        final next = _earliest(s.matches);
+        return OverlayShell(
+          title: 'الماتشات',
+          subtitle: gw != null ? 'FIXTURES · GAMEWEEK ${gw.toString().padLeft(2, '0')}' : 'FIXTURES',
+          onBack: nav.back,
+          trailing: gw != null ? Text('GW$gw', style: AppText.h(13, color: AppColors.white)) : null,
+          children: [
+            if (next != null) _deadline(next),
+            if (s.isLoading)
+              const Padding(
                 padding: EdgeInsets.all(30),
                 child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-              );
-            }
-            if (SupabaseConfig.isConfigured) {
-              return s.hasData ? _live(s.matches) : _empty();
-            }
-            return _mock();
-          },
-        ),
-      ],
+              )
+            else if (s.matches.isEmpty)
+              _empty()
+            else
+              _live(s.matches),
+          ],
+        );
+      },
     );
   }
 
-  Widget _deadline() {
+  GameMatch? _earliest(List<GameMatch> matches) {
+    if (matches.isEmpty) return null;
+    var first = matches.first;
+    for (final m in matches) {
+      if (m.dateTime.isBefore(first.dateTime)) first = m;
+    }
+    return first;
+  }
+
+  Widget _deadline(GameMatch m) {
     return Container(
       color: AppColors.black,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
       child: Row(children: [
         const BlinkDot(color: AppColors.accent),
         const SizedBox(width: 8),
-        Text('يقفل الخميس 8:00م · اختر قبلها', style: AppText.h(11, color: AppColors.white)),
+        Text('يقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)} · اختر قبلها',
+            style: AppText.h(11, color: AppColors.white)),
       ]),
     );
   }
@@ -86,19 +92,6 @@ class _FixturesView extends StatelessWidget {
         _legend(),
       ],
     );
-  }
-
-  Widget _mock() {
-    return Column(children: [
-      _dayHeader('الخميس · صعوبة اللاعبين (FDR)'),
-      _row(2, 'التجمع', 'أكتوبر', '9:00م'),
-      _row(3, 'المهندسين', 'الرحاب', '9:00م'),
-      _row(5, 'المعادي', 'مدينة نصر', '10:30م'),
-      _dayHeader('الجمعة'),
-      _row(2, 'أكتوبر', 'الشيخ زايد', '7:00م'),
-      _row(4, 'الرحاب', 'الزمالك سبورت', '9:00م'),
-      _legend(),
-    ]);
   }
 
   Widget _empty() {

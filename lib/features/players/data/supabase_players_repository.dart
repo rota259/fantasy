@@ -33,19 +33,19 @@ class SupabasePlayersRepository implements PlayersRepository {
     required String name,
     required String team,
     required String position,
-    required double price,
   }) async {
     final rows = await SupabaseService.table(_table).insert({
       'name': name,
       'team': team,
       'position': position,
-      'price': price,
     }).select('id');
     return rows.first['id'].toString();
   }
 
   @override
-  Future<void> deletePlayer(String id) async {
-    await SupabaseService.table(_table).delete().eq('id', id);
+  Future<int> deletePlayer(String id) async {
+    // .select() بيرجّع الصفوف المحذوفة فعلًا — 0 يعني RLS منع الحذف (مش مدير).
+    final rows = await SupabaseService.table(_table).delete().eq('id', id).select('id');
+    return rows.length;
   }
 }

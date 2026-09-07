@@ -14,7 +14,6 @@ import '../cubit/leagues_cubit.dart';
 import '../data/leagues_repository.dart';
 import '../data/models/league_standing.dart';
 import '../widgets/leagues_widgets.dart';
-import '../widgets/leagues_mock.dart';
 
 /// تبويب الدوريات.
 class LeaguesScreen extends StatelessWidget {
@@ -60,12 +59,12 @@ class _LeaguesView extends StatelessWidget {
               final live = SupabaseConfig.isConfigured;
               return Column(
                 children: [
-                  LeaguesHero(rank: live && s.hasData ? _fmt(s.globalRank) : '12,480'),
+                  LeaguesHero(rank: live && s.globalRank > 0 ? _fmt(s.globalRank) : '—'),
                   const LeagueSubTabs(),
                   Expanded(
                     child: ListView(
                       padding: EdgeInsets.zero,
-                      children: live ? _liveBody(context, s) : leaguesMockBody(),
+                      children: _liveBody(context, s),
                     ),
                   ),
                 ],

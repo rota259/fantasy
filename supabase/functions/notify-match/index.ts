@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     const body = `${teams[0] ?? ""} ضد ${teams[1] ?? ""} — اختار تشكيلتك قبل الديدلاين`;
 
     let sent = 0;
+    let failed = 0;
     for (const token of tokens) {
       const res = await fetch(
         `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`,
@@ -49,14 +50,19 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: { token, notification: { title, body } },
+            message: {
+              token,
+              notification: { title, body },
+              android: { priority: "high" },
+            },
           }),
         },
       );
       if (res.ok) sent++;
+      else failed++;
     }
 
-    return new Response(JSON.stringify({ sent }), {
+    return new Response(JSON.stringify({ sent, failed, total: tokens.length }), {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {

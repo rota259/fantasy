@@ -8,11 +8,11 @@ import '../../../core/widgets/pill.dart';
 class ChallengeVsCard extends StatelessWidget {
   const ChallengeVsCard({
     super.key,
-    this.meName = 'أنت',
-    this.meScore = '54',
-    this.oppName = 'محمود',
-    this.oppScore = '41',
-    this.meWins = true,
+    required this.meName,
+    required this.meScore,
+    required this.oppName,
+    required this.oppScore,
+    required this.meWins,
   });
 
   final String meName;

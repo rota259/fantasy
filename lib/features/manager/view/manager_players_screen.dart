@@ -34,14 +34,12 @@ class _View extends StatefulWidget {
 class _ViewState extends State<_View> {
   final _name = TextEditingController();
   final _team = TextEditingController();
-  final _price = TextEditingController();
   String _pos = 'FWD';
 
   @override
   void dispose() {
     _name.dispose();
     _team.dispose();
-    _price.dispose();
     super.dispose();
   }
 
@@ -54,11 +52,9 @@ class _ViewState extends State<_View> {
       name: _name.text.trim(),
       team: _team.text.trim(),
       position: _pos,
-      price: double.tryParse(_price.text) ?? 5.0,
     );
     _name.clear();
     _team.clear();
-    _price.clear();
   }
 
   @override
@@ -85,8 +81,6 @@ class _ViewState extends State<_View> {
                     _field(_team, 'النادي'),
                     const SizedBox(height: 10),
                     _positionChips(),
-                    const SizedBox(height: 10),
-                    _field(_price, 'السعر (مليون)', number: true),
                     const SizedBox(height: 12),
                     GestureDetector(
                       onTap: () => _add(cubit),
@@ -102,9 +96,15 @@ class _ViewState extends State<_View> {
                     const SizedBox(height: 6),
                     if (s.isLoading)
                       const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator(color: AppColors.accent))),
+                    if (!s.isLoading && s.players.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text('لسه مضفتش لاعيبة. ضيف أول لاعب من فوق.',
+                            style: AppText.body(12, color: AppColors.neutral600)),
+                      ),
                     for (final p in s.players)
-                      _playerRow(p.name, '${p.team} · ${p.positionAr} · ${p.price.toStringAsFixed(1)}م',
-                          () => cubit.remove(p.id)),
+                      _playerRow(p.name, '${p.team} · ${p.positionAr}',
+                          () => _confirmDelete(cubit, p.id, p.name)),
                   ],
                 );
               },
@@ -113,6 +113,35 @@ class _ViewState extends State<_View> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(ManagerPlayersCubit cubit, String id, String name) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.bg,
+        shape: const RoundedRectangleBorder(),
+        title: Text('حذف اللاعب', style: AppText.h(16)),
+        content: Text('متأكد إنك عايز تحذف «$name»؟', style: AppText.body(13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('إلغاء', style: AppText.h(13, color: AppColors.neutral700)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('احذف', style: AppText.h(13, color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final err = await cubit.remove(id);
+    messenger.showSnackBar(SnackBar(
+      content: Text(err ?? 'اتحذف «$name» ✓'),
+      duration: const Duration(milliseconds: 2200),
+    ));
   }
 
   Widget _field(TextEditingController c, String hint, {bool number = false}) {

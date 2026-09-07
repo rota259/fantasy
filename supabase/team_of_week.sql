@@ -4,7 +4,7 @@
 -- ═══════════════════════════════════════════════════════════════
 
 create or replace function public.player_week_points(w int)
-returns table(id uuid, name text, team text, position text, points bigint)
+returns table(id uuid, name text, team text, "position" text, points bigint)
 language sql stable as $$
   select pl.id, pl.name, pl.team, pl.position,
     coalesce(sum(public.fn_event_points(e.type, pl.position)), 0)::bigint as points

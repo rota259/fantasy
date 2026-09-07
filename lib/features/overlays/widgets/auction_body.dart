@@ -22,19 +22,6 @@ List<Widget> auctionLiveBody(AuctionState s) {
   ];
 }
 
-/// جسم المزاد الثابت (وضع demo).
-List<Widget> auctionMockBody() {
-  return [
-    _currentLot('أحمد فتحي', 'التجمع · مهاجم', 'أح', 6.0),
-    _highest(8.5, 'محمود'),
-    _bidsHeader(),
-    _bidRow('محمود', '8.5م', accent: true),
-    _bidRow('أنت', '8.0م'),
-    _bidRow('كريم', '7.5م'),
-    _slots(),
-  ];
-}
-
 Widget _currentLot(String name, String meta, String ini, double base) {
   return Container(
     color: AppColors.black,
@@ -101,26 +88,3 @@ Widget _bidRow(String who, String amount, {bool accent = false}) {
   );
 }
 
-Widget _slots() {
-  Widget filled(String t) => Container(
-      width: 26, height: 26, alignment: Alignment.center,
-      color: AppColors.neutral800,
-      child: Text(t, style: AppText.h(10, color: AppColors.white)));
-  Widget empty() => Container(
-      width: 26, height: 26,
-      decoration: BoxDecoration(border: Border.all(color: AppColors.neutral400, width: 2)));
-  return Container(
-    margin: const EdgeInsets.only(top: 6),
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-    decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider, width: 2))),
-    child: Row(children: [
-      Text('فريقك 3/5', style: AppText.body(10, color: AppColors.neutral700, weight: FontWeight.w600)),
-      const Spacer(),
-      filled('حس'), const SizedBox(width: 6),
-      filled('عم'), const SizedBox(width: 6),
-      filled('آد'), const SizedBox(width: 6),
-      empty(), const SizedBox(width: 6),
-      empty(),
-    ]),
-  );
-}

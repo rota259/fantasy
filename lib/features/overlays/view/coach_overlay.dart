@@ -41,29 +41,40 @@ class _CoachView extends StatelessWidget {
           bottomBar: _askBar(),
           children: s.isLoading
               ? [const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(color: AppColors.accent)))]
-              : [
-                  _alert(a),
-                  _header('توصية التحويل'),
-                  CoachRecommendation(advice: a, onAct: () => _apply(context, a)),
-                  _header('كابتن الجولة المقترح'),
-                  _captainCard(a),
-                  const SizedBox(height: 16),
-                ],
+              : a == null
+                  ? [
+                      Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Center(
+                          child: Text(
+                            'لسه مفيش توصيات — لازم يكون فيه لاعيبة واختيارات الأول',
+                            textAlign: TextAlign.center,
+                            style: AppText.body(13, color: AppColors.neutral600),
+                          ),
+                        ),
+                      ),
+                    ]
+                  : [
+                      _alert(a),
+                      _header('توصية التحويل'),
+                      CoachRecommendation(advice: a, onAct: () => _apply(context, a)),
+                      _header('كابتن الجولة المقترح'),
+                      _captainCard(a),
+                      const SizedBox(height: 16),
+                    ],
         );
       },
     );
   }
 
-  void _apply(BuildContext context, CoachAdvice? a) {
-    if (a != null) {
-      final squad = context.read<SquadCubit>();
-      squad.removePlayer(a.out.id);
-      final err = squad.addPlayer(a.incoming);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(err ?? 'اتنفّذ: ${a.out.name} ← ${a.incoming.name}'),
-        duration: const Duration(milliseconds: 1500),
-      ));
-    }
+  void _apply(BuildContext context, CoachAdvice a) {
+    final squad = context.read<SquadCubit>();
+    squad.removePlayer(a.out.id);
+    final err = squad.addPlayer(a.incoming);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(err ?? 'اتنفّذ: ${a.out.name} ← ${a.incoming.name}'),
+      duration: const Duration(milliseconds: 1500),
+    ));
     context.read<AppNavCubit>().back();
   }
 
@@ -72,11 +83,9 @@ class _CoachView extends StatelessWidget {
         child: Text(t, style: AppText.h(15)),
       );
 
-  Widget _alert(CoachAdvice? a) {
-    final title = a != null ? '${a.out.name} فورمته ضعيفة ⚠️' : 'زياد مصاب ⚠️';
-    final body = a != null
-        ? 'أقل لاعب فورمة في تشكيلتك — يستحسن تبدّله.'
-        : 'مدافع في تشكيلتك — مستبعد الجولة دي.';
+  Widget _alert(CoachAdvice a) {
+    final title = '${a.out.name} فورمته ضعيفة ⚠️';
+    const body = 'أقل لاعب فورمة في تشكيلتك — يستحسن تبدّله.';
     return Container(
       margin: const EdgeInsets.fromLTRB(18, 12, 18, 0),
       decoration: BoxDecoration(border: Border.all(color: AppColors.accent, width: 2)),
@@ -106,9 +115,9 @@ class _CoachView extends StatelessWidget {
     );
   }
 
-  Widget _captainCard(CoachAdvice? a) {
-    final name = a != null ? '${a.captain.name} — ${a.captain.team}' : 'عمر — المعادي';
-    final ini = a != null ? a.captain.initials : 'عم';
+  Widget _captainCard(CoachAdvice a) {
+    final name = '${a.captain.name} — ${a.captain.team}';
+    final ini = a.captain.initials;
     return Container(
       margin: const EdgeInsets.fromLTRB(18, 0, 18, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),

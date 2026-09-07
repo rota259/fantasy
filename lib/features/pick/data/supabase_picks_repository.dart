@@ -31,6 +31,7 @@ class SupabasePicksRepository implements PicksRepository {
           'player_id': p.playerId,
           'status': p.status,
           'is_captain': p.isCaptain,
+          'is_vice': p.isVice,
         },
     ]);
   }

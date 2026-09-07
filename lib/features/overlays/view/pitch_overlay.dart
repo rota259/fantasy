@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pill.dart';
@@ -39,18 +38,6 @@ class PitchOverlay extends StatelessWidget {
           ),
         ),
         children: [
-          _mapStrip(),
-          SizedBox(
-            height: 46,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: _days.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) =>
-                  i == 0 ? Pill.accent(_days[i]) : Pill(_days[i], border: AppColors.divider),
-            ),
-          ),
           BlocBuilder<VenuesCubit, VenuesState>(
             builder: (context, s) {
               if (s.isLoading) {
@@ -59,7 +46,21 @@ class PitchOverlay extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
                 );
               }
-              return SupabaseConfig.isConfigured ? _live(s.venues) : _mock();
+              return Column(children: [
+                _mapStrip(s.venues.length),
+                SizedBox(
+                  height: 46,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    itemCount: _days.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) =>
+                        i == 0 ? Pill.accent(_days[i]) : Pill(_days[i], border: AppColors.divider),
+                  ),
+                ),
+                _live(s.venues),
+              ]);
             },
           ),
         ],
@@ -92,15 +93,7 @@ class PitchOverlay extends StatelessWidget {
     );
   }
 
-  Widget _mock() {
-    return const Column(children: [
-      VenueCard(name: 'ملعب التجمع الخماسي', price: '120ج', meta: '1.2 كم · نجيلة صناعية · إضاءة', fillLabel: '6/10 لاعبين', fill: 0.6, action: '9:00م احجز', topBorder: false),
-      VenueCard(name: 'أرينا المعادي', price: '150ج', meta: '3.4 كم · نجيلة صناعية · مغطّى', fillLabel: '10/10 مكتمل', fill: 1.0, action: 'قائمة انتظار', full: true),
-      VenueCard(name: 'ستاد أكتوبر 6', price: '100ج', meta: '5.1 كم · نجيلة صناعية', fillLabel: '2/10 لاعبين', fill: 0.2, action: '10:30م احجز'),
-    ]);
-  }
-
-  Widget _mapStrip() {
+  Widget _mapStrip(int count) {
     return Container(
       height: 120,
       decoration: const BoxDecoration(
@@ -117,7 +110,7 @@ class PitchOverlay extends StatelessWidget {
           child: Container(
             color: AppColors.white,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            child: Text('3 ملاعب قريبة', style: AppText.h(10, color: AppColors.black)),
+            child: Text('$count ملاعب قريبة', style: AppText.h(10, color: AppColors.black)),
           ),
         ),
       ]),

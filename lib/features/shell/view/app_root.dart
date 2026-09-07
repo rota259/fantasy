@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/notifications/notification_service.dart';
-import '../../../core/supabase/supabase_config.dart';
 import '../../auction/data/auction_repository.dart';
 import '../../auction/data/supabase_auction_repository.dart';
 import '../../auth/cubit/auth_cubit.dart';
@@ -12,7 +11,6 @@ import '../../auth/view/login_screen.dart';
 import '../../auth/view/register_screen.dart';
 import '../../events/data/events_repository.dart';
 import '../../events/data/supabase_events_repository.dart';
-import '../../home/cubit/live_feed_cubit.dart';
 import '../../leagues/data/leagues_repository.dart';
 import '../../manager/data/lineup_repository.dart';
 import '../../manager/data/supabase_lineup_repository.dart';
@@ -58,7 +56,6 @@ class AppRoot extends StatelessWidget {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => AppNavCubit()),
-          BlocProvider(create: (_) => LiveFeedCubit()),
           BlocProvider(create: (c) => SquadCubit(c.read<PlayersRepository>(), c.read<ProfileRepository>())),
           BlocProvider(create: (c) => AuthCubit(c.read<AuthRepository>())..checkSession()),
         ],
@@ -67,27 +64,6 @@ class AppRoot extends StatelessWidget {
             BlocListener<AuthCubit, AuthState>(
               listenWhen: (p, c) => p.status != c.status,
               listener: _onAuthChanged,
-            ),
-            BlocListener<AppNavCubit, AppNavState>(
-              listenWhen: (p, c) => p.route != AppRoute.app && c.route == AppRoute.app,
-              listener: (context, _) {
-                // وضع demo فقط؛ في الوضع الحقيقي البثّ بيتحمّل مع التشكيلة.
-                if (!SupabaseConfig.isConfigured) {
-                  context.read<LiveFeedCubit>().startDemo();
-                }
-              },
-            ),
-            BlocListener<SquadCubit, SquadState>(
-              listenWhen: (p, c) =>
-                  c.status == SquadStatus.loaded &&
-                  (p.players != c.players || p.captainId != c.captainId),
-              listener: (context, s) {
-                if (SupabaseConfig.isConfigured) {
-                  context
-                      .read<LiveFeedCubit>()
-                      .loadLive(s.players, s.captainId, context.read<EventsRepository>());
-                }
-              },
             ),
           ],
           child: BlocBuilder<AppNavCubit, AppNavState>(

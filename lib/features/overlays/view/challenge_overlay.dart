@@ -38,7 +38,7 @@ class _ChallengeView extends StatelessWidget {
           bottomBar: _shareBar(nav),
           children: s.isLoading
               ? [const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(color: AppColors.accent)))]
-              : (s.result != null ? _live(s.result!) : _mock()),
+              : (s.result != null ? _live(s.result!) : _empty()),
         );
       },
     );
@@ -61,16 +61,16 @@ class _ChallengeView extends StatelessWidget {
     ];
   }
 
-  List<Widget> _mock() {
+  List<Widget> _empty() {
     return [
-      const ChallengeVsCard(),
       Padding(
-        padding: const EdgeInsets.fromLTRB(18, 2, 18, 4),
-        child: Text('التفصيل', style: AppText.kicker()),
+        padding: const EdgeInsets.all(40),
+        child: Center(
+          child: Text('انضم لدوري عشان تتحدّى أقرب منافس ليك',
+              textAlign: TextAlign.center,
+              style: AppText.body(13, color: AppColors.neutral600)),
+        ),
       ),
-      _breakdown('18', 'الكابتن', '12'),
-      _breakdown('−4', 'التحويلات', '0'),
-      _breakdown('✓', 'دكّة الاحتياطي', '✕', leftColor: AppColors.accent, rightColor: AppColors.neutral500),
     ];
   }
 
@@ -105,16 +105,4 @@ class _ChallengeView extends StatelessWidget {
     );
   }
 
-  Widget _breakdown(String l, String label, String r, {Color? leftColor, Color? rightColor}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 18),
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Row(children: [
-        SizedBox(width: 36, child: Text(l, style: AppText.h(14, color: leftColor ?? AppColors.ink))),
-        Expanded(child: Text(label, textAlign: TextAlign.center, style: AppText.body(11, color: AppColors.neutral700))),
-        SizedBox(width: 36, child: Text(r, textAlign: TextAlign.left, style: AppText.h(14, color: rightColor ?? AppColors.ink))),
-      ]),
-    );
-  }
 }

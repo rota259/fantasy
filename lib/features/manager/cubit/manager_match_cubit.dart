@@ -50,7 +50,7 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
 
   /// (مدير) إضافة لاعب لفريق في الماتش وضمّه للتشكيلة كأساسي.
   Future<void> addPlayerToTeam(String name, String team, String position) async {
-    final id = await _players.addPlayer(name: name, team: team, position: position, price: 5);
+    final id = await _players.addPlayer(name: name, team: team, position: position);
     await _lineups.setStatus(match.id, id, 'starting');
     await load();
   }

@@ -46,6 +46,48 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
     if (added == true) _reload();
   }
 
+  Future<void> _confirmDelete(GameMatch m) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.bg,
+        shape: const RoundedRectangleBorder(),
+        title: Text('حذف الماتش', style: AppText.h(16)),
+        content: Text('متأكد إنك عايز تحذف «${m.teamA} ضد ${m.teamB}»؟\nهيتمسح معاه التشكيلة والأحداث.',
+            style: AppText.body(13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('إلغاء', style: AppText.h(13, color: AppColors.neutral700)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('احذف', style: AppText.h(13, color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final n = await widget.matchesRepo.deleteMatch(m.id);
+      if (n == 0) {
+        messenger.showSnackBar(const SnackBar(
+          content: Text('الحذف محتاج صلاحية مدير — تأكد إن حسابك Role = manager'),
+          duration: Duration(milliseconds: 2600),
+        ));
+        return;
+      }
+      messenger.showSnackBar(const SnackBar(content: Text('اتحذف الماتش ✓')));
+      _reload();
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text('فشل الحذف: $e'),
+        duration: const Duration(milliseconds: 2600),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,6 +153,15 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
             ]),
           ),
           Text('إدارة ›', style: AppText.h(12, color: AppColors.accent)),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () => _confirmDelete(m),
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+              child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+            ),
+          ),
         ]),
       ),
     );

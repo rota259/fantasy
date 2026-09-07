@@ -17,11 +17,15 @@ abstract final class NotificationService {
     }
   }
 
-  /// بتخزّن توكن الجهاز للمستخدم بعد تسجيل الدخول.
+  /// بتخزّن توكن الجهاز للمستخدم بعد تسجيل الدخول + بتتابع أي تجديد للتوكن.
   static Future<void> registerToken(String userId, ProfileRepository repo) async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) await repo.saveFcmToken(userId, token);
+      // التوكن ممكن يتجدّد — نخزّن الجديد تلقائيًا.
+      FirebaseMessaging.instance.onTokenRefresh.listen((t) {
+        repo.saveFcmToken(userId, t).catchError((_) {});
+      });
     } catch (_) {}
   }
 }

@@ -16,9 +16,8 @@ abstract interface class PlayersRepository {
     required String name,
     required String team,
     required String position,
-    required double price,
   });
 
-  /// (مدير) حذف لاعب.
-  Future<void> deletePlayer(String id);
+  /// (مدير) حذف لاعب — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
+  Future<int> deletePlayer(String id);
 }

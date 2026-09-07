@@ -95,7 +95,7 @@ create table if not exists public.venues (
 create table if not exists public.auctions (
   id                uuid primary key default gen_random_uuid(),
   name              text not null,
-  current_player_id uuid references public.players(id),
+  current_player_id uuid references public.players(id) on delete set null,
   base_price        numeric not null default 6,
   ends_at           timestamptz,
   status            text not null default 'live'     -- live | ended
@@ -176,48 +176,22 @@ create policy "members read"   on public.league_members for select to authentica
 create policy "members insert" on public.league_members for insert to authenticated with check (auth.uid() = user_id);
 create policy "members delete" on public.league_members for delete to authenticated using (auth.uid() = user_id);
 
--- ── بيانات تجريبية (اختياري) ──
-insert into public.players (name, team, position, price, total_points, form) values
-  ('أحمد فتحي',   'التجمع',     'FWD', 8.5, 189, 8.4),
-  ('مصطفى وائل',  'المهندسين',  'MID', 7.1, 172, 7.1),
-  ('طارق سمير',   'أكتوبر',     'FWD', 5.2, 141, 8.6),
-  ('كريم حسن',    'المعادي',    'DEF', 5.5, 128, 6.0),
-  ('حسام عادل',   'الرحاب',     'GK',  4.8, 119, 5.3),
-  ('زياد ناصر',   'مدينة نصر',  'DEF', 4.8,  96, 2.1)
-on conflict do nothing;
+-- ── مفيش بيانات تجريبية ──
+-- كل المحتوى (لاعيبة/ماتشات/دوريات/ملاعب) بيضيفه المدير من داخل التطبيق.
 
-insert into public.matches (date_time, teams, week, status, fdr) values
-  (now() + interval '2 day' + interval '21 hour', array['التجمع','أكتوبر'],        7, 'upcoming', 2),
-  (now() + interval '2 day' + interval '21 hour', array['المهندسين','الرحاب'],     7, 'upcoming', 3),
-  (now() + interval '2 day' + interval '22 hour', array['المعادي','مدينة نصر'],    7, 'upcoming', 5),
-  (now() + interval '3 day' + interval '19 hour', array['أكتوبر','الشيخ زايد'],    7, 'upcoming', 2),
-  (now() + interval '3 day' + interval '21 hour', array['الرحاب','الزمالك سبورت'], 7, 'upcoming', 4)
-on conflict do nothing;
+-- إصلاح ربط المزاد باللاعب: خلّيه on delete set null (للقواعد القديمة كمان)
+-- عشان حذف لاعب معروض في مزاد ما يفشلش بـ foreign key.
+alter table public.auctions drop constraint if exists auctions_current_player_id_fkey;
+alter table public.auctions add constraint auctions_current_player_id_fkey
+  foreign key (current_player_id) references public.players(id) on delete set null;
 
-insert into public.leagues (name, type, invite_code) values
-  ('دوري الشلّة', 'h2h', 'SHILLA7')
-on conflict do nothing;
-
-insert into public.venues (name, price, distance_km, surface, feature, capacity, filled, slot_time) values
-  ('ملعب التجمع الخماسي', 120, 1.2, 'نجيلة صناعية', 'إضاءة',  10, 6,  '9:00م'),
-  ('أرينا المعادي',       150, 3.4, 'نجيلة صناعية', 'مغطّى',   10, 10, '9:00م'),
-  ('ستاد أكتوبر 6',       100, 5.1, 'نجيلة صناعية', null,      10, 2,  '10:30م')
-on conflict do nothing;
-
--- تفعيل الـ Realtime للمزاد (idempotent)
+-- تفعيل الـ Realtime للمزاد (idempotent) — بدون أي بيانات
 do $$ begin
   alter publication supabase_realtime add table public.auction_bids;
 exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.auctions;
 exception when duplicate_object then null; end $$;
-
-insert into public.auctions (name, current_player_id, base_price, ends_at, status)
-select 'شلة الجمعة', p.id, 6, now() + interval '2 minute', 'live'
-from public.players p
-where p.name = 'أحمد فتحي'
-  and not exists (select 1 from public.auctions where status = 'live')
-limit 1;
 
 
 -- ╔═══════════════════════════════════════════════════════════════╗
@@ -314,8 +288,10 @@ create table if not exists public.picks (
   player_id  uuid references public.players(id) on delete cascade,
   status     text not null default 'starting',   -- starting | bench
   is_captain boolean not null default false,
+  is_vice    boolean not null default false,     -- كابتن احتياطي (يشتغل لو الكابتن ملعبش)
   primary key (user_id, match_id, player_id)
 );
+alter table public.picks add column if not exists is_vice boolean not null default false;
 
 alter table public.picks enable row level security;
 drop policy if exists "picks read" on public.picks;
@@ -324,7 +300,8 @@ create policy "picks read" on public.picks for select to authenticated using (tr
 create policy "picks own write" on public.picks for all to authenticated
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- ═══ إعادة حساب نقاط المستخدمين من اختيارات الماتشات (الأساسيين + الكابتن ×2) ═══
+-- ═══ إعادة حساب نقاط المستخدمين من اختيارات الماتشات ═══
+-- الأساسيين فقط. الكابتن ×2 لو لعب؛ لو الكابتن ملعبش → الكابتن الاحتياطي ×2.
 create or replace function public.fn_recalc_users()
 returns void language sql as $$
   update public.profiles pr set total_points = coalesce((
@@ -332,7 +309,18 @@ returns void language sql as $$
       (select coalesce(sum(public.fn_event_points(e.type, pl.position)), 0)
        from public.events e
        where e.player_id = pk.player_id and e.match_id = pk.match_id)
-      * case when pk.is_captain then 2 else 1 end
+      * case
+          when pk.is_captain and exists(
+            select 1 from public.events ce
+            where ce.player_id = pk.player_id and ce.match_id = pk.match_id
+          ) then 2
+          when pk.is_vice and not exists(
+            select 1 from public.picks cap
+            join public.events ce on ce.player_id = cap.player_id and ce.match_id = cap.match_id
+            where cap.user_id = pk.user_id and cap.match_id = pk.match_id and cap.is_captain
+          ) then 2
+          else 1
+        end
     )
     from public.picks pk
     join public.players pl on pl.id = pk.player_id
@@ -375,7 +363,7 @@ drop trigger if exists profile_recalc on public.profiles;
 -- ╚═══════════════════════════════════════════════════════════════╝
 
 create or replace function public.player_week_points(w int)
-returns table(id uuid, name text, team text, position text, points bigint)
+returns table(id uuid, name text, team text, "position" text, points bigint)
 language sql stable as $$
   select pl.id, pl.name, pl.team, pl.position,
     coalesce(sum(public.fn_event_points(e.type, pl.position)), 0)::bigint as points

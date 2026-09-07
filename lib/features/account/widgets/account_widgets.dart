@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pill.dart';
 import '../../auth/data/models/app_user.dart';
 
 /// ترويسة الحساب (سوداء) — أفاتار + اسم + شارة.
@@ -41,12 +40,6 @@ class AccountHeader extends StatelessWidget {
                 Text(handle,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.6))),
-                const SizedBox(height: 8),
-                const FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Pill.accent('🏆 دوري الشلّة #1'),
-                ),
               ],
             ),
           ),
@@ -65,9 +58,9 @@ class AccountStats extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final points = live && user != null ? '${user!.totalPoints}' : '389';
-    final rankText = live ? ((rank ?? 0) > 0 ? '$rank' : '—') : '12.5k';
-    final bestGw = live ? '—' : '78';
+    final points = user != null ? '${user!.totalPoints}' : '—';
+    final rankText = (rank ?? 0) > 0 ? '$rank' : '—';
+    const bestGw = '—';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

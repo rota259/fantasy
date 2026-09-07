@@ -26,14 +26,22 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
     required String name,
     required String team,
     required String position,
-    required double price,
   }) async {
-    await _repo.addPlayer(name: name, team: team, position: position, price: price);
+    await _repo.addPlayer(name: name, team: team, position: position);
     await load();
   }
 
-  Future<void> remove(String id) async {
-    await _repo.deletePlayer(id);
-    await load();
+  /// بيرجّع null لو نجح، أو رسالة الخطأ لو فشل.
+  Future<String?> remove(String id) async {
+    try {
+      final n = await _repo.deletePlayer(id);
+      if (n == 0) {
+        return 'الحذف محتاج صلاحية مدير — تأكد إن حسابك Role = manager';
+      }
+      await load();
+      return null;
+    } catch (e) {
+      return 'فشل الحذف: $e';
+    }
   }
 }

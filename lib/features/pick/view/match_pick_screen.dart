@@ -8,10 +8,11 @@ import '../../../core/widgets/status_bar.dart';
 import '../../manager/data/lineup_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
-import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/match_pick_cubit.dart';
 import '../data/picks_repository.dart';
+import '../widgets/pick_pitch.dart';
+import '../widgets/pick_sheets.dart';
 
 class MatchPickScreen extends StatelessWidget {
   const MatchPickScreen({
@@ -81,21 +82,28 @@ class _View extends StatelessWidget {
                   );
                 }
                 final cubit = context.read<MatchPickCubit>();
-                final teamA = s.players.where((p) => p.team == match.teamA).toList();
-                final teamB = s.players.where((p) => p.team == match.teamB).toList();
                 return ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.zero,
                   children: [
                     _counts(s),
-                    const SizedBox(height: 8),
-                    Text('القواعد: ٢ من كل فريق + حارس (أي فريق) + ٢ احتياطي + كابتن',
-                        style: AppText.body(11, color: AppColors.neutral700)),
-                    const SizedBox(height: 12),
-                    _teamHeader(match.teamA),
-                    for (final p in teamA) _row(cubit, s, p, locked),
-                    const SizedBox(height: 8),
-                    _teamHeader(match.teamB),
-                    for (final p in teamB) _row(cubit, s, p, locked),
+                    PickPitch(
+                      state: s,
+                      teamA: match.teamA,
+                      teamB: match.teamB,
+                      onSlotTap: locked
+                          ? (_) {}
+                          : (kind) => showAddPlayerSheet(context, cubit, s, kind, match.teamA, match.teamB),
+                      onPlayerTap: locked
+                          ? (_) {}
+                          : (p) => showPlayerOptionsSheet(context, cubit, s, p),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+                      child: Text(
+                        'القواعد: ٢ من كل فريق + حارس (أي فريق) + ٢ احتياطي + كابتن.\nدوس على أي لاعب عشان تعمله كابتن/احتياطي أو تبدّله.',
+                        style: AppText.body(11, color: AppColors.neutral700),
+                      ),
+                    ),
                   ],
                 );
               },
@@ -119,60 +127,12 @@ class _View extends StatelessWidget {
   }
 
   Widget _counts(MatchPickState s) {
-    return Row(children: [
-      Text('أساسي ${s.startingCount}/5', style: AppText.h(13, color: AppColors.accent)),
-      const SizedBox(width: 16),
-      Text('احتياطي ${s.benchCount}/2', style: AppText.h(13)),
-    ]);
-  }
-
-  Widget _teamHeader(String name) => Padding(
-        padding: const EdgeInsets.only(bottom: 6, top: 4),
-        child: Text(name, style: AppText.kicker(color: AppColors.accent)),
-      );
-
-  Widget _row(MatchPickCubit cubit, MatchPickState s, Player p, bool locked) {
-    final status = s.sel[p.id] ?? 'out';
-    final isCap = s.captainId == p.id;
-    Widget opt(String label, String value) => GestureDetector(
-          onTap: locked ? null : () => cubit.setStatus(p.id, value),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: status == value ? AppColors.accent : null,
-              border: Border.all(color: status == value ? AppColors.accent : AppColors.divider, width: 2),
-            ),
-            child: Text(label, style: AppText.h(10, color: status == value ? AppColors.white : AppColors.ink)),
-          ),
-        );
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: Row(children: [
-        if (status == 'starting')
-          GestureDetector(
-            onTap: locked ? null : () => cubit.setCaptain(p.id),
-            child: Container(
-              width: 24, height: 24, alignment: Alignment.center,
-              margin: const EdgeInsets.only(left: 6),
-              decoration: BoxDecoration(
-                color: isCap ? AppColors.accent : null,
-                border: Border.all(color: AppColors.black, width: 2),
-              ),
-              child: Text('C', style: AppText.h(10, color: isCap ? AppColors.white : AppColors.ink)),
-            ),
-          ),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(p.name, style: AppText.h(13)),
-            Text(p.positionAr, style: AppText.body(9, color: AppColors.neutral700)),
-          ]),
-        ),
-        opt('أساسي', 'starting'),
-        const SizedBox(width: 4),
-        opt('احتياطي', 'bench'),
-        const SizedBox(width: 4),
-        opt('بره', 'out'),
+        Text('أساسي ${s.startingCount}/5', style: AppText.h(13, color: AppColors.accent)),
+        const SizedBox(width: 16),
+        Text('احتياطي ${s.benchCount}/2', style: AppText.h(13)),
       ]),
     );
   }

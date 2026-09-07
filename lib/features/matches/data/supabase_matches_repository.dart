@@ -37,7 +37,8 @@ class SupabaseMatchesRepository implements MatchesRepository {
   }
 
   @override
-  Future<void> deleteMatch(String id) async {
-    await SupabaseService.table(_table).delete().eq('id', id);
+  Future<int> deleteMatch(String id) async {
+    final rows = await SupabaseService.table(_table).delete().eq('id', id).select('id');
+    return rows.length;
   }
 }

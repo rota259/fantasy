@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pill.dart';
 
-/// هيرو الترتيب العام (أسود).
+/// هيرو الترتيب العام (أسود) — الترتيب محسوب من نقاط كل المستخدمين.
 class LeaguesHero extends StatelessWidget {
-  const LeaguesHero({super.key, this.rank = '12,480'});
+  const LeaguesHero({super.key, required this.rank});
   final String rank;
   @override
   Widget build(BuildContext context) {
@@ -14,29 +13,13 @@ class LeaguesHero extends StatelessWidget {
       width: double.infinity,
       color: AppColors.black,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('ترتيبك العام',
-                  style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),
-              const SizedBox(height: 2),
-              Text(rank, style: AppText.h(44, color: AppColors.white, height: 0.9)),
-            ],
-          ),
-          const SizedBox(width: 14),
-          const Flexible(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: Pill.accent('▲ 3,412 هذا الأسبوع'),
-              ),
-            ),
-          ),
+          Text('ترتيبك العام',
+              style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),
+          const SizedBox(height: 2),
+          Text(rank, style: AppText.h(44, color: AppColors.white, height: 0.9)),
         ],
       ),
     );
