@@ -17,4 +17,13 @@ abstract interface class MatchesRepository {
 
   /// (مدير) حذف ماتش — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
   Future<int> deleteMatch(String id);
+
+  /// الماتشات اللي خلصت (الأحدث الأول).
+  Future<List<GameMatch>> fetchFinished();
+
+  /// (مدير) إنهاء الماتش بنتيجته.
+  Future<void> finishMatch(String id, int scoreA, int scoreB);
+
+  /// (مدير) تعديل بيانات ماتش.
+  Future<void> updateMatch(String id, {required List<String> teams, required DateTime dateTime, required int week});
 }

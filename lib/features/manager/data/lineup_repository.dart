@@ -10,4 +10,8 @@ abstract interface class LineupRepository {
 
   /// إخراج لاعب من التشكيلة تمامًا.
   Future<void> remove(String matchId, String playerId);
+
+  /// (مدير) حفظ التشكيلة كاملة مرة واحدة — بيستبدل القديمة.
+  /// entries: playerId → starting|bench (اللي مش موجود = بره).
+  Future<void> replaceForMatch(String matchId, Map<String, String> entries);
 }

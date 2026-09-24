@@ -15,6 +15,8 @@ class Player extends Equatable {
     this.assists = 0,
     this.cleanSheets = 0,
     this.yellowCards = 0,
+    this.availability = 'ready',
+    this.news,
   });
 
   final String id;
@@ -29,6 +31,8 @@ class Player extends Equatable {
   final int assists;
   final int cleanSheets;
   final int yellowCards;
+  final String availability; // ready | injured | doubtful | suspended
+  final String? news; // سبب الحالة
 
   /// المركز بالعربي للعرض.
   String get positionAr => const {
@@ -55,6 +59,8 @@ class Player extends Equatable {
         assists: (map['assists'] ?? 0) as int,
         cleanSheets: (map['clean_sheets'] ?? 0) as int,
         yellowCards: (map['yellow_cards'] ?? 0) as int,
+        availability: (map['availability'] ?? 'ready') as String,
+        news: map['news'] as String?,
       );
 
   Map<String, dynamic> toMap() => {

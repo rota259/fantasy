@@ -3,12 +3,16 @@
 -- Supabase Dashboard → SQL Editor → New query → الصق الكل → Run
 --
 -- الترتيب مهم ومظبوط هنا:
---   1) schema            — الجداول + RLS + بيانات تجريبية
---   2) manager & scoring — دور المدير + محرك النقاط + fn_event_points
+--   1) schema            — الجداول + RLS (من غير بيانات تجريبية)
+--   2) manager & scoring — دور المدير + محرك النقاط + إحصائيات اللاعب
 --   3) lineups           — تشكيلة كل ماتش (المدير)
---   4) picks             — اختيار اليوزر لكل ماتش + إعادة حساب النقاط (النموذج الجديد)
---   5) team of week      — نقاط اللاعيبة في الجولة
---   6) fcm               — عمود توكن الإشعارات
+--   4) picks             — اختيار اليوزر لكل ماتش + الكابتن/الاحتياطي + إعادة حساب النقاط
+--   5) team of week      — نقاط الجولة + الامتلاك + الدخول/الخروج + تاريخ اللاعب
+--   6) notifications     — صندوق الإشعارات (للكل أو ليوزر محدّد)
+--   7) polls             — نجم الجولة + تحدّي الجولة
+--   8) admin             — نتيجة الماتش + أدوار المستخدمين + حذف الدوريات
+--   9) venues & bookings — الملاعب على الخريطة + الصور + الحجز بموافقة صاحب الملعب
+--  10) fcm               — عمود توكن الإشعارات
 --
 -- كله idempotent — تقدر تعيد تشغيله من غير ما يكسّر حاجة.
 -- ملاحظة: picks بيعيد تعريف fn_recalc_users عشان يحسب per-match، فلازم يجي بعد manager_and_scoring.
@@ -49,8 +53,12 @@ create table if not exists public.players (
   goals         int not null default 0,
   assists       int not null default 0,
   clean_sheets  int not null default 0,
-  yellow_cards  int not null default 0
+  yellow_cards  int not null default 0,
+  availability  text not null default 'ready',       -- ready | injured | doubtful | suspended
+  news          text                                 -- سبب/تفاصيل حالة اللاعب (المدير بيكتبها)
 );
+alter table public.players add column if not exists availability text not null default 'ready';
+alter table public.players add column if not exists news text;
 
 -- ── matches: الماتشات/الجولات ──
 create table if not exists public.matches (
@@ -185,12 +193,15 @@ alter table public.auctions drop constraint if exists auctions_current_player_id
 alter table public.auctions add constraint auctions_current_player_id_fkey
   foreign key (current_player_id) references public.players(id) on delete set null;
 
--- تفعيل الـ Realtime للمزاد (idempotent) — بدون أي بيانات
+-- تفعيل الـ Realtime (idempotent) — للمزاد + الماتشات + الإشعارات (تحديث فوري في الهوم)
 do $$ begin
   alter publication supabase_realtime add table public.auction_bids;
 exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.auctions;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.matches;
 exception when duplicate_object then null; end $$;
 
 
@@ -241,14 +252,25 @@ returns int language sql immutable as $$
   end;
 $$;
 
--- ── إعادة حساب نقاط لاعب من أحداثه ──
+-- ── إعادة حساب إحصائيات لاعب من أحداثه (نقاط + أهداف + أسيست + شباك + كروت + فورمة) ──
+-- الفورمة = متوسط نقاطه في آخر ٣ جولات لعبها.
 create or replace function public.fn_recalc_player(p_player uuid)
-returns void language sql as $$
-  update public.players pl
-  set total_points = coalesce((
-    select sum(public.fn_event_points(e.type, pl.position))
-    from public.events e where e.player_id = pl.id
-  ), 0)
+returns void language sql security definer set search_path = public as $$
+  update public.players pl set
+    total_points = coalesce((
+      select sum(public.fn_event_points(e.type, pl.position))
+      from public.events e where e.player_id = pl.id), 0),
+    goals        = (select count(*) from public.events e where e.player_id = pl.id and e.type = 'goal'),
+    assists      = (select count(*) from public.events e where e.player_id = pl.id and e.type = 'assist'),
+    clean_sheets = (select count(*) from public.events e where e.player_id = pl.id and e.type = 'cleanSheet'),
+    yellow_cards = (select count(*) from public.events e where e.player_id = pl.id and e.type = 'yellowCard'),
+    form = coalesce((
+      select round(avg(w.pts)::numeric, 1) from (
+        select m.week, sum(public.fn_event_points(e.type, pl.position)) as pts
+        from public.events e join public.matches m on m.id = e.match_id
+        where e.player_id = pl.id
+        group by m.week order by m.week desc limit 3
+      ) w), 0)
   where pl.id = p_player;
 $$;
 
@@ -300,12 +322,11 @@ create policy "picks read" on public.picks for select to authenticated using (tr
 create policy "picks own write" on public.picks for all to authenticated
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
--- ═══ إعادة حساب نقاط المستخدمين من اختيارات الماتشات ═══
+-- ═══ نقاط يوزر واحد من اختياراته في الماتشات ═══
 -- الأساسيين فقط. الكابتن ×2 لو لعب؛ لو الكابتن ملعبش → الكابتن الاحتياطي ×2.
-create or replace function public.fn_recalc_users()
-returns void language sql as $$
-  update public.profiles pr set total_points = coalesce((
-    select sum(
+create or replace function public.fn_user_points(p_user uuid)
+returns int language sql stable security definer set search_path = public as $$
+  select coalesce(sum(
       (select coalesce(sum(public.fn_event_points(e.type, pl.position)), 0)
        from public.events e
        where e.player_id = pk.player_id and e.match_id = pk.match_id)
@@ -321,19 +342,28 @@ returns void language sql as $$
           ) then 2
           else 1
         end
-    )
-    from public.picks pk
-    join public.players pl on pl.id = pk.player_id
-    where pk.user_id = pr.id and pk.status = 'starting'
-  ), 0);
+    ), 0)::int
+  from public.picks pk
+  join public.players pl on pl.id = pk.player_id
+  where pk.user_id = p_user and pk.status = 'starting';
 $$;
 
--- تريجر: أي تغيير في events → أعد حساب اللاعب + كل المستخدمين
+-- إعادة حساب نقاط كل المستخدمين (للاستخدام اليدوي من SQL Editor).
+-- ⚠️ كل UPDATE لازم يبقى ليه WHERE: Supabase مشغّل pg-safeupdate على طلبات التطبيق
+-- وبيرفض أي UPDATE من غير WHERE — ودي كانت سبب إن التشكيلة والأحداث مبتتحفظش.
+create or replace function public.fn_recalc_users()
+returns void language sql security definer set search_path = public as $$
+  update public.profiles set total_points = public.fn_user_points(id) where id is not null;
+$$;
+
+-- تريجر: أي تغيير في events → أعد حساب اللاعب + اليوزرز اللي ليهم تشكيلة في الماتش ده بس
 create or replace function public.trg_events_recalc()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql security definer set search_path = public as $$
+declare m uuid := coalesce(new.match_id, old.match_id);
 begin
   perform public.fn_recalc_player(coalesce(new.player_id, old.player_id));
-  perform public.fn_recalc_users();
+  update public.profiles set total_points = public.fn_user_points(id)
+  where id in (select distinct user_id from public.picks where match_id = m);
   return null;
 end;
 $$;
@@ -342,17 +372,21 @@ create trigger events_recalc
 after insert or update or delete on public.events
 for each row execute function public.trg_events_recalc();
 
--- تريجر: أي تغيير في picks → أعد حساب النقاط
+-- تريجر: أي تغيير في picks → أعد حساب نقاط صاحب التشكيلة ده بس
 create or replace function public.trg_picks_recalc()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql security definer set search_path = public as $$
+declare u uuid := coalesce(new.user_id, old.user_id);
 begin
-  perform public.fn_recalc_users();
+  update public.profiles set total_points = public.fn_user_points(u) where id = u;
   return null;
 end; $$;
 drop trigger if exists picks_recalc on public.picks;
 create trigger picks_recalc
 after insert or update or delete on public.picks
 for each row execute function public.trg_picks_recalc();
+
+-- نظبّط نقاط الكل مرة واحدة بالحساب الجديد
+select public.fn_recalc_users();
 
 -- التريجر القديم اللي كان بيحسب من profiles.team مبقاش ليه لازمة
 drop trigger if exists profile_recalc on public.profiles;
@@ -377,9 +411,377 @@ $$;
 
 grant execute on function public.player_week_points(int) to authenticated;
 
+-- ═══ إحصائيات كل لاعب في جولة: النقاط + الامتلاك + الدخول/الخروج ═══
+-- الامتلاك = % من اليوزرز اللي اختاروه في الجولة (من كل اللي عملوا تشكيلة فيها).
+-- الدخول = اختاروه الجولة دي ومكانوش مختارينه اللي قبلها. الخروج = العكس.
+create or replace function public.player_gw_stats(w int)
+returns table(id uuid, points bigint, owners bigint, ownership numeric,
+              transfers_in bigint, transfers_out bigint)
+language sql stable as $$
+  with cur as (
+    select distinct pk.user_id, pk.player_id from public.picks pk
+    join public.matches m on m.id = pk.match_id where m.week = w
+  ), prev as (
+    select distinct pk.user_id, pk.player_id from public.picks pk
+    join public.matches m on m.id = pk.match_id where m.week = w - 1
+  ), total as (
+    select greatest(count(distinct user_id), 1) as n from cur
+  )
+  select pl.id,
+    coalesce((select sum(public.fn_event_points(e.type, pl.position))
+              from public.events e join public.matches m on m.id = e.match_id
+              where e.player_id = pl.id and m.week = w), 0)::bigint,
+    (select count(*) from cur c where c.player_id = pl.id)::bigint,
+    round((select count(*) from cur c where c.player_id = pl.id) * 100.0 / (select n from total), 1),
+    (select count(*) from cur c where c.player_id = pl.id and not exists (
+       select 1 from prev p where p.user_id = c.user_id and p.player_id = pl.id))::bigint,
+    (select count(*) from prev p where p.player_id = pl.id and not exists (
+       select 1 from cur c where c.user_id = p.user_id and c.player_id = pl.id))::bigint
+  from public.players pl;
+$$;
+grant execute on function public.player_gw_stats(int) to authenticated;
+
+-- ═══ نقاط لاعب في كل جولة (للرسم في صفحة اللاعب) ═══
+create or replace function public.player_history(p uuid)
+returns table(gw int, points bigint)
+language sql stable as $$
+  select m.week, coalesce(sum(public.fn_event_points(e.type, pl.position)), 0)::bigint
+  from public.events e
+  join public.matches m on m.id = e.match_id
+  join public.players pl on pl.id = e.player_id
+  where e.player_id = p
+  group by m.week order by m.week;
+$$;
+grant execute on function public.player_history(uuid) to authenticated;
+
+-- ═══ الجولة بالوقت (مش برقم الجولة) ═══
+-- الجولة = من جمعة 4 الفجر لجمعة 4 الفجر اللي بعدها (التطبيق بيحسب الحدود ويبعتها).
+-- أي ماتش بيتحسب في الجولة اللي ميعاده جواها: p_from < date_time <= p_to.
+
+-- نقاط كل لاعب في فترة (لنجوم الجولة / أعلى ٥ في اليوم / تشكيلة الأسبوع)
+create or replace function public.player_points_between(p_from timestamptz, p_to timestamptz)
+returns table(id uuid, name text, team text, "position" text, points bigint)
+language sql stable as $$
+  select pl.id, pl.name, pl.team, pl.position,
+    sum(public.fn_event_points(e.type, pl.position))::bigint as points
+  from public.events e
+  join public.matches m on m.id = e.match_id and m.date_time > p_from and m.date_time <= p_to
+  join public.players pl on pl.id = e.player_id
+  group by pl.id, pl.name, pl.team, pl.position
+  having sum(public.fn_event_points(e.type, pl.position)) <> 0
+  order by points desc;
+$$;
+grant execute on function public.player_points_between(timestamptz, timestamptz) to authenticated;
+
+-- إحصائيات كل لاعب في الجولة (بالوقت): النقاط + الامتلاك الحقيقي + الدخول/الخروج.
+-- الامتلاك = عدد اليوزرز اللي اختاروه في ماتشات الجولة ÷ كل اليوزرز اللي عملوا تشكيلة في الجولة.
+-- managers = عدد اليوزرز اللي عملوا تشكيلة (المقام) — عشان التطبيق يعرض "اختاره 5 من 12".
+create or replace function public.player_window_stats(p_from timestamptz, p_to timestamptz)
+returns table(id uuid, points bigint, owners bigint, ownership numeric,
+              transfers_in bigint, transfers_out bigint, managers bigint)
+language sql stable as $$
+  with cur as (
+    select distinct pk.user_id, pk.player_id from public.picks pk
+    join public.matches m on m.id = pk.match_id
+    where m.date_time > p_from and m.date_time <= p_to
+  ), prev as (
+    select distinct pk.user_id, pk.player_id from public.picks pk
+    join public.matches m on m.id = pk.match_id
+    where m.date_time > p_from - interval '7 days' and m.date_time <= p_from
+  ), total as (
+    select count(distinct user_id) as n from cur
+  )
+  select pl.id,
+    coalesce((select sum(public.fn_event_points(e.type, pl.position))
+              from public.events e join public.matches m on m.id = e.match_id
+              where e.player_id = pl.id and m.date_time > p_from and m.date_time <= p_to), 0)::bigint,
+    (select count(*) from cur c where c.player_id = pl.id)::bigint,
+    case when (select n from total) = 0 then 0
+         else round((select count(*) from cur c where c.player_id = pl.id) * 100.0 / (select n from total), 1) end,
+    (select count(*) from cur c where c.player_id = pl.id and not exists (
+       select 1 from prev p where p.user_id = c.user_id and p.player_id = pl.id))::bigint,
+    (select count(*) from prev p where p.player_id = pl.id and not exists (
+       select 1 from cur c where c.user_id = p.user_id and c.player_id = pl.id))::bigint,
+    (select n from total)::bigint
+  from public.players pl;
+$$;
+grant execute on function public.player_window_stats(timestamptz, timestamptz) to authenticated;
+
+-- إعادة حساب إحصائيات كل اللاعيبة الموجودين (مرة واحدة)
+select public.fn_recalc_player(id) from public.players;
+
 
 -- ╔═══════════════════════════════════════════════════════════════╗
--- ║ 6) FCM                                                         ║
+-- ║ 6) NOTIFICATIONS (صندوق إشعارات داخل التطبيق)                  ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+
+create table if not exists public.notifications (
+  id         uuid primary key default gen_random_uuid(),
+  title      text not null,
+  body       text not null default '',
+  kind       text not null default 'event',   -- lineup | match | event | status (لتمييز الصوت)
+  match_id   uuid references public.matches(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table public.notifications add column if not exists kind text not null default 'event';
+-- user_id فاضي = للكل. لو متحدّد = إشعار موجّه ليوزر واحد (زي التذكير).
+alter table public.notifications add column if not exists user_id uuid references public.profiles(id) on delete cascade;
+
+alter table public.notifications enable row level security;
+
+drop policy if exists "notifications read" on public.notifications;
+create policy "notifications read" on public.notifications
+  for select to authenticated using (user_id is null or user_id = auth.uid());
+
+drop policy if exists "notifications manager write" on public.notifications;
+create policy "notifications manager write" on public.notifications
+  for insert to authenticated with check (public.is_manager());
+
+-- realtime للإشعارات (تظهر فورًا عند اليوزرز)
+do $$ begin
+  alter publication supabase_realtime add table public.notifications;
+exception when duplicate_object then null; end $$;
+
+
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║ 7) POLLS (نجم الجولة + تحدّي الجولة — المدير يحط واليوزرز يصوّتوا) ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+
+create table if not exists public.polls (
+  id         uuid primary key default gen_random_uuid(),
+  kind       text not null,                 -- 'star' | 'challenge'
+  question   text not null default '',
+  active     boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.poll_options (
+  id        uuid primary key default gen_random_uuid(),
+  poll_id   uuid references public.polls(id) on delete cascade,
+  label     text not null,
+  player_id uuid references public.players(id) on delete set null
+);
+
+create table if not exists public.poll_votes (
+  poll_id    uuid references public.polls(id) on delete cascade,
+  option_id  uuid references public.poll_options(id) on delete cascade,
+  user_id    uuid references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (poll_id, user_id)            -- صوت واحد لكل يوزر في كل تصويت
+);
+
+alter table public.polls        enable row level security;
+alter table public.poll_options enable row level security;
+alter table public.poll_votes   enable row level security;
+
+drop policy if exists "polls read" on public.polls;
+create policy "polls read" on public.polls for select to authenticated using (true);
+drop policy if exists "polls manager write" on public.polls;
+create policy "polls manager write" on public.polls for all to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+
+drop policy if exists "poll_options read" on public.poll_options;
+create policy "poll_options read" on public.poll_options for select to authenticated using (true);
+drop policy if exists "poll_options manager write" on public.poll_options;
+create policy "poll_options manager write" on public.poll_options for all to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+
+drop policy if exists "poll_votes read" on public.poll_votes;
+create policy "poll_votes read" on public.poll_votes for select to authenticated using (true);
+drop policy if exists "poll_votes own write" on public.poll_votes;
+-- اليوزر يصوّت بنفسه بس، وعلى تصويت لسه مفتوح بس.
+create policy "poll_votes own write" on public.poll_votes for all to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id
+    and exists (select 1 from public.polls p where p.id = poll_id and p.active));
+
+-- realtime عشان النتائج تتحدّث فورًا
+do $$ begin
+  alter publication supabase_realtime add table public.poll_votes;
+exception when duplicate_object then null; end $$;
+
+
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║ 8) ADMIN (نتيجة الماتش + أدوار المستخدمين + حذف الدوريات)       ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+
+-- نتيجة الماتش (المدير بيكتبها وهو بيقفل الماتش)
+alter table public.matches add column if not exists score_a int;
+alter table public.matches add column if not exists score_b int;
+
+-- تغيير دور مستخدم (user ↔ manager) — المدير بس، من غير ما يفتح تعديل البروفايلات كلها.
+create or replace function public.set_user_role(uid uuid, new_role text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_manager() then raise exception 'not allowed'; end if;
+  if new_role not in ('user', 'manager') then raise exception 'bad role'; end if;
+  update public.profiles set role = new_role where id = uid;
+end; $$;
+grant execute on function public.set_user_role(uuid, text) to authenticated;
+
+-- المدير يقدر يحذف دوري
+drop policy if exists "leagues manager delete" on public.leagues;
+create policy "leagues manager delete" on public.leagues
+  for delete to authenticated using (public.is_manager());
+
+
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║ 9) VENUES & BOOKINGS (الملاعب على الخريطة + الصور + الحجز)       ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+
+-- بيانات الملعب الجديدة: الموقع + التليفون + العنوان + مواعيد التشغيل + الصور + صاحبه.
+-- المواعيد بالساعة: open_hour..close_hour (close ممكن > 24 = بعد نص الليل، مثلًا 26 = 2 الفجر).
+alter table public.venues add column if not exists lat        double precision;
+alter table public.venues add column if not exists lng        double precision;
+alter table public.venues add column if not exists phone      text;
+alter table public.venues add column if not exists address    text;
+alter table public.venues add column if not exists open_hour  int not null default 16;
+alter table public.venues add column if not exists close_hour int not null default 24;
+alter table public.venues add column if not exists photos     text[] not null default '{}';
+alter table public.venues add column if not exists owner_id   uuid references public.profiles(id) on delete set null;
+-- لينك جوجل مابس للملعب (الأدق — زرار "الموقع" بيفتحه على طول)
+alter table public.venues add column if not exists maps_url   text;
+do $$ begin
+  alter table public.venues add constraint venues_hours_chk
+    check (open_hour between 0 and 23 and close_hour > open_hour and close_hour <= 30);
+exception when duplicate_object then null; end $$;
+
+-- الحجوزات: كل صف = ساعة في ملعب في يوم.
+create table if not exists public.bookings (
+  id         uuid primary key default gen_random_uuid(),
+  venue_id   uuid not null references public.venues(id) on delete cascade,
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  day        date not null,
+  hour       int  not null,                     -- ساعة البداية (≥24 = بعد نص الليل)
+  status     text not null default 'pending',   -- pending | confirmed | rejected | cancelled
+  note       text,                              -- اسم الفريق / ملاحظة
+  created_at timestamptz not null default now()
+);
+-- الميعاد مايتحجزش مرتين: طلب واحد (معلّق أو مؤكد) بس لكل ملعب+يوم+ساعة.
+create unique index if not exists bookings_one_active_per_slot
+  on public.bookings (venue_id, day, hour) where status in ('pending', 'confirmed');
+
+alter table public.bookings enable row level security;
+
+-- الكل يشوف الحجوزات (عشان المواعيد المحجوزة تبان)
+drop policy if exists "bookings read" on public.bookings;
+create policy "bookings read" on public.bookings for select to authenticated using (true);
+
+-- اليوزر يطلب حجز لنفسه بس، معلّق، في يوم جاي، وفي ساعة جوه مواعيد الملعب.
+drop policy if exists "bookings request" on public.bookings;
+create policy "bookings request" on public.bookings for insert to authenticated
+  with check (
+    auth.uid() = user_id and status = 'pending' and day >= current_date
+    and exists (select 1 from public.venues v
+                where v.id = venue_id and hour >= v.open_hour and hour < v.close_hour)
+  );
+-- مفيش update/delete مباشر — تغيير الحالة بالدالة تحت بس.
+
+-- ساعة بالعربي: 21 → "9:00م"، 24 → "12:00ص"
+create or replace function public.fmt_hour(h int)
+returns text language sql immutable as $$
+  select (case when h % 24 = 0 then 12 when h % 24 > 12 then h % 24 - 12 else h % 24 end)::text
+         || ':00' || case when h % 24 < 12 then 'ص' else 'م' end;
+$$;
+
+-- تغيير حالة حجز بصلاحيات مضبوطة:
+--   صاحب الحجز: يلغي (من معلّق/مؤكد).
+--   صاحب الملعب أو المدير: يأكّد/يرفض المعلّق، أو يلغي المؤكد.
+create or replace function public.set_booking_status(bid uuid, new_status text)
+returns void language plpgsql security definer set search_path = public as $$
+declare b public.bookings; is_owner boolean;
+begin
+  select * into b from public.bookings where id = bid;
+  if not found then raise exception 'booking not found'; end if;
+  select (exists(select 1 from public.venues v where v.id = b.venue_id and v.owner_id = auth.uid())
+          or public.is_manager()) into is_owner;
+
+  if new_status = 'cancelled' and b.status in ('pending', 'confirmed')
+     and (b.user_id = auth.uid() or is_owner) then
+    null;
+  elsif new_status in ('confirmed', 'rejected') and b.status = 'pending' and is_owner then
+    null;
+  else
+    raise exception 'not allowed';
+  end if;
+
+  update public.bookings set status = new_status where id = bid;
+end; $$;
+grant execute on function public.set_booking_status(uuid, text) to authenticated;
+
+-- إشعارات جوه التطبيق للحجز (تلقائي من الداتابيز):
+--   طلب جديد → صاحب الملعب · تأكيد/رفض → الحاجز · إلغاء → الطرف التاني.
+create or replace function public.trg_booking_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare v public.venues; who text; slot text;
+begin
+  select * into v from public.venues where id = new.venue_id;
+  slot := v.name || ' · ' || to_char(new.day, 'DD/MM') || ' الساعة ' || public.fmt_hour(new.hour);
+  select coalesce(nullif(name, ''), email) into who from public.profiles where id = new.user_id;
+
+  if tg_op = 'INSERT' then
+    if v.owner_id is not null then
+      insert into public.notifications (title, body, kind, user_id)
+      values ('طلب حجز جديد 📅', who || ' عايز يحجز ' || slot, 'booking', v.owner_id);
+    end if;
+  elsif new.status is distinct from old.status then
+    if new.status = 'confirmed' then
+      insert into public.notifications (title, body, kind, user_id)
+      values ('اتأكد حجزك ✅', slot, 'booking', new.user_id);
+    elsif new.status = 'rejected' then
+      insert into public.notifications (title, body, kind, user_id)
+      values ('اترفض طلب الحجز ❌', slot, 'booking', new.user_id);
+    elsif new.status = 'cancelled' then
+      if auth.uid() = new.user_id and v.owner_id is not null then
+        insert into public.notifications (title, body, kind, user_id)
+        values ('اتلغى حجز 🚫', who || ' لغى ' || slot, 'booking', v.owner_id);
+      elsif auth.uid() is distinct from new.user_id then
+        insert into public.notifications (title, body, kind, user_id)
+        values ('اتلغى حجزك 🚫', slot, 'booking', new.user_id);
+      end if;
+    end if;
+  end if;
+  return new;
+end; $$;
+drop trigger if exists booking_notify on public.bookings;
+create trigger booking_notify
+after insert or update on public.bookings
+for each row execute function public.trg_booking_notify();
+
+do $$ begin
+  alter publication supabase_realtime add table public.bookings;
+exception when duplicate_object then null; end $$;
+
+-- Realtime لباقي الجداول اللي اليوزر بيشوفها (أي تعديل من المدير يظهر عند الكل فورًا)
+do $$
+declare t text;
+begin
+  foreach t in array array['lineups', 'players', 'events', 'polls', 'venues', 'picks'] loop
+    begin
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    exception when duplicate_object then null;
+    end;
+  end loop;
+end $$;
+
+-- ── صور الملاعب (Supabase Storage) — الكل يشوف، المدير بس يرفع/يمسح ──
+insert into storage.buckets (id, name, public)
+values ('venue-photos', 'venue-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "venue photos read" on storage.objects;
+create policy "venue photos read" on storage.objects
+  for select using (bucket_id = 'venue-photos');
+drop policy if exists "venue photos manager upload" on storage.objects;
+create policy "venue photos manager upload" on storage.objects
+  for insert to authenticated with check (bucket_id = 'venue-photos' and public.is_manager());
+drop policy if exists "venue photos manager delete" on storage.objects;
+create policy "venue photos manager delete" on storage.objects
+  for delete to authenticated using (bucket_id = 'venue-photos' and public.is_manager());
+
+
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║ 10) FCM                                                        ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 
 alter table public.profiles add column if not exists fcm_token text;

@@ -6,12 +6,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
-import '../../events/data/events_repository.dart';
 import '../../leagues/data/leagues_repository.dart';
-import '../../manager/data/lineup_repository.dart';
 import '../../manager/view/manager_hub_screen.dart';
-import '../../matches/data/matches_repository.dart';
-import '../../players/data/players_repository.dart';
+import '../../pitch/data/models/venue.dart';
+import '../../pitch/data/venues_repository.dart';
+import '../../pitch/view/my_bookings_screen.dart';
+import '../../pitch/view/venue_requests_screen.dart';
 import '../../week/data/week_repository.dart';
 import '../../week/view/team_of_week_screen.dart';
 import '../cubit/account_cubit.dart';
@@ -41,32 +41,65 @@ class AccountScreen extends StatelessWidget {
                     live: SupabaseConfig.isConfigured,
                   ),
                 ),
-                const Divider(color: AppColors.divider, height: 2, thickness: 2),
-                _settingRow(Icons.star_border, 'تشكيلة الأسبوع',
+                const Divider(
+                  color: AppColors.divider,
+                  height: 2,
+                  thickness: 2,
+                ),
+                _settingRow(
+                  Icons.star_border,
+                  'تشكيلة الأسبوع',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TeamOfWeekScreen(
+                        weekRepo: context.read<WeekRepository>(),
+                      ),
+                    ),
+                  ),
+                ),
+                if (user != null)
+                  _settingRow(
+                    Icons.event_available_outlined,
+                    'حجوزاتي (الملاعب)',
                     onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MyBookingsScreen(userId: user.id)),
+                    ),
+                  ),
+                // صاحب ملعب → طلبات الحجز على ملاعبه
+                if (user != null)
+                  FutureBuilder<List<Venue>>(
+                    future: context.read<VenuesRepository>().fetchOwned(user.id),
+                    builder: (context, snap) {
+                      if ((snap.data ?? const []).isEmpty) return const SizedBox.shrink();
+                      return _settingRow(
+                        Icons.stadium_outlined,
+                        'طلبات حجز ملاعبي (${snap.data!.length})',
+                        onTap: () => Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => TeamOfWeekScreen(weekRepo: context.read<WeekRepository>()),
-                          ),
-                        )),
+                          MaterialPageRoute(builder: (_) => VenueRequestsScreen(ownerId: user.id)),
+                        ),
+                      );
+                    },
+                  ),
                 if (user?.isManager == true)
-                  _settingRow(Icons.admin_panel_settings_outlined, 'لوحة المدير',
-                      onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ManagerHubScreen(
-                                playersRepo: context.read<PlayersRepository>(),
-                                matchesRepo: context.read<MatchesRepository>(),
-                                eventsRepo: context.read<EventsRepository>(),
-                                lineupRepo: context.read<LineupRepository>(),
-                              ),
-                            ),
-                          )),
-                _settingRow(Icons.translate, 'اللغة · عربي / English'),
-                _settingRow(Icons.notifications_none, 'الإشعارات'),
+                  _settingRow(
+                    Icons.admin_panel_settings_outlined,
+                    'لوحة المدير',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ManagerHubScreen()),
+                    ),
+                  ),
+
                 _settingRow(Icons.help_outline, 'المساعدة والدعم'),
-                _settingRow(Icons.logout, 'تسجيل الخروج',
-                    accent: true, onTap: context.read<AuthCubit>().signOut),
+                _settingRow(
+                  Icons.logout,
+                  'تسجيل الخروج',
+                  accent: true,
+                  onTap: context.read<AuthCubit>().signOut,
+                ),
               ],
             ),
           ),
@@ -75,7 +108,12 @@ class AccountScreen extends StatelessWidget {
     );
   }
 
-  Widget _settingRow(IconData icon, String label, {bool accent = false, VoidCallback? onTap}) {
+  Widget _settingRow(
+    IconData icon,
+    String label, {
+    bool accent = false,
+    VoidCallback? onTap,
+  }) {
     final color = accent ? AppColors.accent : AppColors.ink;
     return GestureDetector(
       onTap: onTap,
@@ -89,8 +127,11 @@ class AccountScreen extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(width: 12),
-            Expanded(child: Text(label, style: AppText.h(13, color: color))),
-            if (!accent) Text('›', style: AppText.body(16, color: AppColors.neutral700)),
+            Expanded(
+              child: Text(label, style: AppText.h(13, color: color)),
+            ),
+            if (!accent)
+              Text('›', style: AppText.body(16, color: AppColors.neutral700)),
           ],
         ),
       ),

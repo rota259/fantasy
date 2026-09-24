@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/live.dart';
 import '../../manager/data/lineup_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/models/player.dart';
@@ -44,6 +47,39 @@ class MatchPickCubit extends Cubit<MatchPickState> {
     } catch (_) {
       emit(const MatchPickState(status: MatchPickStatus.ready));
     }
+    _sub ??= liveTable('lineups', _refreshLineup,
+        eqColumn: 'match_id', eqValue: match.id, primaryKey: const ['match_id', 'player_id']);
+  }
+
+  StreamSubscription<void>? _sub;
+
+  /// المدير غيّر تشكيلة الماتش → نحدّث اللاعيبة ونشيل من اختيارات اليوزر اللي خرجوا بس.
+  Future<void> _refreshLineup() async {
+    try {
+      final lineup = await _lineups.fetchForMatch(match.id);
+      final ids = lineup.map((l) => l.playerId).toSet();
+      final players = await _players.fetchByIds(ids.toList());
+      if (isClosed) return;
+      final sel = {
+        for (final e in state.sel.entries)
+          if (ids.contains(e.key)) e.key: e.value,
+      };
+      final cap = ids.contains(state.captainId) ? state.captainId : null;
+      final vice = ids.contains(state.viceId) ? state.viceId : null;
+      emit(MatchPickState(
+        status: MatchPickStatus.ready,
+        players: players,
+        sel: sel,
+        captainId: cap,
+        viceId: vice,
+      ));
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> close() {
+    _sub?.cancel();
+    return super.close();
   }
 
   /// إضافة/تغيير حالة لاعب (starting | bench | out).
@@ -115,7 +151,14 @@ class MatchPickCubit extends Cubit<MatchPickState> {
               isVice: e.key == state.viceId,
             ))
         .toList();
-    await _picks.savePicks(userId, match.id, picks);
-    return null;
+    try {
+      await _picks.savePicks(userId, match.id, picks);
+      // نتأكد إنها اتسجّلت فعلًا في السيرفر
+      final saved = await _picks.fetchForUserMatch(userId, match.id);
+      if (saved.length != picks.length) return 'الحفظ مااتسجّلش كامل — جرّب تاني';
+      return null;
+    } catch (e) {
+      return 'تعذّر الحفظ: $e';
+    }
   }
 }

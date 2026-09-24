@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../matches/data/matches_repository.dart';
+import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
+import '../../notifications/data/notifications_repository.dart';
 
-/// شاشة المدير: إنشاء ماتش جديد (فريقين + معاد). الديدلاين = المعاد − ساعة.
+/// شاشة المدير: إنشاء ماتش جديد أو تعديل ماتش (فريقين + معاد). الديدلاين = المعاد − ساعة.
 class ManagerAddMatchScreen extends StatefulWidget {
-  const ManagerAddMatchScreen({super.key, required this.matchesRepo});
+  const ManagerAddMatchScreen({super.key, required this.matchesRepo, this.editing});
   final MatchesRepository matchesRepo;
+  final GameMatch? editing; // لو موجود = وضع التعديل
 
   @override
   State<ManagerAddMatchScreen> createState() => _ManagerAddMatchScreenState();
 }
 
 class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
-  final _teamA = TextEditingController();
-  final _teamB = TextEditingController();
-  final _week = TextEditingController(text: '1');
-  DateTime? _kickoff;
+  late final _teamA = TextEditingController(text: widget.editing?.teamA ?? '');
+  late final _teamB = TextEditingController(text: widget.editing?.teamB ?? '');
+  late final _week = TextEditingController(text: '${widget.editing?.week ?? 1}');
+  late DateTime? _kickoff = widget.editing?.dateTime;
   bool _saving = false;
+
+  bool get _isEdit => widget.editing != null;
 
   @override
   void dispose() {
@@ -53,16 +59,35 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
+    final notifs = context.read<NotificationsRepository>();
+    final teamA = _teamA.text.trim();
+    final teamB = _teamB.text.trim();
+    final week = int.tryParse(_week.text) ?? 1;
+    final when = '${arabicWeekday(_kickoff!)} ${arabicTime(_kickoff!)}';
     try {
-      await widget.matchesRepo.addMatch(
-        teams: [_teamA.text.trim(), _teamB.text.trim()],
-        dateTime: _kickoff!,
-        week: int.tryParse(_week.text) ?? 1,
-      );
+      if (_isEdit) {
+        await widget.matchesRepo.updateMatch(widget.editing!.id,
+            teams: [teamA, teamB], dateTime: _kickoff!, week: week);
+        // تعديل الماتش بيأثّر على الديدلاين — نبلّغ الناس
+        await notifs.add(
+          title: 'تعديل في ماتش 📝',
+          body: '$teamA ضد $teamB · GW$week · الميعاد الجديد $when',
+          kind: 'match',
+          matchId: widget.editing!.id,
+        );
+      } else {
+        await widget.matchesRepo.addMatch(teams: [teamA, teamB], dateTime: _kickoff!, week: week);
+        // إشعار بتفاصيل الماتش الجديد (يظهر لكل اليوزرز فورًا)
+        await notifs.add(
+          title: 'ماتش جديد ⚽',
+          body: '$teamA ضد $teamB · GW$week · $when',
+          kind: 'match',
+        );
+      }
       navigator.pop(true);
     } catch (_) {
       setState(() => _saving = false);
-      messenger.showSnackBar(const SnackBar(content: Text('تعذّر إنشاء الماتش')));
+      messenger.showSnackBar(SnackBar(content: Text(_isEdit ? 'تعذّر تعديل الماتش' : 'تعذّر إنشاء الماتش')));
     }
   }
 
@@ -74,7 +99,11 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'ماتش جديد', subtitle: 'NEW MATCH', onBack: () => Navigator.pop(context)),
+          Masthead(
+            title: _isEdit ? 'تعديل ماتش' : 'ماتش جديد',
+            subtitle: _isEdit ? 'EDIT MATCH' : 'NEW MATCH',
+            onBack: () => Navigator.pop(context),
+          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),

@@ -4,7 +4,7 @@ enum AppRoute { splash, onboard, login, register, app }
 
 enum AppTab { home, team, market, leagues, account }
 
-enum AppOverlayView { none, coach, auction, pitch, challenge, fixtures, player }
+enum AppOverlayView { none, coach, pitch, challenge, fixtures, player, star }
 
 class AppNavState extends Equatable {
   const AppNavState({

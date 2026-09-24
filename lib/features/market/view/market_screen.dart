@@ -1,13 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/initials_tile.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/cubit/players_cubit.dart';
+import '../../players/data/availability.dart';
 import '../../players/data/models/player.dart';
+import '../../players/data/models/player_gw_stat.dart';
+import '../../players/data/stats_repository.dart';
+import '../../week/data/week_window.dart';
+import '../../players/widgets/availability_badge.dart';
 import '../../players/data/players_repository.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 
@@ -24,8 +32,39 @@ class MarketScreen extends StatelessWidget {
   }
 }
 
-class _PlayersView extends StatelessWidget {
+class _PlayersView extends StatefulWidget {
   const _PlayersView();
+
+  @override
+  State<_PlayersView> createState() => _PlayersViewState();
+}
+
+class _PlayersViewState extends State<_PlayersView> {
+  Map<String, PlayerGwStat> _stats = const {};
+  StreamSubscription<void>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+    // حد حفظ/غيّر تشكيلته → الامتلاك يتحدّث
+    _sub = liveTable('picks', _loadStats, primaryKey: const ['user_id', 'match_id', 'player_id']);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  /// الامتلاك الحقيقي لكل لاعب في الجولة الحالية.
+  Future<void> _loadStats() async {
+    try {
+      final repo = context.read<StatsRepository>();
+      final stats = await repo.windowStats(WeekWindow.current());
+      if (mounted) setState(() => _stats = stats);
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,13 +104,25 @@ class _PlayersView extends StatelessWidget {
         child: Row(children: [
           InitialsTile(p.initials),
           const SizedBox(width: 11),
+          AvailabilityBadge(p.availability, size: 20),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, style: AppText.h(14)),
-              Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
+              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(14)),
+              Text(
+                p.availability != Availability.ready && (p.news?.isNotEmpty ?? false)
+                    ? '${p.team} · ${Availability.statusLine(p.availability)}: ${p.news}'
+                    : '${p.team} · ${p.positionAr}',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: AppText.body(10, color: AppColors.neutral700),
+              ),
             ]),
           ),
-          Text('${p.totalPoints}', style: AppText.h(18)),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('${p.totalPoints}', style: AppText.h(18)),
+            Text('امتلاك ${(_stats[p.id]?.ownership ?? 0).toStringAsFixed(0)}%',
+                style: AppText.body(9, color: AppColors.neutral700)),
+          ]),
         ]),
       ),
     );

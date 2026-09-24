@@ -1,3 +1,7 @@
+import 'dart:math';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/supabase/supabase_service.dart';
 import 'leagues_repository.dart';
 import 'models/league.dart';
@@ -69,11 +73,55 @@ class SupabaseLeaguesRepository implements LeaguesRepository {
   Future<void> joinByCode(String inviteCode, String userId) async {
     final league = await SupabaseService.table('leagues')
         .select('id')
-        .eq('invite_code', inviteCode)
+        .eq('invite_code', inviteCode.trim().toUpperCase())
         .single();
     await SupabaseService.table('league_members').upsert(
       {'league_id': league['id'], 'user_id': userId},
       onConflict: 'league_id,user_id',
     );
+  }
+
+  @override
+  Future<List<League>> fetchAll() async {
+    final leagues = await SupabaseService.table('leagues').select().order('name');
+    final members = await SupabaseService.table('league_members').select('league_id');
+    final counts = <String, int>{};
+    for (final m in members) {
+      final id = m['league_id'].toString();
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return [
+      for (final l in leagues)
+        League.fromMap(l).copyWith(memberCount: counts[l['id'].toString()] ?? 0),
+    ];
+  }
+
+  /// كود دعوة من ٦ حروف/أرقام (من غير الحروف اللي بتتلخبط زي O و0).
+  static String _code() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    final r = Random.secure();
+    return List.generate(6, (_) => chars[r.nextInt(chars.length)]).join();
+  }
+
+  @override
+  Future<League> createLeague(String name, String type) async {
+    // لو الكود اتكرّر (نادر جدًا) نجرّب تاني.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final row = await SupabaseService.table('leagues')
+            .insert({'name': name, 'type': type, 'invite_code': _code()})
+            .select()
+            .single();
+        return League.fromMap(row);
+      } on PostgrestException catch (e) {
+        if (e.code != '23505' || attempt == 2) rethrow; // 23505 = unique violation
+      }
+    }
+    throw StateError('unreachable');
+  }
+
+  @override
+  Future<void> deleteLeague(String id) async {
+    await SupabaseService.table('leagues').delete().eq('id', id);
   }
 }

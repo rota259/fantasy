@@ -6,6 +6,7 @@ import 'core/supabase/supabase_config.dart';
 import 'core/supabase/supabase_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'features/shell/view/app_repositories.dart';
 import 'features/shell/view/app_root.dart';
 
 void main() async {
@@ -32,12 +33,14 @@ class FantasyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'الخماسي',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
-      builder: (context, child) => _responsiveShell(context, child!),
-      home: const AppRoot(),
+    return AppRepositories(
+      child: MaterialApp(
+        title: 'الخماسي',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.theme,
+        builder: (context, child) => _responsiveShell(context, child!),
+        home: const AppRoot(),
+      ),
     );
   }
 

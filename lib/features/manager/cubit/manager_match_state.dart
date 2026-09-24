@@ -17,10 +17,14 @@ class ManagerMatchState extends Equatable {
 
   bool get isLoading => status == ManagerMatchStatus.loading;
 
-  ManagerMatchState copyWith({List<MatchEvent>? events, Map<String, String>? lineup}) =>
+  ManagerMatchState copyWith({
+    List<Player>? players,
+    List<MatchEvent>? events,
+    Map<String, String>? lineup,
+  }) =>
       ManagerMatchState(
         status: status,
-        players: players,
+        players: players ?? this.players,
         events: events ?? this.events,
         lineup: lineup ?? this.lineup,
       );

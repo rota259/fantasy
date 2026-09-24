@@ -1,15 +1,15 @@
 part of 'coach_cubit.dart';
 
-enum CoachStatus { initial, loading, loaded }
+enum CoachStatus { initial, loading, ready }
 
 class CoachState extends Equatable {
-  const CoachState({this.status = CoachStatus.initial, this.advice});
+  const CoachState({this.status = CoachStatus.initial, this.report});
 
   final CoachStatus status;
-  final CoachAdvice? advice;
+  final CoachReport? report;
 
   bool get isLoading => status == CoachStatus.loading;
 
   @override
-  List<Object?> get props => [status, advice];
+  List<Object?> get props => [status, report];
 }

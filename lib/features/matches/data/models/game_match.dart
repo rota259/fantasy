@@ -9,6 +9,8 @@ class GameMatch extends Equatable {
     required this.week,
     this.status = 'upcoming',
     this.fdr = 3,
+    this.scoreA,
+    this.scoreB,
   });
 
   final String id;
@@ -17,8 +19,13 @@ class GameMatch extends Equatable {
   final int week;
   final String status; // 'upcoming' أو 'finished'
   final int fdr; // صعوبة الماتش 1..5
+  final int? scoreA; // أهداف الفريق الأول (بعد ما الماتش يخلص)
+  final int? scoreB;
 
   bool get isFinished => status == 'finished';
+
+  /// النتيجة كنص، مثلًا "3 - 2" (فاضية لو الماتش لسه).
+  String get scoreText => (scoreA == null || scoreB == null) ? '' : '$scoreA - $scoreB';
   String get teamA => teams.isNotEmpty ? teams[0] : '';
   String get teamB => teams.length > 1 ? teams[1] : '';
 
@@ -33,6 +40,8 @@ class GameMatch extends Equatable {
         week: (map['week'] ?? 0) as int,
         status: (map['status'] ?? 'upcoming') as String,
         fdr: (map['fdr'] ?? 3) as int,
+        scoreA: map['score_a'] as int?,
+        scoreB: map['score_b'] as int?,
       );
 
   Map<String, dynamic> toMap() => {
@@ -45,5 +54,5 @@ class GameMatch extends Equatable {
       };
 
   @override
-  List<Object?> get props => [id, dateTime, teams, week, status, fdr];
+  List<Object?> get props => [id, dateTime, teams, week, status, fdr, scoreA, scoreB];
 }

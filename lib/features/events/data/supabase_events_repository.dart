@@ -15,6 +15,13 @@ class SupabaseEventsRepository implements EventsRepository {
   }
 
   @override
+  Future<List<MatchEvent>> fetchByMatches(List<String> matchIds) async {
+    if (matchIds.isEmpty) return const [];
+    final rows = await SupabaseService.table(_table).select().inFilter('match_id', matchIds);
+    return rows.map(MatchEvent.fromMap).toList();
+  }
+
+  @override
   Future<List<MatchEvent>> fetchByPlayer(String playerId) async {
     final rows = await SupabaseService.table(_table)
         .select()

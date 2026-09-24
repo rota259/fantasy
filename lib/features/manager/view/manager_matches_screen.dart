@@ -36,7 +36,7 @@ class ManagerMatchesScreen extends StatefulWidget {
 class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
   late Future<List<GameMatch>> _future = widget.matchesRepo.fetchAll();
 
-  void _reload() => setState(() => _future = widget.matchesRepo.fetchAll());
+  void _reload() => setState(() { _future = widget.matchesRepo.fetchAll(); });
 
   Future<void> _addMatch() async {
     final added = await Navigator.push<bool>(
@@ -44,6 +44,14 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
       MaterialPageRoute(builder: (_) => ManagerAddMatchScreen(matchesRepo: widget.matchesRepo)),
     );
     if (added == true) _reload();
+  }
+
+  Future<void> _editMatch(GameMatch m) async {
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => ManagerAddMatchScreen(matchesRepo: widget.matchesRepo, editing: m)),
+    );
+    if (saved == true) _reload();
   }
 
   Future<void> _confirmDelete(GameMatch m) async {
@@ -148,12 +156,20 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(14)),
-              Text('GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى' : 'قادم'}',
+              Text('GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى ${m.scoreText}' : 'قادم'}',
                   style: AppText.body(10, color: AppColors.neutral700)),
             ]),
           ),
           Text('إدارة ›', style: AppText.h(12, color: AppColors.accent)),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _editMatch(m),
+            behavior: HitTestBehavior.opaque,
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.edit_outlined, size: 20, color: AppColors.neutral700),
+            ),
+          ),
           GestureDetector(
             onTap: () => _confirmDelete(m),
             behavior: HitTestBehavior.opaque,

@@ -37,7 +37,7 @@ class SplashLogo extends StatelessWidget {
                 opacity: num5,
                 child: Transform.scale(
                   scale: 0.3 + 0.7 * num5,
-                  child: Text('٥', style: AppText.h(size * 0.38, color: AppColors.accent)),
+                  child: Text('5', style: AppText.h(size * 0.38, color: AppColors.accent)),
                 ),
               ),
             ],
@@ -68,7 +68,7 @@ class _LogoPainter extends CustomPainter {
         metric.extractPath(0, metric.length * draw),
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 3 * s
+          ..strokeWidth = 5 * s
           ..strokeJoin = StrokeJoin.miter
           ..color = AppColors.accent,
       );

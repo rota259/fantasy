@@ -28,4 +28,17 @@ class SupabaseLineupRepository implements LineupRepository {
         .eq('match_id', matchId)
         .eq('player_id', playerId);
   }
+
+  @override
+  Future<void> replaceForMatch(String matchId, Map<String, String> entries) async {
+    await SupabaseService.table(_table).delete().eq('match_id', matchId);
+    final rows = [
+      for (final e in entries.entries)
+        if (e.value == 'starting' || e.value == 'bench')
+          {'match_id': matchId, 'player_id': e.key, 'status': e.value},
+    ];
+    if (rows.isNotEmpty) {
+      await SupabaseService.table(_table).insert(rows);
+    }
+  }
 }

@@ -7,4 +7,7 @@ abstract interface class WeekRepository {
 
   /// نقاط اللاعيبة في جولة (الأعلى أولًا).
   Future<List<WeekPlayer>> topPlayers(int week);
+
+  /// نقاط اللاعيبة في ماتشات فترة معيّنة (الأعلى أولًا) — للجولة بالوقت وأعلى ٥ في اليوم.
+  Future<List<WeekPlayer>> pointsBetween(DateTime from, DateTime to);
 }

@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1067643071542",
-    "project_id": "khomasii-37f5c",
-    "storage_bucket": "khomasii-37f5c.firebasestorage.app"
+    "project_number": "490243994292",
+    "project_id": "khomasi-e383e",
+    "storage_bucket": "khomasi-e383e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1067643071542:android:861cb28e95314fb1c1fc97",
+        "mobilesdk_app_id": "1:490243994292:android:ab6ca798e2969ea3849de1",
         "android_client_info": {
           "package_name": "com.example.fantasy_5omasi"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDZueATPTmyF6AVqbseWwEj7Qm1LxOpDVo"
+          "current_key": "AIzaSyD5spnm2v8Wp9NuGGbgL965-zdMgVR_CLE"
         }
       ],
       "services": {

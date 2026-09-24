@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../players/data/availability.dart';
 import '../../players/data/models/player.dart';
+import '../../players/widgets/availability_badge.dart';
 
 /// ترويسة اللاعب السوداء (أفاتار + اسم + مركز) — بيانات اللاعب الحقيقية.
 class PlayerHeader extends StatelessWidget {
@@ -46,6 +48,20 @@ class PlayerHeader extends StatelessWidget {
                   Text('${player.team} · ${player.positionAr}',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    AvailabilityBadge(player.availability, size: 18),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        player.availability != Availability.ready && player.news?.isNotEmpty == true
+                            ? '${Availability.statusLine(player.availability)} · ${player.news}'
+                            : Availability.statusLine(player.availability),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: AppText.h(11, color: Availability.color(player.availability)),
+                      ),
+                    ),
+                  ]),
                 ],
               ),
             ),

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
@@ -14,14 +17,35 @@ import '../../pick/data/picks_repository.dart';
 import '../../pick/view/match_pick_screen.dart';
 import '../../players/data/players_repository.dart';
 
-/// تبويب فريقي — لكل ماتش قادم تختار تشكيلتك.
-class TeamScreen extends StatelessWidget {
+/// تبويب فريقي — لكل ماتش قادم تختار تشكيلتك. بيتحدّث لوحده لما المدير يضيف/يعدّل ماتش.
+class TeamScreen extends StatefulWidget {
   const TeamScreen({super.key});
+
+  @override
+  State<TeamScreen> createState() => _TeamScreenState();
+}
+
+class _TeamScreenState extends State<TeamScreen> {
+  late Future<List<GameMatch>> _future = context.read<MatchesRepository>().fetchUpcoming();
+  StreamSubscription<void>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    _sub = liveTable('matches', () {
+      if (mounted) setState(() { _future = context.read<MatchesRepository>().fetchUpcoming(); });
+    });
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final userId = context.read<AuthCubit>().state.user?.id;
-    final matchesRepo = context.read<MatchesRepository>();
     return Column(
       children: [
         const StatusArea(),
@@ -30,7 +54,7 @@ class TeamScreen extends StatelessWidget {
           child: userId == null
               ? _hint('سجّل دخولك عشان تختار تشكيلتك')
               : FutureBuilder<List<GameMatch>>(
-                  future: matchesRepo.fetchUpcoming(),
+                  future: _future,
                   builder: (context, snap) {
                     if (!snap.hasData) {
                       return const Center(child: CircularProgressIndicator(color: AppColors.accent));

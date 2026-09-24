@@ -47,7 +47,11 @@ class _View extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
     final err = await context.read<MatchPickCubit>().save();
-    messenger.showSnackBar(SnackBar(content: Text(err ?? 'اتحفظت تشكيلتك ✓')));
+    messenger.showSnackBar(SnackBar(
+      content: Text(err ?? 'اتحفظت تشكيلتك ✓'),
+      backgroundColor: err == null ? AppColors.accent : AppColors.danger,
+      duration: Duration(milliseconds: err == null ? 1600 : 4000),
+    ));
     if (err == null) navigator.pop();
   }
 

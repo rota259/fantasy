@@ -1,3 +1,4 @@
+import 'models/league.dart';
 import 'models/league_standing.dart';
 
 /// عقد بيانات الدوريات والترتيب.
@@ -13,4 +14,13 @@ abstract interface class LeaguesRepository {
 
   /// الانضمام لدوري بكود الدعوة.
   Future<void> joinByCode(String inviteCode, String userId);
+
+  /// (مدير) كل الدوريات بعدد أعضائها.
+  Future<List<League>> fetchAll();
+
+  /// (مدير) إنشاء دوري بكود دعوة أوتوماتيك.
+  Future<League> createLeague(String name, String type);
+
+  /// (مدير) حذف دوري.
+  Future<void> deleteLeague(String id);
 }

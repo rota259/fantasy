@@ -50,6 +50,11 @@ class _FixturesView extends StatelessWidget {
               _empty()
             else
               _live(s.matches),
+            if (!s.isLoading && s.results.isNotEmpty) ...[
+              _dayHeader('آخر النتايج'),
+              for (final m in s.results) _result(m),
+              const SizedBox(height: 16),
+            ],
           ],
         );
       },
@@ -123,6 +128,25 @@ class _FixturesView extends StatelessWidget {
           ])),
         ),
         Text(time, style: AppText.h(12, color: AppColors.neutral600)),
+      ]),
+    );
+  }
+
+  /// ماتش خلص: الفريقين والنتيجة في النص.
+  Widget _result(GameMatch m) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
+      child: Row(children: [
+        Expanded(child: Text(m.teamA, textAlign: TextAlign.end, style: AppText.h(13))),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          color: AppColors.black,
+          child: Text(m.scoreText.isEmpty ? '—' : m.scoreText, style: AppText.h(14, color: AppColors.white)),
+        ),
+        Expanded(child: Text(m.teamB, style: AppText.h(13))),
+        Text('GW${m.week}', style: AppText.body(10, color: AppColors.neutral600)),
       ]),
     );
   }

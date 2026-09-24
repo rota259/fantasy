@@ -7,6 +7,7 @@ import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/manager_players_cubit.dart';
+import '../widgets/player_edit_sheet.dart';
 
 const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
 
@@ -104,7 +105,8 @@ class _ViewState extends State<_View> {
                       ),
                     for (final p in s.players)
                       _playerRow(p.name, '${p.team} · ${p.positionAr}',
-                          () => _confirmDelete(cubit, p.id, p.name)),
+                          onEdit: () => showPlayerEditSheet(context, cubit, p),
+                          onDelete: () => _confirmDelete(cubit, p.id, p.name)),
                   ],
                 );
               },
@@ -182,7 +184,8 @@ class _ViewState extends State<_View> {
     );
   }
 
-  Widget _playerRow(String name, String meta, VoidCallback onDelete) {
+  Widget _playerRow(String name, String meta,
+      {required VoidCallback onEdit, required VoidCallback onDelete}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
@@ -192,6 +195,13 @@ class _ViewState extends State<_View> {
             Text(name, style: AppText.h(13)),
             Text(meta, style: AppText.body(10, color: AppColors.neutral700)),
           ]),
+        ),
+        GestureDetector(
+          onTap: onEdit,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Icon(Icons.edit_outlined, size: 18, color: AppColors.neutral700),
+          ),
         ),
         GestureDetector(onTap: onDelete, child: const Icon(Icons.close, size: 18, color: AppColors.danger)),
       ]),

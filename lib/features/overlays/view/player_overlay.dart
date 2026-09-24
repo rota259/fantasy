@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
+import '../widgets/player_stats_section.dart';
 import '../widgets/player_widgets.dart';
 
 /// تفاصيل اللاعب — بيانات حقيقية للاعب المختار من تبويب «اللاعيبة».
@@ -41,7 +42,10 @@ class PlayerOverlay extends StatelessWidget {
       subtitle: 'PLAYER',
       onBack: nav.back,
       header: PlayerHeader(onBack: nav.back, player: player),
-      children: [PlayerStatGrid(player: player)],
+      children: [
+        PlayerStatGrid(player: player),
+        PlayerStatsSection(playerId: player.id),
+      ],
     );
   }
 }

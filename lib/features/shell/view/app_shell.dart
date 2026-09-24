@@ -6,12 +6,11 @@ import '../../account/view/account_screen.dart';
 import '../../home/view/home_screen.dart';
 import '../../leagues/view/leagues_screen.dart';
 import '../../market/view/market_screen.dart';
-import '../../overlays/view/auction_overlay.dart';
-import '../../overlays/view/challenge_overlay.dart';
 import '../../overlays/view/coach_overlay.dart';
 import '../../overlays/view/fixtures_overlay.dart';
 import '../../overlays/view/pitch_overlay.dart';
 import '../../overlays/view/player_overlay.dart';
+import '../../polls/view/poll_overlay.dart';
 import '../../team/view/team_screen.dart';
 import '../cubit/app_nav_cubit.dart';
 import '../widgets/bottom_tab_bar.dart';
@@ -53,9 +52,9 @@ class AppShell extends StatelessWidget {
   Widget _overlay(AppOverlayView o) {
     return switch (o) {
       AppOverlayView.coach => const CoachOverlay(),
-      AppOverlayView.auction => const AuctionOverlay(),
       AppOverlayView.pitch => const PitchOverlay(),
-      AppOverlayView.challenge => const ChallengeOverlay(),
+      AppOverlayView.challenge => const PollOverlay(kind: 'challenge', title: 'تحدّي الجولة', subtitle: 'CHALLENGE'),
+      AppOverlayView.star => const PollOverlay(kind: 'star', title: 'نجم الجولة', subtitle: 'STAR OF THE WEEK'),
       AppOverlayView.fixtures => const FixturesOverlay(),
       AppOverlayView.player => const PlayerOverlay(),
       AppOverlayView.none => const SizedBox.shrink(),

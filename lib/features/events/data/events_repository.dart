@@ -5,6 +5,9 @@ abstract interface class EventsRepository {
   /// كل أحداث ماتش معيّن.
   Future<List<MatchEvent>> fetchByMatch(String matchId);
 
+  /// أحداث مجموعة ماتشات (لتفاصيل نقاط اليوزر).
+  Future<List<MatchEvent>> fetchByMatches(List<String> matchIds);
+
   /// كل أحداث لاعب معيّن (لحساب نقاطه).
   Future<List<MatchEvent>> fetchByPlayer(String playerId);
 

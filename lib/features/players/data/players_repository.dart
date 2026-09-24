@@ -20,4 +20,10 @@ abstract interface class PlayersRepository {
 
   /// (مدير) حذف لاعب — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
   Future<int> deletePlayer(String id);
+
+  /// (مدير) تعديل بيانات لاعب.
+  Future<void> updatePlayer(String id, {required String name, required String team, required String position});
+
+  /// (مدير) تحديث حالة اللاعب (جاهز/مصاب/…) وسببها.
+  Future<void> setAvailability(String id, String availability, String? news);
 }

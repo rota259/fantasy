@@ -11,12 +11,11 @@ class HomeShortcuts extends StatelessWidget {
   final ValueChanged<AppOverlayView> onOpen;
 
   static const _items = [
-    (AppOverlayView.coach, Icons.auto_awesome, 'مدرّب الذكاء'),
-    (AppOverlayView.auction, Icons.gavel, 'مزاد اللاعبين'),
-    (AppOverlayView.pitch, Icons.location_on_outlined, 'احجز ملعب'),
+    (AppOverlayView.star, Icons.star_outline, 'نجم الجولة'),
     (AppOverlayView.challenge, Icons.emoji_events_outlined, 'تحدّي الجولة'),
     (AppOverlayView.fixtures, Icons.calendar_today_outlined, 'الماتشات'),
-    (AppOverlayView.player, Icons.star_outline, 'نجم الجولة'),
+    (AppOverlayView.pitch, Icons.location_on_outlined, 'احجز ملعب'),
+    (AppOverlayView.coach, Icons.auto_awesome, 'مدرّب الذكاء'),
   ];
 
   @override

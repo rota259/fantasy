@@ -1,44 +1,84 @@
 import 'package:equatable/equatable.dart';
 
 /// ملعب للحجز (جدول venues).
+/// المواعيد بالساعة: openHour..closeHour (closeHour ممكن > 24 = بعد نص الليل).
 class Venue extends Equatable {
   const Venue({
     required this.id,
     required this.name,
     required this.price,
-    required this.distanceKm,
-    required this.surface,
+    this.surface = 'نجيلة صناعية',
     this.feature,
-    this.capacity = 10,
-    this.filled = 0,
-    this.slotTime = '',
+    this.lat,
+    this.lng,
+    this.phone,
+    this.address,
+    this.openHour = 16,
+    this.closeHour = 24,
+    this.photos = const [],
+    this.ownerId,
+    this.mapsUrl,
   });
 
   final String id;
   final String name;
-  final int price; // بالجنيه/الساعة
-  final double distanceKm;
-  final String surface; // نوع النجيلة
+  final int price; // جنيه/ساعة
+  final String surface;
   final String? feature; // إضاءة / مغطّى ...
-  final int capacity;
-  final int filled;
-  final String slotTime; // ميعاد متاح
+  final double? lat;
+  final double? lng;
+  final String? phone;
+  final String? address;
+  final int openHour;
+  final int closeHour;
+  final List<String> photos; // روابط الصور
+  final String? ownerId; // صاحب الملعب (بيأكّد الحجوزات)
+  final String? mapsUrl; // لينك جوجل مابس (الأدق)
 
-  bool get isFull => filled >= capacity;
-  double get fill => capacity == 0 ? 0 : (filled / capacity).clamp(0, 1);
+  /// عنده إحداثيات (بيظهر كدبوس على خريطة التطبيق).
+  bool get hasLocation => lat != null && lng != null;
 
-  factory Venue.fromMap(Map<String, dynamic> map) => Venue(
-        id: map['id'].toString(),
-        name: (map['name'] ?? '') as String,
-        price: (map['price'] ?? 0) as int,
-        distanceKm: (map['distance_km'] as num?)?.toDouble() ?? 0,
-        surface: (map['surface'] ?? '') as String,
-        feature: map['feature'] as String?,
-        capacity: (map['capacity'] ?? 10) as int,
-        filled: (map['filled'] ?? 0) as int,
-        slotTime: (map['slot_time'] ?? '') as String,
+  /// عنده أي موقع (لينك أو إحداثيات) — زرار "الموقع" يشتغل.
+  bool get hasAnyLocation => hasLocation || (mapsUrl?.isNotEmpty ?? false);
+
+  /// ساعات الحجز المتاحة في اليوم.
+  List<int> get hours => [for (var h = openHour; h < closeHour; h++) h];
+
+  factory Venue.fromMap(Map<String, dynamic> m) => Venue(
+        id: m['id'].toString(),
+        name: (m['name'] ?? '') as String,
+        price: (m['price'] as num?)?.toInt() ?? 0,
+        surface: (m['surface'] ?? 'نجيلة صناعية') as String,
+        feature: m['feature'] as String?,
+        lat: (m['lat'] as num?)?.toDouble(),
+        lng: (m['lng'] as num?)?.toDouble(),
+        phone: m['phone'] as String?,
+        address: m['address'] as String?,
+        openHour: (m['open_hour'] as num?)?.toInt() ?? 16,
+        closeHour: (m['close_hour'] as num?)?.toInt() ?? 24,
+        photos: List<String>.from(m['photos'] ?? const []),
+        ownerId: m['owner_id']?.toString(),
+        mapsUrl: m['maps_url'] as String?,
       );
 
+  /// الأعمدة القابلة للكتابة (للإضافة/التعديل).
+  Map<String, dynamic> toWrite() => {
+        'name': name,
+        'price': price,
+        'surface': surface,
+        'feature': feature,
+        'lat': lat,
+        'lng': lng,
+        'phone': phone,
+        'address': address,
+        'open_hour': openHour,
+        'close_hour': closeHour,
+        'photos': photos,
+        'owner_id': ownerId,
+        'maps_url': mapsUrl,
+      };
+
   @override
-  List<Object?> get props => [id, name, price, distanceKm, surface, capacity, filled];
+  List<Object?> get props =>
+      [id, name, price, surface, feature, lat, lng, phone, address, openHour, closeHour, photos, ownerId, mapsUrl];
 }

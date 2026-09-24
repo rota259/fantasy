@@ -12,6 +12,8 @@ import '../../players/data/players_repository.dart';
 import '../../points/points_engine.dart';
 import '../cubit/manager_match_cubit.dart';
 import '../data/lineup_repository.dart';
+import '../widgets/match_picks_section.dart';
+import '../widgets/match_result_section.dart';
 
 /// أنواع الأحداث اللي المدير يقدر يسجّلها.
 const _eventTypes = [
@@ -70,7 +72,14 @@ class _ViewState extends State<_View> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اختر اللاعب الأول')));
       return;
     }
-    cubit.addEvent(_playerId!, _type, int.tryParse(_minute.text));
+    final messenger = ScaffoldMessenger.of(context);
+    cubit.addEvent(_playerId!, _type, int.tryParse(_minute.text)).then((err) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(err ?? 'اتسجّل الحدث ✓'),
+        backgroundColor: err == null ? AppColors.accent : AppColors.danger,
+        duration: Duration(milliseconds: err == null ? 1200 : 4000),
+      ));
+    });
     _minute.clear();
   }
 
@@ -100,8 +109,12 @@ class _ViewState extends State<_View> {
                     const SizedBox(height: 16),
                     if (_mode == 'lineup')
                       ..._lineupSection(cubit, s)
+                    else if (_mode == 'events')
+                      ..._eventsSection(cubit, s)
+                    else if (_mode == 'result')
+                      MatchResultSection(match: widget.match)
                     else
-                      ..._eventsSection(cubit, s),
+                      MatchPicksSection(match: widget.match),
                   ],
                 );
               },
@@ -129,7 +142,15 @@ class _ViewState extends State<_View> {
             ),
           ),
         );
-    return Row(children: [tab('التشكيلة', 'lineup'), const SizedBox(width: 8), tab('الأحداث', 'events')]);
+    return Row(children: [
+      tab('التشكيلة', 'lineup'),
+      const SizedBox(width: 6),
+      tab('الأحداث', 'events'),
+      const SizedBox(width: 6),
+      tab('النتيجة', 'result'),
+      const SizedBox(width: 6),
+      tab('اليوزرز', 'picks'),
+    ]);
   }
 
   List<Widget> _lineupSection(ManagerMatchCubit cubit, ManagerMatchState s) {
@@ -138,13 +159,23 @@ class _ViewState extends State<_View> {
     return [
       Text('نزّل تشكيلة الفريقين', style: AppText.h(15)),
       const SizedBox(height: 4),
-      Text('ضيف اللاعيبة وحدّد مين أساسي ومين احتياطي.',
+      Text('كل فريق: ٤ لاعيبة + حارس أساسيين + ٢ احتياطي. لما تخلص اضغط «احفظ التشكيلة».',
           style: AppText.body(11, color: AppColors.neutral700)),
       const SizedBox(height: 12),
       ..._teamBlock(cubit, s, widget.match.teamA, a),
       const SizedBox(height: 18),
       ..._teamBlock(cubit, s, widget.match.teamB, b),
       const SizedBox(height: 20),
+      GestureDetector(
+        onTap: () => _saveLineup(cubit),
+        child: Container(
+          color: AppColors.accent,
+          padding: const EdgeInsets.all(13),
+          alignment: Alignment.center,
+          child: Text('💾 احفظ التشكيلة', style: AppText.h(14, color: AppColors.white)),
+        ),
+      ),
+      const SizedBox(height: 10),
       GestureDetector(
         onTap: () => _notify(cubit),
         child: Container(
@@ -157,6 +188,12 @@ class _ViewState extends State<_View> {
     ];
   }
 
+  Future<void> _saveLineup(ManagerMatchCubit cubit) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final msg = await cubit.saveLineup();
+    messenger.showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   Future<void> _notify(ManagerMatchCubit cubit) async {
     final messenger = ScaffoldMessenger.of(context);
     final msg = await cubit.notifyUsers();
@@ -164,9 +201,15 @@ class _ViewState extends State<_View> {
   }
 
   List<Widget> _teamBlock(ManagerMatchCubit cubit, ManagerMatchState s, String team, List<Player> players) {
+    final ids = players.map((p) => p.id).toSet();
+    final start = s.lineup.entries.where((e) => e.value == 'starting' && ids.contains(e.key)).length;
+    final benchN = s.lineup.entries.where((e) => e.value == 'bench' && ids.contains(e.key)).length;
     return [
       Row(children: [
         Expanded(child: Text(team, style: AppText.h(14, color: AppColors.accent))),
+        Text('أساسي $start/5 · احتياطي $benchN/2',
+            style: AppText.body(10, color: AppColors.neutral700)),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: () => _addPlayer(cubit, team),
           child: Container(
@@ -183,8 +226,12 @@ class _ViewState extends State<_View> {
               style: AppText.body(11, color: AppColors.neutral600)),
         ),
       for (final p in players)
-        _lineupRow(p.name, p.positionAr, s.lineup[p.id] ?? 'out',
-            (status) => cubit.setLineup(p.id, status)),
+        _lineupRow(p.name, p.positionAr, s.lineup[p.id] ?? 'out', (status) {
+          final err = cubit.setLineup(p.id, status);
+          if (err != null) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+          }
+        }),
     ];
   }
 

@@ -16,6 +16,7 @@ class PickPitch extends StatelessWidget {
     required this.teamB,
     required this.onSlotTap,
     required this.onPlayerTap,
+    this.pointsFor,
   });
 
   final MatchPickState state;
@@ -23,6 +24,9 @@ class PickPitch extends StatelessWidget {
   final String teamB;
   final void Function(String kind) onSlotTap;
   final void Function(Player p) onPlayerTap;
+
+  /// لو متحدّد: بيظهر جنب كل لاعب نقطه (للعرض — شاشة تفاصيل النقط).
+  final Map<String, int>? pointsFor;
 
   List<Player> _starting(bool Function(Player) test) {
     final out = <Player>[];
@@ -127,10 +131,19 @@ class PickPitch extends StatelessWidget {
           Text(p.name,
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: AppText.h(10, color: AppColors.white)),
+          if (pointsFor != null) _pts(pointsFor![p.id] ?? 0),
         ]),
       ),
     );
   }
+
+  /// شارة النقط تحت اللاعب.
+  Widget _pts(int n) => Container(
+        margin: const EdgeInsets.only(top: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        color: n > 0 ? AppColors.accent : (n < 0 ? AppColors.danger : AppColors.neutral600),
+        child: Text('$n', style: AppText.h(11, color: AppColors.white)),
+      );
 
   Widget _benchSlot(Player? p) {
     if (p == null) {
@@ -159,6 +172,9 @@ class PickPitch extends StatelessWidget {
           Expanded(
             child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(12)),
           ),
+          // الاحتياطي نقطه بتظهر بس مش بتتحسب
+          if (pointsFor != null)
+            Text('${pointsFor![p.id] ?? 0}', style: AppText.h(12, color: AppColors.neutral500)),
         ]),
       ),
     );

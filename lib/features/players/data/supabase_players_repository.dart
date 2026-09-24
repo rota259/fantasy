@@ -48,4 +48,19 @@ class SupabasePlayersRepository implements PlayersRepository {
     final rows = await SupabaseService.table(_table).delete().eq('id', id).select('id');
     return rows.length;
   }
+
+  @override
+  Future<void> updatePlayer(String id,
+      {required String name, required String team, required String position}) async {
+    await SupabaseService.table(_table)
+        .update({'name': name, 'team': team, 'position': position})
+        .eq('id', id);
+  }
+
+  @override
+  Future<void> setAvailability(String id, String availability, String? news) async {
+    await SupabaseService.table(_table)
+        .update({'availability': availability, 'news': news})
+        .eq('id', id);
+  }
 }
