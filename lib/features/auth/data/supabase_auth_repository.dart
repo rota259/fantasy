@@ -16,7 +16,7 @@ class SupabaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
     String? phone,
-    String role = 'user',
+    String? referralCode,
   }) async {
     final res = await _auth.signUp(email: email, password: password);
     final id = res.user?.id;
@@ -27,28 +27,29 @@ class SupabaseAuthRepository implements AuthRepository {
       throw Exception('افتح إيميلك وأكّد الحساب، وبعدين سجّل دخول');
     }
 
-    final user = AppUser(id: id, name: name, email: email, phone: phone, role: role);
-    await SupabaseService.table(_table).insert(user.toMap());
-    return user;
+    final user = AppUser(id: id, name: name, email: email, phone: phone);
+    await SupabaseService.table(_table).insert(user.toInsert());
+    final code = referralCode?.trim() ?? '';
+    if (code.isNotEmpty) {
+      try {
+        await SupabaseService.client.rpc('apply_referral', params: {'p_code': code});
+      } catch (_) {} // كود غلط مش هيوقّف التسجيل
+    }
+    return _fetchProfile(id);
   }
 
   @override
-  Future<AppUser> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<AppUser> signIn({required String email, required String password}) async {
     // ممكن يكون إيميل أو رقم موبايل — لو رقم نحوّله لإيميل عبر RPC آمن.
     var loginEmail = email.trim();
     if (!loginEmail.contains('@')) {
-      final resolved = await SupabaseService.client
-          .rpc('email_for_phone', params: {'p': loginEmail});
+      final resolved = await SupabaseService.client.rpc('email_for_phone', params: {'p': loginEmail});
       if (resolved == null || (resolved as String).isEmpty) {
         throw Exception('الرقم مش مسجّل');
       }
       loginEmail = resolved;
     }
-    final res =
-        await _auth.signInWithPassword(email: loginEmail, password: password);
+    final res = await _auth.signInWithPassword(email: loginEmail, password: password);
     final id = res.user?.id;
     if (id == null) throw Exception('بيانات الدخول غير صحيحة');
     return _fetchProfile(id);
@@ -62,15 +63,24 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    // الجهاز ده ميستقبلش إشعارات الحساب بعد الخروج
+    final id = _auth.currentUser?.id;
+    if (id != null) {
+      try {
+        await SupabaseService.table(_table).update({'fcm_token': null}).eq('id', id);
+      } catch (_) {}
+    }
+    await _auth.signOut();
+  }
 
   @override
-  Stream<bool> get authChanges =>
-      _auth.onAuthStateChange.map((e) => e.session != null);
+  Stream<bool> get authChanges => _auth.onAuthStateChange.map((e) => e.session != null);
 
+  /// بروفايلي كامل (الإيميل والموبايل مخفيين عن غيري — بيجوا من دالة my_profile).
   Future<AppUser> _fetchProfile(String id) async {
-    final row =
-        await SupabaseService.table(_table).select().eq('id', id).single();
-    return AppUser.fromMap(row);
+    final rows = await SupabaseService.client.rpc('my_profile') as List;
+    if (rows.isEmpty) throw Exception('البروفايل مش موجود');
+    return AppUser.fromMap(rows.first as Map<String, dynamic>);
   }
 }

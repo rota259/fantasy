@@ -42,7 +42,11 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
   }
 
   void _reload() {
-    if (mounted) setState(() { _future = _repo.forOwner(widget.ownerId); });
+    if (mounted) {
+      setState(() {
+        _future = _repo.forOwner(widget.ownerId);
+      });
+    }
   }
 
   Future<void> _set(Booking b, String status) async {
@@ -50,11 +54,15 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
     setState(() => _busy.add(b.id));
     try {
       await _repo.setStatus(b.id, status);
-      messenger.showSnackBar(SnackBar(content: Text(switch (status) {
-        'confirmed' => 'اتأكد الحجز ✅ واتبعت إشعار للحاجز',
-        'rejected' => 'اترفض الطلب واتبعت إشعار للحاجز',
-        _ => 'اتلغى الحجز',
-      })));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(switch (status) {
+            'confirmed' => 'اتأكد الحجز ✅ واتبعت إشعار للحاجز',
+            'rejected' => 'اترفض الطلب واتبعت إشعار للحاجز',
+            _ => 'اتلغى الحجز',
+          }),
+        ),
+      );
       _reload();
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('تعذّر التحديث: $e')));
@@ -67,83 +75,103 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Column(children: [
-        const StatusArea(),
-        Masthead(title: 'طلبات الحجز', subtitle: 'BOOKINGS', onBack: () => Navigator.pop(context)),
-        Expanded(
-          child: FutureBuilder<List<Booking>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.hasError) {
-                return Center(child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)));
-              }
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-              final all = snap.data!;
-              final pending = all.where((b) => b.isPending && !b.isPast).toList();
-              final upcoming = all.where((b) => b.isConfirmed && !b.isPast).toList();
-              final old = all.where((b) => !pending.contains(b) && !upcoming.contains(b)).toList();
-              if (all.isEmpty) {
-                return Center(child: Text('لسه مفيش طلبات حجز', style: AppText.body(13, color: AppColors.neutral600)));
-              }
-              return ListView(padding: const EdgeInsets.only(bottom: 20), children: [
-                _header('مستنية ردّك (${pending.length})'),
-                for (final b in pending) _row(b),
-                _header('المؤكدة الجاية (${upcoming.length})'),
-                for (final b in upcoming) _row(b),
-                if (old.isNotEmpty) _header('القديمة'),
-                for (final b in old.take(30)) _row(b),
-              ]);
-            },
+      body: Column(
+        children: [
+          const StatusArea(),
+          Masthead(title: 'طلبات الحجز', subtitle: 'BOOKINGS', onBack: () => Navigator.pop(context)),
+          Expanded(
+            child: FutureBuilder<List<Booking>>(
+              future: _future,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return Center(
+                    child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
+                  );
+                }
+                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                final all = snap.data!;
+                final pending = all.where((b) => b.isPending && !b.isPast).toList();
+                final upcoming = all.where((b) => b.isConfirmed && !b.isPast).toList();
+                final old = all.where((b) => !pending.contains(b) && !upcoming.contains(b)).toList();
+                if (all.isEmpty) {
+                  return Center(
+                    child: Text('لسه مفيش طلبات حجز', style: AppText.body(13, color: AppColors.neutral600)),
+                  );
+                }
+                return ListView(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  children: [
+                    _header('مستنية ردّك (${pending.length})'),
+                    for (final b in pending) _row(b),
+                    _header('المؤكدة الجاية (${upcoming.length})'),
+                    for (final b in upcoming) _row(b),
+                    if (old.isNotEmpty) _header('القديمة'),
+                    for (final b in old.take(30)) _row(b),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
   Widget _header(String t) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
-        child: Text(t, style: AppText.kicker(color: AppColors.accent)),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
+    child: Text(t, style: AppText.kicker(color: AppColors.accent)),
+  );
 
   Widget _row(Booking b) {
     final busy = _busy.contains(b.id);
     final phone = b.userPhone;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          Expanded(child: Text('${b.venueName ?? ''} · ${slotText(b.day, b.hour)}', style: AppText.h(14))),
-          Text(b.statusLabel, style: AppText.body(11, color: AppColors.neutral700)),
-        ]),
-        Text('${b.userName ?? 'يوزر'}${phone != null ? ' · $phone' : ''}',
-            style: AppText.body(12, color: AppColors.neutral700)),
-        if (b.note != null) Text('«${b.note}»', style: AppText.body(12)),
-        if (!b.isPast && b.isActive) ...[
-          const SizedBox(height: 8),
-          Row(children: [
-            if (phone != null) _btn('📞', AppColors.black, busy ? null : () => Launchers.call(phone)),
-            if (b.isPending) ...[
-              _btn('✅ أكّد', AppColors.accent, busy ? null : () => _set(b, 'confirmed')),
-              _btn('❌ ارفض', AppColors.danger, busy ? null : () => _set(b, 'rejected')),
-            ] else
-              _btn('إلغاء الحجز', AppColors.danger, busy ? null : () => _set(b, 'cancelled')),
-          ]),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text('${b.venueName ?? ''} · ${slotText(b.day, b.hour)}', style: AppText.h(14))),
+              Text(b.statusLabel, style: AppText.body(11, color: AppColors.neutral700)),
+            ],
+          ),
+          Text(
+            '${b.userName ?? 'يوزر'}${phone != null ? ' · $phone' : ''}',
+            style: AppText.body(12, color: AppColors.neutral700),
+          ),
+          if (b.note != null) Text('«${b.note}»', style: AppText.body(12)),
+          if (!b.isPast && b.isActive) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (phone != null) _btn('📞', AppColors.black, busy ? null : () => Launchers.call(phone)),
+                if (b.isPending) ...[
+                  _btn('✅ أكّد', AppColors.accent, busy ? null : () => _set(b, 'confirmed')),
+                  _btn('❌ ارفض', AppColors.danger, busy ? null : () => _set(b, 'rejected')),
+                ] else
+                  _btn('إلغاء الحجز', AppColors.danger, busy ? null : () => _set(b, 'cancelled')),
+              ],
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 
   Widget _btn(String label, Color color, VoidCallback? onTap) => Expanded(
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            color: onTap == null ? AppColors.neutral500 : color,
-            padding: const EdgeInsets.all(10),
-            alignment: Alignment.center,
-            child: Text(label, style: AppText.h(12, color: AppColors.white)),
-          ),
-        ),
-      );
+    child: GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        color: onTap == null ? AppColors.neutral500 : color,
+        padding: const EdgeInsets.all(10),
+        alignment: Alignment.center,
+        child: Text(label, style: AppText.h(12, color: AppColors.white)),
+      ),
+    ),
+  );
 }

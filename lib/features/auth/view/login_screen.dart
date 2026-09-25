@@ -35,9 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _social() {
     if (SupabaseConfig.isConfigured) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الدخول بجوجل/آبل قريباً')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الدخول بجوجل/آبل قريباً')));
     } else {
       context.read<AuthCubit>().signIn('', ''); // وضع demo
     }
@@ -58,8 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text('أهلاً بيك تاني 👋', style: AppText.h(22)),
                   const SizedBox(height: 4),
-                  Text('سجّل دخولك وكمّل من حيث وقفت.',
-                      style: AppText.body(13, color: AppColors.neutral700)),
+                  Text('سجّل دخولك وكمّل من حيث وقفت.', style: AppText.body(13, color: AppColors.neutral700)),
                   const SizedBox(height: 20),
                   LoginField(label: 'رقم الموبايل أو الإيميل', hint: '01xx xxx xxxx', controller: _id),
                   const SizedBox(height: 14),
@@ -111,8 +108,10 @@ class _LoginScreenState extends State<LoginScreen> {
             alignment: Alignment.center,
             child: s.isBusy
                 ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white))
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white),
+                  )
                 : Text('دخول', style: AppText.h(15, color: AppColors.white)),
           ),
         );
@@ -135,14 +134,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _divider() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 18),
-      child: Row(children: [
-        const Expanded(child: Divider(color: AppColors.divider, height: 1)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('أو', style: AppText.kicker().copyWith(letterSpacing: 1)),
-        ),
-        const Expanded(child: Divider(color: AppColors.divider, height: 1)),
-      ]),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(color: AppColors.divider, height: 1)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Text('أو', style: AppText.kicker().copyWith(letterSpacing: 1)),
+          ),
+          const Expanded(child: Divider(color: AppColors.divider, height: 1)),
+        ],
+      ),
     );
   }
 
@@ -157,8 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text('لسه مامعندكش حساب؟ ',
-                style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.7))),
+            Text('لسه مامعندكش حساب؟ ', style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.7))),
             GestureDetector(
               onTap: context.read<AppNavCubit>().goRegister,
               child: Text('أنشئ حساب', style: AppText.h(13, color: AppColors.accent400)),

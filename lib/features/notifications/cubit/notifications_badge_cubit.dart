@@ -34,9 +34,13 @@ class NotificationsBadgeCubit extends Cubit<int> {
     } else {
       _lastSeen = DateTime.tryParse(saved) ?? _lastSeen;
     }
+    // آخر ٥٠ بس (الجدول بيكبر مع الوقت) — السيرفر بيفلتر اللي يخصّني (RLS)
     _sub = SupabaseService.client
         .from('notifications')
-        .stream(primaryKey: ['id']).listen(_onData);
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .limit(50)
+        .listen(_onData, onError: (_) {});
   }
 
   void _onData(List<Map<String, dynamic>> rows) {

@@ -36,7 +36,9 @@ class ManagerMatchesScreen extends StatefulWidget {
 class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
   late Future<List<GameMatch>> _future = widget.matchesRepo.fetchAll();
 
-  void _reload() => setState(() { _future = widget.matchesRepo.fetchAll(); });
+  void _reload() => setState(() {
+    _future = widget.matchesRepo.fetchAll();
+  });
 
   Future<void> _addMatch() async {
     final added = await Navigator.push<bool>(
@@ -49,7 +51,9 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
   Future<void> _editMatch(GameMatch m) async {
     final saved = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: (_) => ManagerAddMatchScreen(matchesRepo: widget.matchesRepo, editing: m)),
+      MaterialPageRoute(
+        builder: (_) => ManagerAddMatchScreen(matchesRepo: widget.matchesRepo, editing: m),
+      ),
     );
     if (saved == true) _reload();
   }
@@ -61,8 +65,10 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
         backgroundColor: AppColors.bg,
         shape: const RoundedRectangleBorder(),
         title: Text('حذف الماتش', style: AppText.h(16)),
-        content: Text('متأكد إنك عايز تحذف «${m.teamA} ضد ${m.teamB}»؟\nهيتمسح معاه التشكيلة والأحداث.',
-            style: AppText.body(13)),
+        content: Text(
+          'متأكد إنك عايز تحذف «${m.teamA} ضد ${m.teamB}»؟\nهيتمسح معاه التشكيلة والأحداث.',
+          style: AppText.body(13),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -80,19 +86,18 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
     try {
       final n = await widget.matchesRepo.deleteMatch(m.id);
       if (n == 0) {
-        messenger.showSnackBar(const SnackBar(
-          content: Text('الحذف محتاج صلاحية مدير — تأكد إن حسابك Role = manager'),
-          duration: Duration(milliseconds: 2600),
-        ));
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text('الحذف محتاج صلاحية مدير — تأكد إن حسابك Role = manager'),
+            duration: Duration(milliseconds: 2600),
+          ),
+        );
         return;
       }
       messenger.showSnackBar(const SnackBar(content: Text('اتحذف الماتش ✓')));
       _reload();
     } catch (e) {
-      messenger.showSnackBar(SnackBar(
-        content: Text('فشل الحذف: $e'),
-        duration: const Duration(milliseconds: 2600),
-      ));
+      messenger.showSnackBar(SnackBar(content: Text('فشل الحذف: $e'), duration: const Duration(milliseconds: 2600)));
     }
   }
 
@@ -125,7 +130,9 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
                 }
                 final matches = snap.data!;
                 if (matches.isEmpty) {
-                  return Center(child: Text('مفيش ماتشات — اضغط "+ ماتش"', style: AppText.body(13, color: AppColors.neutral600)));
+                  return Center(
+                    child: Text('مفيش ماتشات — اضغط "+ ماتش"', style: AppText.body(13, color: AppColors.neutral600)),
+                  );
                 }
                 return ListView(padding: EdgeInsets.zero, children: [for (final m in matches) _row(m)]);
               },
@@ -143,42 +150,52 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => ManagerMatchScreen(
-              match: m,
-              playersRepo: widget.playersRepo,
-              eventsRepo: widget.eventsRepo,
-              lineupRepo: widget.lineupRepo),
+            match: m,
+            playersRepo: widget.playersRepo,
+            eventsRepo: widget.eventsRepo,
+            lineupRepo: widget.lineupRepo,
+          ),
         ),
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-        child: Row(children: [
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(14)),
-              Text('GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى ${m.scoreText}' : 'قادم'}',
-                  style: AppText.body(10, color: AppColors.neutral700)),
-            ]),
-          ),
-          Text('إدارة ›', style: AppText.h(12, color: AppColors.accent)),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () => _editMatch(m),
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(Icons.edit_outlined, size: 20, color: AppColors.neutral700),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppColors.divider)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(14)),
+                  Text(
+                    'GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى ${m.scoreText}' : 'قادم'}',
+                    style: AppText.body(10, color: AppColors.neutral700),
+                  ),
+                ],
+              ),
             ),
-          ),
-          GestureDetector(
-            onTap: () => _confirmDelete(m),
-            behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-              child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+            Text('إدارة ›', style: AppText.h(12, color: AppColors.accent)),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => _editMatch(m),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.all(4),
+                child: Icon(Icons.edit_outlined, size: 20, color: AppColors.neutral700),
+              ),
             ),
-          ),
-        ]),
+            GestureDetector(
+              onTap: () => _confirmDelete(m),
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

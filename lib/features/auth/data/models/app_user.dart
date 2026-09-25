@@ -16,6 +16,7 @@ class AppUser extends Equatable {
     this.totalPoints = 0,
     this.isActive = true,
     this.createdAt,
+    this.refCode,
   });
 
   final String id;
@@ -31,6 +32,7 @@ class AppUser extends Equatable {
   final int totalPoints; // نقاط اللاعب الإجمالية
   final bool isActive;
   final DateTime? createdAt;
+  final String? refCode; // كود الدعوة بتاعه (بيظهر ليه بس)
 
   bool get isManager => role == 'manager';
 
@@ -38,37 +40,24 @@ class AppUser extends Equatable {
   String get initials => name.trim().length >= 2 ? name.trim().substring(0, 2) : name;
 
   factory AppUser.fromMap(Map<String, dynamic> map) => AppUser(
-        id: map['id'] as String,
-        name: (map['name'] ?? '') as String,
-        email: (map['email'] ?? '') as String,
-        phone: map['phone'] as String?,
-        role: (map['role'] ?? 'user') as String,
-        team: List<String>.from(map['team'] ?? const []),
-        leagueId: map['league_id'] as String?,
-        photoUrl: map['photo_url'] as String?,
-        position: map['position'] as String?,
-        captainId: map['captain_id'] as String?,
-        totalPoints: (map['total_points'] ?? 0) as int,
-        isActive: (map['is_active'] ?? true) as bool,
-        createdAt: map['created_at'] == null
-            ? null
-            : DateTime.parse(map['created_at'] as String),
-      );
+    id: map['id'] as String,
+    name: (map['name'] ?? '') as String,
+    email: (map['email'] ?? '') as String,
+    phone: map['phone'] as String?,
+    role: (map['role'] ?? 'user') as String,
+    team: List<String>.from(map['team'] ?? const []),
+    leagueId: map['league_id'] as String?,
+    photoUrl: map['photo_url'] as String?,
+    position: map['position'] as String?,
+    captainId: map['captain_id'] as String?,
+    totalPoints: (map['total_points'] ?? 0) as int,
+    isActive: (map['is_active'] ?? true) as bool,
+    createdAt: map['created_at'] == null ? null : DateTime.parse(map['created_at'] as String),
+    refCode: map['ref_code'] as String?,
+  );
 
-  Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'email': email,
-        'phone': phone,
-        'role': role,
-        'team': team,
-        'league_id': leagueId,
-        'photo_url': photoUrl,
-        'position': position,
-        'captain_id': captainId,
-        'total_points': totalPoints,
-        'is_active': isActive,
-      };
+  /// الأعمدة اللي بتتكتب عند التسجيل (الدور والنقط بيحددهم السيرفر).
+  Map<String, dynamic> toInsert() => {'id': id, 'name': name, 'email': email, 'phone': phone};
 
   AppUser copyWith({
     String? name,
@@ -81,24 +70,37 @@ class AppUser extends Equatable {
     String? captainId,
     int? totalPoints,
     bool? isActive,
-  }) =>
-      AppUser(
-        id: id,
-        name: name ?? this.name,
-        email: email,
-        phone: phone ?? this.phone,
-        role: role ?? this.role,
-        team: team ?? this.team,
-        leagueId: leagueId ?? this.leagueId,
-        photoUrl: photoUrl ?? this.photoUrl,
-        position: position ?? this.position,
-        captainId: captainId ?? this.captainId,
-        totalPoints: totalPoints ?? this.totalPoints,
-        isActive: isActive ?? this.isActive,
-        createdAt: createdAt,
-      );
+  }) => AppUser(
+    id: id,
+    name: name ?? this.name,
+    email: email,
+    phone: phone ?? this.phone,
+    role: role ?? this.role,
+    team: team ?? this.team,
+    leagueId: leagueId ?? this.leagueId,
+    photoUrl: photoUrl ?? this.photoUrl,
+    position: position ?? this.position,
+    captainId: captainId ?? this.captainId,
+    totalPoints: totalPoints ?? this.totalPoints,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt,
+    refCode: refCode,
+  );
 
   @override
-  List<Object?> get props =>
-      [id, name, email, phone, role, team, leagueId, photoUrl, position, captainId, totalPoints, isActive];
+  List<Object?> get props => [
+    id,
+    name,
+    email,
+    phone,
+    role,
+    team,
+    leagueId,
+    photoUrl,
+    position,
+    captainId,
+    totalPoints,
+    isActive,
+    refCode,
+  ];
 }

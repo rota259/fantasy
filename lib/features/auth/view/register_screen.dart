@@ -21,7 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _pass = TextEditingController();
-  String _role = 'user'; // 'user' = لاعب | 'manager' = مدير
+  final _ref = TextEditingController(); // كود دعوة (اختياري)
 
   @override
   void dispose() {
@@ -29,18 +29,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _email.dispose();
     _phone.dispose();
     _pass.dispose();
+    _ref.dispose();
     super.dispose();
   }
 
   void _register() {
     FocusScope.of(context).unfocus();
     context.read<AuthCubit>().signUp(
-          name: _name.text,
-          email: _email.text,
-          phone: _phone.text,
-          password: _pass.text,
-          role: _role,
-        );
+      name: _name.text,
+      email: _email.text,
+      phone: _phone.text,
+      password: _pass.text,
+      referralCode: _ref.text,
+    );
   }
 
   @override
@@ -58,8 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text('اعمل حسابك 🚀', style: AppText.h(22)),
                   const SizedBox(height: 4),
-                  Text('كوّن فريقك ونافس أصحابك.',
-                      style: AppText.body(13, color: AppColors.neutral700)),
+                  Text('كوّن فريقك ونافس أصحابك.', style: AppText.body(13, color: AppColors.neutral700)),
                   const SizedBox(height: 20),
                   LoginField(label: 'الاسم', hint: 'محمد كمال', controller: _name),
                   const SizedBox(height: 14),
@@ -68,8 +68,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   LoginField(label: 'رقم الموبايل', hint: '01xx xxx xxxx', controller: _phone),
                   const SizedBox(height: 14),
                   LoginField(label: 'كلمة السر', hint: '••••••••', obscure: true, controller: _pass),
-                  const SizedBox(height: 16),
-                  _rolePicker(),
+                  const SizedBox(height: 14),
+                  LoginField(label: 'كود دعوة صاحبك (اختياري)', hint: 'ABC123', controller: _ref),
                   const SizedBox(height: 18),
                   _errorText(),
                   _button(),
@@ -79,40 +79,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           _footer(),
         ],
-      ),
-    );
-  }
-
-  Widget _rolePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('نوع الحساب', style: AppText.kicker()),
-        const SizedBox(height: 6),
-        Row(children: [
-          _roleOption('لاعب', 'user'),
-          const SizedBox(width: 8),
-          _roleOption('مدير ماتشات', 'manager'),
-        ]),
-      ],
-    );
-  }
-
-  Widget _roleOption(String label, String value) {
-    final selected = _role == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _role = value),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? AppColors.accent : null,
-            border: Border.all(color: selected ? AppColors.accent : AppColors.black, width: 2),
-          ),
-          child: Text(label,
-              style: AppText.h(13, color: selected ? AppColors.white : AppColors.ink)),
-        ),
       ),
     );
   }
@@ -141,8 +107,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           alignment: Alignment.center,
           child: s.isBusy
               ? const SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white))
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white),
+                )
               : Text('أنشئ حساب', style: AppText.h(15, color: AppColors.white)),
         ),
       ),
@@ -160,8 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text('عندك حساب بالفعل؟ ',
-                style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.7))),
+            Text('عندك حساب بالفعل؟ ', style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.7))),
             GestureDetector(
               onTap: context.read<AppNavCubit>().goLogin,
               child: Text('سجّل دخول', style: AppText.h(13, color: AppColors.accent400)),

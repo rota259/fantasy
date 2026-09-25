@@ -44,4 +44,15 @@ abstract final class AppColors {
 
   // خطأ/تحذير
   static const Color danger = Color(0xFFDC2626);
+
+  // أزرق: تشكيلة الجولة + علامة التوثيق
+  static const Color info = Color(0xFF1D6FE0);
+  static const Color navy = Color(0xFF0A1A33); // أرضية تشكيلة الجولة
+  static const Color navyStripe = Color(0xFF0D2242);
+  static const Color navyLine = Color(0x8C5B9BFF);
+
+  // مستويات الشارات
+  static const Color bronze = Color(0xFFB0703C);
+  static const Color silver = Color(0xFF9AA3AD);
+  static const Color gold = Color(0xFFD4A017);
 }

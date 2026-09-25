@@ -38,10 +38,20 @@ class SupabaseVenuesRepository implements VenuesRepository {
   }
 
   @override
-  Future<String> uploadPhoto(Uint8List bytes, String extension) async {
+  Future<Map<String, ({double avg, int count})>> ratings() async {
+    final rows = await SupabaseService.client.rpc('venue_ratings') as List;
+    return {
+      for (final r in rows.cast<Map<String, dynamic>>())
+        r['venue_id'].toString(): (avg: (r['avg'] as num).toDouble(), count: (r['count'] as num).toInt()),
+    };
+  }
+
+  @override
+  Future<String> uploadPhoto(String userId, Uint8List bytes, String extension) async {
     final ext = extension.toLowerCase().replaceAll('.', '');
     final type = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
-    final path = 'v_${DateTime.now().microsecondsSinceEpoch}.${ext.isEmpty ? 'jpg' : ext}';
+    // فولدر اليوزر (السياسة في السيرفر بتمنع يرفع في فولدر حد تاني)
+    final path = '$userId/v_${DateTime.now().microsecondsSinceEpoch}.${ext.isEmpty ? 'jpg' : ext}';
     final storage = SupabaseService.client.storage.from(_bucket);
     await storage.uploadBinary(path, bytes, fileOptions: FileOptions(contentType: type));
     return storage.getPublicUrl(path);

@@ -26,7 +26,7 @@ void main() {
     expect(v.hours, [22, 23, 24, 25]);
   });
 
-  test('Booking.fromMap بياخد اسم الملعب وبيرجع للإيميل لو الاسم فاضي', () {
+  test('Booking.fromMap بياخد اسم الملعب والموبايل (من غير إيميل — خصوصية)', () {
     final b = Booking.fromMap({
       'id': 'b1',
       'venue_id': 'v1',
@@ -35,11 +35,18 @@ void main() {
       'hour': 25,
       'status': 'pending',
       'venues': {'name': 'ملعب النصر'},
-      'profiles': {'name': '  ', 'email': 'a@b.com', 'phone': '010'},
+      'profiles': {'name': '  ', 'phone': '010'},
     });
     expect(b.venueName, 'ملعب النصر');
-    expect(b.userName, 'a@b.com');
+    expect(b.userName, isNull);
+    expect(b.userPhone, '010');
     expect(b.isPending && b.isActive, isTrue);
     expect(b.start, DateTime(2026, 10, 2, 1));
+  });
+
+  test('ميعاد محجوز لحد تاني بيرجع من غير صاحبه', () {
+    final b = Booking.fromMap({'id': 'b2', 'venue_id': 'v1', 'user_id': null, 'day': '2026-10-01', 'hour': 20, 'status': 'confirmed'});
+    expect(b.userId, isEmpty);
+    expect(b.isConfirmed, isTrue);
   });
 }

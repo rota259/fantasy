@@ -6,10 +6,5 @@ abstract interface class NotificationsRepository {
   Future<List<AppNotification>> fetchRecent();
 
   /// (مدير) تسجيل إشعار جديد يظهر لكل اليوزرز.
-  Future<void> add({
-    required String title,
-    required String body,
-    String kind = 'event',
-    String? matchId,
-  });
+  Future<void> add({required String title, required String body, String kind = 'event', String? matchId});
 }

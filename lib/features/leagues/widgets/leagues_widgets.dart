@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/pentagon_avatar.dart';
+import '../../badges/data/models/user_badge.dart';
+import '../data/models/league.dart';
+import '../data/models/league_standing.dart';
 
 /// هيرو الترتيب العام (أسود) — الترتيب محسوب من نقاط كل المستخدمين.
 class LeaguesHero extends StatelessWidget {
   const LeaguesHero({super.key, required this.rank});
   final String rank;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -16,8 +21,7 @@ class LeaguesHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ترتيبك العام',
-              style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),
+          Text('ترتيبك العام', style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),
           const SizedBox(height: 2),
           Text(rank, style: AppText.h(44, color: AppColors.white, height: 0.9)),
         ],
@@ -26,52 +30,72 @@ class LeaguesHero extends StatelessWidget {
   }
 }
 
-/// تبويبات فرعية للدوريات.
-class LeagueSubTabs extends StatelessWidget {
-  const LeagueSubTabs({super.key});
-  static const _tabs = ['دورياتي', 'عام', 'مناطق'];
+/// شريط كود الدعوة للدوري المختار + شيّر + خروج/حذف.
+class LeagueCodeBar extends StatelessWidget {
+  const LeagueCodeBar({
+    super.key,
+    required this.league,
+    required this.onCopy,
+    required this.onLeave,
+    required this.isOwner,
+  });
+
+  final League league;
+  final VoidCallback onCopy;
+  final VoidCallback onLeave;
+  final bool isOwner;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.divider, width: 2)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
       child: Row(
         children: [
-          for (var i = 0; i < _tabs.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(left: 16),
+          Expanded(child: Text('${league.name} · الترتيب', style: AppText.h(14))),
+          if (league.isGlobal)
+            Text('كل اليوزرز', style: AppText.h(11, color: AppColors.accent))
+          else ...[
+            GestureDetector(
+              onTap: onCopy,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: i == 0 ? AppColors.accent : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                color: AppColors.black,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(league.inviteCode, style: AppText.h(12, color: AppColors.white, spacingEm: 0.1)),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.share_outlined, size: 14, color: AppColors.white),
+                  ],
                 ),
-                child: Text(_tabs[i],
-                    style: AppText.h(12, color: i == 0 ? AppColors.accent : AppColors.ink)),
               ),
             ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: onLeave,
+              child: Icon(isOwner ? Icons.delete_outline : Icons.logout, size: 20, color: AppColors.danger),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// صف في جدول الترتيب.
+/// صف في جدول الترتيب: المركز + الصورة + الاسم + أحسن ٣ شارات + النقط.
 class StandingRow extends StatelessWidget {
-  const StandingRow({super.key, required this.rank, required this.name, required this.pts, this.me = false});
-  final String rank, name, pts;
+  const StandingRow({super.key, required this.standing, this.me = false, this.badges = const []});
+
+  final LeagueStanding standing;
   final bool me;
+  final List<UserBadge> badges;
 
   @override
   Widget build(BuildContext context) {
+    final s = standing;
+    final top = badges.where((b) => b.def != null).take(3).map((b) => b.def!.emoji).join();
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: me ? AppColors.accent100 : null,
         border: const Border(top: BorderSide(color: AppColors.divider)),
@@ -79,12 +103,24 @@ class StandingRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 22,
-            child: Text(rank,
-                style: AppText.h(14, color: me ? AppColors.accent : AppColors.neutral500)),
+            width: 26,
+            child: Text('${s.rank}', style: AppText.h(14, color: me ? AppColors.accent : AppColors.neutral500)),
           ),
-          Expanded(child: Text(name, style: AppText.h(13))),
-          Text(pts, style: AppText.h(14)),
+          PentagonAvatar(initials: s.initials, photoUrl: s.photoUrl, size: 30),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(text: s.name.isEmpty ? 'يوزر' : s.name, style: AppText.h(13)),
+                  if (top.isNotEmpty) TextSpan(text: '  $top', style: const TextStyle(fontSize: 12)),
+                ],
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Text('${s.points}', style: AppText.h(14)),
         ],
       ),
     );

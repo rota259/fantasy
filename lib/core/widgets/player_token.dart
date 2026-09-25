@@ -52,10 +52,7 @@ class PlayerToken extends StatelessWidget {
             color: isCaptain ? AppColors.accent : AppColors.white,
             border: Border.all(color: AppColors.black, width: 2),
           ),
-          child: Text(
-            number,
-            style: AppText.h(15, color: isCaptain ? AppColors.white : AppColors.black),
-          ),
+          child: Text(number, style: AppText.h(15, color: isCaptain ? AppColors.white : AppColors.black)),
         ),
         if (isCaptain)
           Positioned(
@@ -80,10 +77,7 @@ class PlayerToken extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       color: chipAccent ? AppColors.accent : AppColors.white,
-      child: Text(
-        chip!,
-        style: AppText.h(9, color: chipAccent ? AppColors.white : AppColors.black),
-      ),
+      child: Text(chip!, style: AppText.h(9, color: chipAccent ? AppColors.white : AppColors.black)),
     );
   }
 }

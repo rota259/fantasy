@@ -1,38 +1,38 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/db_error.dart';
 import '../../../core/supabase/supabase_config.dart';
+import '../../badges/data/badges_repository.dart';
+import '../../badges/data/models/user_badge.dart';
 import '../data/leagues_repository.dart';
+import '../data/models/league.dart';
 import '../data/models/league_standing.dart';
+import '../../../core/utils/perf.dart';
 
 part 'leagues_state.dart';
 
-/// ViewModel للدوريات: الترتيب العام + دورياتي + جدول الترتيب.
+/// ViewModel للدوريات: الترتيب العام + دورياتي + جدول الترتيب (بالصور والشارات)
+/// + إنشاء دوري / انضمام / خروج / حذف (لصاحبه).
 class LeaguesCubit extends Cubit<LeaguesState> {
-  LeaguesCubit(this._repo) : super(const LeaguesState());
+  LeaguesCubit(this._repo, this._badges) : super(const LeaguesState());
 
   final LeaguesRepository _repo;
+  final BadgesRepository _badges;
   String? _userId;
 
-  Future<void> load(String? userId) async {
+  Future<void> load(String? userId, {String? select}) async {
     _userId = userId;
     if (!SupabaseConfig.isConfigured || userId == null) {
       emit(const LeaguesState(status: LeaguesStatus.loaded));
       return;
     }
-    emit(const LeaguesState(status: LeaguesStatus.loading));
+    if (state.status == LeaguesStatus.initial) emit(const LeaguesState(status: LeaguesStatus.loading));
     try {
-      final rank = await _repo.globalRank(userId);
-      final leagues = await _repo.myLeagues(userId);
-      final firstId = leagues.isNotEmpty ? leagues.first.league.id : null;
-      final table = firstId != null ? await _repo.standings(firstId) : <LeagueStanding>[];
-      emit(LeaguesState(
-        status: LeaguesStatus.loaded,
-        globalRank: rank,
-        myLeagues: leagues,
-        standings: table,
-        selectedLeagueId: firstId,
-      ));
+      final (rank, leagues) = await timed('leagues', () => (_repo.globalRank(userId), _repo.myLeagues(userId)).wait);
+      final id = leagues.any((l) => l.league.id == select) ? select : leagues.firstOrNull?.league.id;
+      emit(LeaguesState(status: LeaguesStatus.loaded, globalRank: rank, myLeagues: leagues, selectedLeagueId: id));
+      if (id != null) await selectLeague(id);
     } catch (_) {
       emit(const LeaguesState(status: LeaguesStatus.loaded));
     }
@@ -42,18 +42,40 @@ class LeaguesCubit extends Cubit<LeaguesState> {
     emit(state.copyWith(selectedLeagueId: leagueId));
     try {
       final table = await _repo.standings(leagueId);
-      emit(state.copyWith(standings: table));
+      final badges = await _badges.earnedFor(table.map((s) => s.userId).toList());
+      emit(state.copyWith(standings: table, badges: badges));
     } catch (_) {}
   }
 
   Future<String> join(String inviteCode) async {
     if (_userId == null) return 'سجّل دخولك الأول';
     try {
-      await _repo.joinByCode(inviteCode.trim(), _userId!);
+      await _repo.joinByCode(inviteCode);
       await load(_userId);
       return 'اتنضممت للدوري ✓';
-    } catch (_) {
-      return 'كود غير صحيح';
+    } catch (e) {
+      return dbMessage(e, fallback: 'كود غير صحيح');
+    }
+  }
+
+  /// بيرجّع كود الدعوة أو يرمي رسالة.
+  Future<League> create(String name, String type) async {
+    final uid = _userId;
+    if (uid == null) throw StateError('سجّل دخولك الأول');
+    final l = await _repo.createLeague(name, type, uid);
+    await load(uid, select: l.id);
+    return l;
+  }
+
+  Future<String> leaveOrDelete(League l) async {
+    final uid = _userId;
+    if (uid == null) return '';
+    try {
+      l.ownerId == uid ? await _repo.deleteLeague(l.id) : await _repo.leave(l.id, uid);
+      await load(uid);
+      return l.ownerId == uid ? 'اتمسح الدوري' : 'خرجت من الدوري';
+    } catch (e) {
+      return dbMessage(e);
     }
   }
 }

@@ -2,13 +2,13 @@ import 'models/app_user.dart';
 
 /// عقد طبقة المصادقة — الـ ViewModel بيعتمد على ده مش على Supabase.
 abstract interface class AuthRepository {
-  /// تسجيل مستخدم جديد وإنشاء profile ليه.
+  /// تسجيل مستخدم جديد وإنشاء profile ليه (+ كود دعوة صاحبه لو موجود).
   Future<AppUser> signUp({
     required String name,
     required String email,
     required String password,
     String? phone,
-    String role = 'user',
+    String? referralCode,
   });
 
   /// تسجيل دخول بالإيميل.

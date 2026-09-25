@@ -1,24 +1,40 @@
-import 'package:fantasy_5omasi/features/week/cubit/team_of_week_cubit.dart';
 import 'package:fantasy_5omasi/features/week/data/models/week_player.dart';
-import 'package:fantasy_5omasi/features/week/data/week_window.dart';
+import 'package:fantasy_5omasi/features/week/data/team_of_week.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-WeekPlayer _w(String id, String pos, int pts) => WeekPlayer(id: id, name: id, team: 'A', position: pos, points: pts);
+WeekPlayer _w(String id, int pts, [String pos = 'FWD']) =>
+    WeekPlayer(id: id, name: id, team: 'A', position: pos, points: pts);
 
 void main() {
-  test('تشكيلة الأسبوع: أحسن واحد في كل مركز + أحسن واحد فاضل من الملعب', () {
-    final s = TeamOfWeekState(
-      window: WeekWindow(DateTime(2026, 9, 25, 4)),
-      players: [
-        _w('f1', 'FWD', 20), _w('f2', 'FWD', 15), _w('m1', 'MID', 12),
-        _w('g1', 'GK', 9), _w('d1', 'DEF', 7), _w('g2', 'GK', 8),
-      ],
-    );
-    expect(s.lineup.map((p) => p?.id).toList(), ['g1', 'd1', 'm1', 'f1', 'f2']);
+  test('أعلى ٥ نقط من أي مركز', () {
+    final t = TeamOfWeek.build([_w('a', 20), _w('b', 15), _w('c', 12), _w('d', 9), _w('e', 8), _w('f', 7)]);
+    expect(t.hasTie, isFalse);
+    expect(t.lineup().map((p) => p?.id), ['a', 'b', 'c', 'd', 'e']);
   });
 
-  test('لو مفيش لاعب في مركز يفضل فاضي', () {
-    final s = TeamOfWeekState(window: WeekWindow(DateTime(2026, 9, 25, 4)), players: [_w('f1', 'FWD', 5)]);
-    expect(s.lineup.map((p) => p?.id).toList(), [null, null, null, 'f1', null]);
+  test('تعادل على آخر مكان → المتعادلين للتصويت والمكان فاضي لحد ما يتحسم', () {
+    final t = TeamOfWeek.build([_w('a', 20), _w('b', 15), _w('c', 12), _w('d', 9), _w('e', 8), _w('f', 8)]);
+    expect(t.hasTie, isTrue);
+    expect(t.openSlots, 1);
+    expect(t.tied.map((p) => p.id), ['e', 'f']);
+    expect(t.lineup().map((p) => p?.id), ['a', 'b', 'c', 'd', null]);
+    expect(t.lineup(winnerIds: ['f']).map((p) => p?.id), ['a', 'b', 'c', 'd', 'f']);
+  });
+
+  test('تعادل على أكتر من مكان', () {
+    final t = TeamOfWeek.build([_w('a', 20), _w('b', 15), _w('c', 9), _w('d', 9), _w('e', 9), _w('f', 9)]);
+    expect(t.openSlots, 3);
+    expect(t.tied.length, 4);
+    expect(t.lineup(winnerIds: ['f', 'c', 'x']).map((p) => p?.id), ['a', 'b', 'f', 'c', null]);
+  });
+
+  test('أقل من ٥ جابوا نقط + السالب مش بيدخل', () {
+    final t = TeamOfWeek.build([_w('a', 5), _w('b', -1), _w('c', 0)]);
+    expect(t.lineup().map((p) => p?.id), ['a']);
+  });
+
+  test('الحارس تحت والأعلى نقط فوق', () {
+    final spots = TeamOfWeek.arrange([_w('a', 20), _w('g', 15, 'GK'), _w('c', 12), _w('d', 9), _w('e', 8)]);
+    expect(spots.map((p) => p?.id), ['g', 'a', 'c', 'd', 'e']);
   });
 }

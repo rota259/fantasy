@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_text.dart';
+import 'pentagon_avatar.dart';
 
-/// مربّع أحرف أولى (بديل صورة اللاعب) — صفر انحناء.
+/// أحرف أولى (بديل الصورة) جوه خماسي — نفس فريم الأفاتار في كل التطبيق.
 class InitialsTile extends StatelessWidget {
   const InitialsTile(
     this.text, {
@@ -11,23 +11,17 @@ class InitialsTile extends StatelessWidget {
     this.size = 34,
     this.background = AppColors.neutral200,
     this.color = AppColors.neutral800,
-    this.fontSize = 12,
+    this.photoUrl,
   });
 
   final String text;
   final double size;
   final Color background;
   final Color color;
-  final double fontSize;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      color: background,
-      child: Text(text, style: AppText.h(fontSize, color: color)),
-    );
+    return PentagonAvatar(initials: text, photoUrl: photoUrl, size: size, background: background, color: color);
   }
 }

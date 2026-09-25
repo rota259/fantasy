@@ -33,12 +33,12 @@ class _MatchPicksSectionState extends State<MatchPicksSection> {
     setState(() => _sending = true);
     try {
       await context.read<AdminRepository>().notify(
-            title: 'متنساش تشكيلتك ⏰',
-            body: '${m.teamA} ضد ${m.teamB} — بتقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)}',
-            kind: 'lineup',
-            matchId: m.id,
-            userIds: [for (final u in missing) u.id],
-          );
+        title: 'متنساش تشكيلتك ⏰',
+        body: '${m.teamA} ضد ${m.teamB} — بتقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)}',
+        kind: 'lineup',
+        matchId: m.id,
+        userIds: [for (final u in missing) u.id],
+      );
       messenger.showSnackBar(SnackBar(content: Text('اتبعت تذكير لـ ${missing.length} ✓')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('فشل الإرسال: $e')));
@@ -64,29 +64,36 @@ class _MatchPicksSectionState extends State<MatchPicksSection> {
         final (users, picked) = snap.data!;
         final done = users.where((u) => picked.contains(u.id)).toList();
         final missing = users.where((u) => !picked.contains(u.id)).toList();
-        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Row(children: [
-            Expanded(child: Text('نزّل تشكيلته ${done.length} من ${users.length}', style: AppText.h(15))),
-            GestureDetector(
-              onTap: () => setState(() { _future = _load(); }),
-              child: const Icon(Icons.refresh, size: 20, color: AppColors.neutral700),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text('نزّل تشكيلته ${done.length} من ${users.length}', style: AppText.h(15))),
+                GestureDetector(
+                  onTap: () => setState(() {
+                    _future = _load();
+                  }),
+                  child: const Icon(Icons.refresh, size: 20, color: AppColors.neutral700),
+                ),
+              ],
             ),
-          ]),
-          const SizedBox(height: 12),
-          if (missing.isNotEmpty && !widget.match.isLocked)
-            GestureDetector(
-              onTap: _sending ? null : () => _remind(missing),
-              child: Container(
-                color: _sending ? AppColors.neutral500 : AppColors.accent,
-                padding: const EdgeInsets.all(12),
-                alignment: Alignment.center,
-                child: Text('⏰ ذكّر اللي لسه (${missing.length})', style: AppText.h(14, color: AppColors.white)),
+            const SizedBox(height: 12),
+            if (missing.isNotEmpty && !widget.match.isLocked)
+              GestureDetector(
+                onTap: _sending ? null : () => _remind(missing),
+                child: Container(
+                  color: _sending ? AppColors.neutral500 : AppColors.accent,
+                  padding: const EdgeInsets.all(12),
+                  alignment: Alignment.center,
+                  child: Text('⏰ ذكّر اللي لسه (${missing.length})', style: AppText.h(14, color: AppColors.white)),
+                ),
               ),
-            ),
-          const SizedBox(height: 12),
-          for (final u in missing) _row(u, false),
-          for (final u in done) _row(u, true),
-        ]);
+            const SizedBox(height: 12),
+            for (final u in missing) _row(u, false),
+            for (final u in done) _row(u, true),
+          ],
+        );
       },
     );
   }
@@ -94,14 +101,21 @@ class _MatchPicksSectionState extends State<MatchPicksSection> {
   Widget _row(AppUser u, bool done) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Row(children: [
-        Icon(done ? Icons.check_circle : Icons.radio_button_unchecked,
-            size: 18, color: done ? AppColors.accent : AppColors.neutral400),
-        const SizedBox(width: 10),
-        Expanded(child: Text(u.name.isEmpty ? u.email : u.name, style: AppText.h(13))),
-        Text(done ? 'نزّل' : 'لسه', style: AppText.body(11, color: done ? AppColors.accent : AppColors.neutral600)),
-      ]),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            done ? Icons.check_circle : Icons.radio_button_unchecked,
+            size: 18,
+            color: done ? AppColors.accent : AppColors.neutral400,
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(u.name.isEmpty ? u.email : u.name, style: AppText.h(13))),
+          Text(done ? 'نزّل' : 'لسه', style: AppText.body(11, color: done ? AppColors.accent : AppColors.neutral600)),
+        ],
+      ),
     );
   }
 }

@@ -23,10 +23,7 @@ class PitchOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (c) => VenuesCubit(c.read<VenuesRepository>())..load(),
-      child: const _PitchView(),
-    );
+    return BlocProvider(create: (c) => VenuesCubit(c.read<VenuesRepository>())..load(), child: const _PitchView());
   }
 }
 
@@ -46,7 +43,12 @@ class _PitchViewState extends State<_PitchView> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('سجّل دخولك الأول')));
       return;
     }
-    Navigator.push(context, MaterialPageRoute(builder: (_) => VenueScreen(venue: v, userId: userId)));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VenueScreen(venue: v, userId: userId),
+      ),
+    );
   }
 
   void _myBookings() {
@@ -60,40 +62,44 @@ class _PitchViewState extends State<_PitchView> {
     final nav = context.read<AppNavCubit>();
     return Material(
       color: AppColors.bg,
-      child: Column(children: [
-        const StatusArea(),
-        Masthead(
-          title: 'احجز ملعبك',
-          subtitle: 'BOOK A PITCH',
-          onBack: nav.back,
-          trailing: GestureDetector(
-            onTap: _myBookings,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(border: AppBorders.white(0.5)),
-              child: Text('حجوزاتي', style: AppText.h(12, color: AppColors.white)),
+      child: Column(
+        children: [
+          const StatusArea(),
+          Masthead(
+            title: 'احجز ملعبك',
+            subtitle: 'BOOK A PITCH',
+            onBack: nav.back,
+            trailing: GestureDetector(
+              onTap: _myBookings,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(border: AppBorders.white(0.5)),
+                child: Text('حجوزاتي', style: AppText.h(12, color: AppColors.white)),
+              ),
             ),
           ),
-        ),
-        Row(children: [_tab('القايمة', false), _tab('الخريطة', true)]),
-        Expanded(
-          child: BlocBuilder<VenuesCubit, VenuesState>(
-            builder: (context, s) {
-              if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-              if (s.venues.isEmpty) {
-                return Center(
-                  child: Text('لسه مفيش ملاعب متاحة', style: AppText.body(13, color: AppColors.neutral600)),
+          Row(children: [_tab('القايمة', false), _tab('الخريطة', true)]),
+          Expanded(
+            child: BlocBuilder<VenuesCubit, VenuesState>(
+              builder: (context, s) {
+                if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (s.venues.isEmpty) {
+                  return Center(
+                    child: Text('لسه مفيش ملاعب متاحة', style: AppText.body(13, color: AppColors.neutral600)),
+                  );
+                }
+                if (_map) return VenuesMapView(venues: s.venues, onOpen: _open);
+                return ListView(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  children: [
+                    for (final v in s.venues) VenueTile(venue: v, rating: s.ratings[v.id], onTap: () => _open(v)),
+                  ],
                 );
-              }
-              if (_map) return VenuesMapView(venues: s.venues, onOpen: _open);
-              return ListView(
-                padding: const EdgeInsets.only(bottom: 16),
-                children: [for (final v in s.venues) VenueTile(venue: v, onTap: () => _open(v))],
-              );
-            },
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 

@@ -26,16 +26,8 @@ abstract final class AppText {
   }
 
   /// كيكر: تسمية صغيرة بأحرف متباعدة (uppercase-ish).
-  static TextStyle kicker({
-    Color color = AppColors.neutral600,
-    double size = 9,
-  }) {
-    return GoogleFonts.archivo(
-      fontSize: size,
-      fontWeight: FontWeight.w600,
-      color: color,
-      letterSpacing: size * 0.14,
-    );
+  static TextStyle kicker({Color color = AppColors.neutral600, double size = 9}) {
+    return GoogleFonts.archivo(fontSize: size, fontWeight: FontWeight.w600, color: color, letterSpacing: size * 0.14);
   }
 
   /// نص عادي (body).
@@ -45,11 +37,6 @@ abstract final class AppText {
     FontWeight weight = FontWeight.w400,
     double height = 1.45,
   }) {
-    return GoogleFonts.archivo(
-      fontSize: size,
-      fontWeight: weight,
-      color: color,
-      height: height,
-    );
+    return GoogleFonts.archivo(fontSize: size, fontWeight: weight, color: color, height: height);
   }
 }

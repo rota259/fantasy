@@ -11,8 +11,11 @@ class SplashLogo extends StatelessWidget {
   final double size;
 
   static const List<Offset> _pts = [
-    Offset(50, 16), Offset(82.3, 39.5), Offset(70, 77.5),
-    Offset(30, 77.5), Offset(17.7, 39.5),
+    Offset(50, 16),
+    Offset(82.3, 39.5),
+    Offset(70, 77.5),
+    Offset(30, 77.5),
+    Offset(17.7, 39.5),
   ];
 
   @override
@@ -31,7 +34,9 @@ class SplashLogo extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Positioned.fill(
-                child: CustomPaint(painter: _LogoPainter(draw: draw, dots: dots)),
+                child: CustomPaint(
+                  painter: _LogoPainter(draw: draw, dots: dots),
+                ),
               ),
               Opacity(
                 opacity: num5,
@@ -77,14 +82,10 @@ class _LogoPainter extends CustomPainter {
     final d = 8 * s * dots;
     for (final p in SplashLogo._pts) {
       final c = p * s;
-      canvas.drawRect(
-        Rect.fromCenter(center: c, width: d, height: d),
-        Paint()..color = AppColors.white,
-      );
+      canvas.drawRect(Rect.fromCenter(center: c, width: d, height: d), Paint()..color = AppColors.white);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _LogoPainter old) =>
-      old.draw != draw || old.dots != dots;
+  bool shouldRepaint(covariant _LogoPainter old) => old.draw != draw || old.dots != dots;
 }

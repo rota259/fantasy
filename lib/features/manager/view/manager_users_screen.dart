@@ -35,9 +35,7 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
         shape: const RoundedRectangleBorder(),
         title: Text(makeManager ? 'خلّيه مدير؟' : 'شيل الإدارة؟', style: AppText.h(16)),
         content: Text(
-          makeManager
-              ? '«${u.name}» هيقدر يضيف ويحذف لاعيبة وماتشات ويبعت إشعارات.'
-              : '«${u.name}» هيرجع يوزر عادي.',
+          makeManager ? '«${u.name}» هيقدر يضيف ويحذف لاعيبة وماتشات ويبعت إشعارات.' : '«${u.name}» هيرجع يوزر عادي.',
           style: AppText.body(13),
         ),
         actions: [
@@ -50,7 +48,9 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _repo.setRole(u.id, makeManager ? 'manager' : 'user');
-      setState(() { _future = _load(); });
+      setState(() {
+        _future = _load();
+      });
       messenger.showSnackBar(const SnackBar(content: Text('اتغيّر الدور ✓')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('فشل: $e')));
@@ -61,64 +61,80 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Column(children: [
-        const StatusArea(),
-        Masthead(title: 'المستخدمين', subtitle: 'MANAGER · USERS', onBack: () => Navigator.pop(context)),
-        Expanded(
-          child: FutureBuilder<(List<AppUser>, String?)>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.hasError) {
-                return Center(child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)));
-              }
-              if (!snap.hasData) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-              }
-              final (users, myId) = snap.data!;
-              return ListView(padding: EdgeInsets.zero, children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text('${users.length} مستخدم · ${users.where((u) => u.isManager).length} مدير',
-                      style: AppText.h(14)),
-                ),
-                for (final u in users) _row(u, isMe: u.id == myId),
-              ]);
-            },
+      body: Column(
+        children: [
+          const StatusArea(),
+          Masthead(title: 'المستخدمين', subtitle: 'MANAGER · USERS', onBack: () => Navigator.pop(context)),
+          Expanded(
+            child: FutureBuilder<(List<AppUser>, String?)>(
+              future: _future,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return Center(
+                    child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
+                  );
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                }
+                final (users, myId) = snap.data!;
+                return ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        '${users.length} مستخدم · ${users.where((u) => u.isManager).length} مدير',
+                        style: AppText.h(14),
+                      ),
+                    ),
+                    for (final u in users) _row(u, isMe: u.id == myId),
+                  ],
+                );
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
   Widget _row(AppUser u, {required bool isMe}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(isMe ? '${u.name} (أنت)' : u.name, style: AppText.h(14)),
-            Text('${u.email} · ${u.totalPoints} نقطة', style: AppText.body(10, color: AppColors.neutral700)),
-          ]),
-        ),
-        if (u.isManager)
-          Container(
-            margin: const EdgeInsets.only(left: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            color: AppColors.accent,
-            child: Text('مدير', style: AppText.h(10, color: AppColors.white)),
-          ),
-        // المدير مايقدرش يشيل الإدارة من نفسه (عشان ميقفلش على نفسه).
-        if (!isMe)
-          GestureDetector(
-            onTap: () => _toggle(u),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-              child: Text(u.isManager ? 'شيل الإدارة' : 'خلّيه مدير', style: AppText.h(11)),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(isMe ? '${u.name} (أنت)' : u.name, style: AppText.h(14)),
+                Text('${u.email} · ${u.totalPoints} نقطة', style: AppText.body(10, color: AppColors.neutral700)),
+              ],
             ),
           ),
-      ]),
+          if (u.isManager)
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              color: AppColors.accent,
+              child: Text('مدير', style: AppText.h(10, color: AppColors.white)),
+            ),
+          // المدير مايقدرش يشيل الإدارة من نفسه (عشان ميقفلش على نفسه).
+          if (!isMe)
+            GestureDetector(
+              onTap: () => _toggle(u),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                child: Text(u.isManager ? 'شيل الإدارة' : 'خلّيه مدير', style: AppText.h(11)),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

@@ -34,14 +34,10 @@ class OverlayShell extends StatelessWidget {
       child: Column(
         children: [
           const StatusArea(),
-          header ??
-              Masthead(
-                title: title,
-                subtitle: subtitle,
-                onBack: onBack,
-                trailing: trailing,
-              ),
-          Expanded(child: ListView(padding: EdgeInsets.zero, children: children)),
+          header ?? Masthead(title: title, subtitle: subtitle, onBack: onBack, trailing: trailing),
+          Expanded(
+            child: ListView(padding: EdgeInsets.zero, children: children),
+          ),
           if (bottomBar != null) bottomBar!,
         ],
       ),

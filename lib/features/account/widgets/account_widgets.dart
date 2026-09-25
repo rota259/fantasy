@@ -1,45 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/pentagon_avatar.dart';
+import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/data/models/app_user.dart';
+import '../../squad/data/profile_repository.dart';
 
-/// ترويسة الحساب (سوداء) — أفاتار + اسم + شارة.
-class AccountHeader extends StatelessWidget {
+/// ترويسة الحساب (سوداء) — صورتك جوه خماسي (دوس تغيّرها) + الاسم.
+class AccountHeader extends StatefulWidget {
   const AccountHeader({super.key, this.user});
   final AppUser? user;
 
   @override
+  State<AccountHeader> createState() => _AccountHeaderState();
+}
+
+class _AccountHeaderState extends State<AccountHeader> {
+  bool _uploading = false;
+
+  Future<void> _changePhoto(AppUser u) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final repo = context.read<ProfileRepository>();
+    final auth = context.read<AuthCubit>();
+    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 75, maxWidth: 800);
+    if (file == null) return;
+    setState(() => _uploading = true);
+    try {
+      final ext = file.name.contains('.') ? file.name.split('.').last : 'jpg';
+      await repo.uploadAvatar(u.id, await file.readAsBytes(), ext);
+      await auth.refresh();
+      messenger.showSnackBar(const SnackBar(content: Text('اتغيّرت صورتك ✓')));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(dbMessage(e, fallback: 'الصورة مترفعتش — جرّب تاني'))));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final u = user;
-    final initials = u != null ? u.initials : 'MK';
-    final name = (u != null && u.name.isNotEmpty) ? u.name : 'محمد كمال';
-    final handle = u != null
-        ? '@${u.email.split('@').first}${u.createdAt != null ? ' · عضو من ${u.createdAt!.year}' : ''}'
-        : '@mk_khamasy · عضو من 2024';
+    final u = widget.user;
+    final name = (u != null && u.name.isNotEmpty) ? u.name : 'ضيف';
+    final handle = u == null
+        ? ''
+        : '@${u.email.split('@').first}${u.createdAt != null ? ' · عضو من ${u.createdAt!.year}' : ''}';
     return Container(
       width: double.infinity,
       color: AppColors.black,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
         children: [
-          Container(
-            width: 60, height: 60, alignment: Alignment.center,
-            color: AppColors.accent,
-            child: Text(initials, style: AppText.h(22, color: AppColors.white)),
+          GestureDetector(
+            onTap: (u == null || _uploading) ? null : () => _changePhoto(u),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                PentagonAvatar(initials: u?.initials ?? '؟', photoUrl: u?.photoUrl, size: 68),
+                Positioned(
+                  bottom: -2,
+                  left: -2,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    color: AppColors.white,
+                    child: _uploading
+                        ? const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
+                          )
+                        : const Icon(Icons.photo_camera_outlined, size: 13, color: AppColors.ink),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name,
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: AppText.h(22, color: AppColors.white)),
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.h(22, color: AppColors.white),
+                ),
                 const SizedBox(height: 3),
-                Text(handle,
-                    maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.6))),
+                Text(
+                  handle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.6)),
+                ),
               ],
             ),
           ),
@@ -49,46 +105,26 @@ class AccountHeader extends StatelessWidget {
   }
 }
 
-/// شبكة إحصائيات + أوراق (chips).
+/// أرقامي: إجمالي النقاط + الترتيب العام + أحسن ماتش.
 class AccountStats extends StatelessWidget {
-  const AccountStats({super.key, this.user, this.rank, this.live = false});
+  const AccountStats({super.key, this.user, this.rank = 0, this.bestMatch = 0});
   final AppUser? user;
-  final int? rank;
-  final bool live;
+  final int rank;
+  final int bestMatch;
 
   @override
   Widget build(BuildContext context) {
-    final points = user != null ? '${user!.totalPoints}' : '—';
-    final rankText = (rank ?? 0) > 0 ? '$rank' : '—';
-    const bestGw = '—';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.divider, width: 2)),
-          ),
-          child: Row(children: [
-            _stat(points, 'إجمالي النقاط', border: true),
-            _stat(rankText, 'الترتيب العام', border: true),
-            _stat(bestGw, 'أفضل جولة', color: AppColors.accent),
-          ]),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-          child: Text('أوراقك · CHIPS', style: AppText.kicker()),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Row(children: [
-            _chip('كابتن ×3', 'متاح', on: true),
-            const SizedBox(width: 8),
-            _chip('وايلد كارد', 'متاح', on: true),
-            const SizedBox(width: 8),
-            _chip('دكّة', 'GW3 ✓', on: false),
-          ]),
-        ),
-      ],
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.divider, width: 2)),
+      ),
+      child: Row(
+        children: [
+          _stat(user != null ? '${user!.totalPoints}' : '—', 'إجمالي النقاط', border: true),
+          _stat(rank > 0 ? '$rank' : '—', 'الترتيب العام', border: true),
+          _stat(bestMatch > 0 ? '$bestMatch' : '—', 'أحسن ماتش', color: AppColors.accent),
+        ],
+      ),
     );
   }
 
@@ -105,24 +141,6 @@ class AccountStats extends StatelessWidget {
             Text(v, style: AppText.h(22, color: color ?? AppColors.ink)),
             Text(k, style: AppText.body(9, color: AppColors.neutral700)),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(String t, String s, {required bool on}) {
-    return Expanded(
-      child: Opacity(
-        opacity: on ? 1 : 0.5,
-        child: Container(
-          padding: const EdgeInsets.all(9),
-          decoration: BoxDecoration(
-            border: Border.all(color: on ? AppColors.black : AppColors.divider, width: 2),
-          ),
-          child: Column(children: [
-            Text(t, style: AppText.h(11)),
-            Text(s, style: AppText.body(8, color: AppColors.neutral700)),
-          ]),
         ),
       ),
     );

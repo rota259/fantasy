@@ -15,12 +15,7 @@ abstract interface class EventsRepository {
   Future<List<MatchEvent>> fetchForPlayers(List<String> playerIds);
 
   /// (مدير) إضافة حدث لماتش.
-  Future<void> addEvent({
-    required String matchId,
-    required String playerId,
-    required String type,
-    int? minute,
-  });
+  Future<void> addEvent({required String matchId, required String playerId, required String type, int? minute});
 
   /// (مدير) حذف حدث.
   Future<void> deleteEvent(String id);

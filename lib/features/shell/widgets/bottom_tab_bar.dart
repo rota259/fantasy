@@ -40,18 +40,18 @@ class BottomTabBar extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        height: 3,
-                        width: 24,
-                        color: active ? AppColors.accent : Colors.transparent,
-                      ),
+                      Container(height: 3, width: 24, color: active ? AppColors.accent : Colors.transparent),
                       const SizedBox(height: 9),
                       Icon(it.$2, size: 21, color: active ? AppColors.accent : AppColors.neutral600),
                       const SizedBox(height: 3),
-                      Text(it.$3,
-                          style: AppText.body(8.5,
-                              color: active ? AppColors.accent : AppColors.neutral600,
-                              weight: FontWeight.w600)),
+                      Text(
+                        it.$3,
+                        style: AppText.body(
+                          8.5,
+                          color: active ? AppColors.accent : AppColors.neutral600,
+                          weight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),

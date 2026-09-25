@@ -9,6 +9,7 @@ class LeaguesState extends Equatable {
     this.myLeagues = const [],
     this.standings = const [],
     this.selectedLeagueId,
+    this.badges = const {},
   });
 
   final LeaguesStatus status;
@@ -16,26 +17,33 @@ class LeaguesState extends Equatable {
   final List<MyLeague> myLeagues;
   final List<LeagueStanding> standings;
   final String? selectedLeagueId;
+  final Map<String, List<UserBadge>> badges; // userId → شاراته (الأعلى أولًا)
 
   bool get isLoading => status == LeaguesStatus.loading;
   bool get hasData => myLeagues.isNotEmpty;
 
+  MyLeague? get selected {
+    for (final m in myLeagues) {
+      if (m.league.id == selectedLeagueId) return m;
+    }
+    return myLeagues.firstOrNull;
+  }
+
   LeaguesState copyWith({
-    LeaguesStatus? status,
-    int? globalRank,
-    List<MyLeague>? myLeagues,
     List<LeagueStanding>? standings,
     String? selectedLeagueId,
+    Map<String, List<UserBadge>>? badges,
   }) {
     return LeaguesState(
-      status: status ?? this.status,
-      globalRank: globalRank ?? this.globalRank,
-      myLeagues: myLeagues ?? this.myLeagues,
+      status: status,
+      globalRank: globalRank,
+      myLeagues: myLeagues,
       standings: standings ?? this.standings,
       selectedLeagueId: selectedLeagueId ?? this.selectedLeagueId,
+      badges: badges ?? this.badges,
     );
   }
 
   @override
-  List<Object?> get props => [status, globalRank, myLeagues, standings, selectedLeagueId];
+  List<Object?> get props => [status, globalRank, myLeagues, standings, selectedLeagueId, badges];
 }

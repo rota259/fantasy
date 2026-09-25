@@ -52,14 +52,14 @@ class OnboardFeedArt extends StatelessWidget {
       opacity: hot ? 1 : 0.5,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        decoration: const Border(
-          top: BorderSide(color: Color(0x1FFFFFFF)),
-        ).toBox(),
+        decoration: const Border(top: BorderSide(color: Color(0x1FFFFFFF))).toBox(),
         child: Row(
           children: [
             Text(min, style: AppText.h(12, color: c)),
             const SizedBox(width: 10),
-            Expanded(child: Text(who, style: AppText.h(12, color: AppColors.white))),
+            Expanded(
+              child: Text(who, style: AppText.h(12, color: AppColors.white)),
+            ),
             Text(pts, style: AppText.h(15, color: c)),
           ],
         ),

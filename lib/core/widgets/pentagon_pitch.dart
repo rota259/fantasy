@@ -17,11 +17,19 @@ class PentagonPitch extends StatelessWidget {
     required this.height,
     required this.tokens,
     this.border,
+    this.background = AppColors.night,
+    this.stripe = AppColors.nightStripe,
+    this.line = const Color(0x8C4FCA85), // rgba(79,202,133,.55)
   });
 
   final double height;
   final List<PitchToken> tokens;
   final Border? border;
+
+  /// ألوان الأرضية (تشكيلة الجولة بتبقى زرقا).
+  final Color background;
+  final Color stripe;
+  final Color line;
 
   /// رؤوس المضلّع (نِسَب 0..1) — مطابقة للـ handoff.
   static const List<Offset> _pentagon = [
@@ -36,16 +44,12 @@ class PentagonPitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      decoration: BoxDecoration(color: AppColors.night, border: border),
+      decoration: BoxDecoration(color: background, border: border),
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          Positioned.fill(child: CustomPaint(painter: _PitchPainter())),
-          for (final t in tokens)
-            Align(
-              alignment: Alignment(t.leftPct / 50 - 1, t.topPct / 50 - 1),
-              child: t.child,
-            ),
+          Positioned.fill(child: CustomPaint(painter: _PitchPainter(stripe, line))),
+          for (final t in tokens) Align(alignment: Alignment(t.leftPct / 50 - 1, t.topPct / 50 - 1), child: t.child),
         ],
       ),
     );
@@ -53,10 +57,14 @@ class PentagonPitch extends StatelessWidget {
 }
 
 class _PitchPainter extends CustomPainter {
+  _PitchPainter(this.stripeColor, this.lineColor);
+  final Color stripeColor;
+  final Color lineColor;
+
   @override
   void paint(Canvas canvas, Size size) {
     // خطوط النجيلة الأفقية
-    final stripe = Paint()..color = AppColors.nightStripe;
+    final stripe = Paint()..color = stripeColor;
     const band = 26.0;
     for (double y = band; y < size.height; y += band * 2) {
       canvas.drawRect(Rect.fromLTWH(0, y, size.width, band), stripe);
@@ -74,10 +82,10 @@ class _PitchPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = const Color(0x8C4FCA85), // rgba(79,202,133,.55)
+        ..color = lineColor,
     );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _PitchPainter old) => old.stripeColor != stripeColor || old.lineColor != lineColor;
 }

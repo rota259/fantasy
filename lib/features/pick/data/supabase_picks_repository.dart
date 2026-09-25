@@ -8,10 +8,7 @@ class SupabasePicksRepository implements PicksRepository {
 
   @override
   Future<List<Pick>> fetchForUserMatch(String userId, String matchId) async {
-    final rows = await SupabaseService.table(_table)
-        .select()
-        .eq('user_id', userId)
-        .eq('match_id', matchId);
+    final rows = await SupabaseService.table(_table).select().eq('user_id', userId).eq('match_id', matchId);
     return rows.map(Pick.fromMap).toList();
   }
 
@@ -27,22 +24,16 @@ class SupabasePicksRepository implements PicksRepository {
 
   @override
   Future<void> savePicks(String userId, String matchId, List<Pick> picks) async {
-    // نمسح القديم ونكتب الجديد (استبدال كامل).
-    await SupabaseService.table(_table)
-        .delete()
-        .eq('user_id', userId)
-        .eq('match_id', matchId);
-    if (picks.isEmpty) return;
-    await SupabaseService.table(_table).insert([
-      for (final p in picks)
-        {
-          'user_id': userId,
-          'match_id': matchId,
-          'player_id': p.playerId,
-          'status': p.status,
-          'is_captain': p.isCaptain,
-          'is_vice': p.isVice,
-        },
-    ]);
+    // دالة واحدة في السيرفر: بتتحقق من القواعد والديدلاين وتستبدل التشكيلة في transaction واحدة.
+    await SupabaseService.client.rpc(
+      'save_picks',
+      params: {
+        'p_match': matchId,
+        'p_picks': [
+          for (final p in picks)
+            {'player_id': p.playerId, 'status': p.status, 'is_captain': p.isCaptain, 'is_vice': p.isVice},
+        ],
+      },
+    );
   }
 }

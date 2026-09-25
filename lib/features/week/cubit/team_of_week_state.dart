@@ -7,46 +7,39 @@ class TeamOfWeekState extends Equatable {
     required this.window,
     this.status = TeamOfWeekStatus.loading,
     this.players = const [],
+    this.tie,
   });
 
   final WeekWindow window;
   final TeamOfWeekStatus status;
   final List<WeekPlayer> players; // نقاط الجولة (الأعلى أولًا)
+  final PollView? tie; // تصويت التعادل على آخر مكان (لو اتعمل)
 
   bool get isLoading => status == TeamOfWeekStatus.loading;
   bool get isCurrent => window == WeekWindow.current();
 
-  /// أعلى لاعيبة في مركز معيّن (بحد أقصى).
-  List<WeekPlayer> byPosition(String pos, {int max = 5}) =>
-      players.where((p) => p.position == pos).take(max).toList();
+  TeamOfWeek get team => TeamOfWeek.build(players);
 
-  /// تشكيلة الخماسي: [حارس، دفاع، وسط، هجوم، أحسن واحد فاضل من الملعب].
-  List<WeekPlayer?> get lineup {
-    WeekPlayer? best(bool Function(WeekPlayer) test, Set<String> used) {
-      for (final p in players) {
-        if (!used.contains(p.id) && test(p)) return p;
-      }
-      return null;
-    }
+  /// التعادل بيتحسم بتصويت بس لما الجولة تبقى نهائي (قبلها الترتيب بيتغيّر كل شوية).
+  bool get contested => team.hasTie && window.isFinal();
 
-    final used = <String>{};
-    final out = <WeekPlayer?>[];
-    for (final pos in const ['GK', 'DEF', 'MID', 'FWD']) {
-      final p = best((x) => x.position == pos, used);
-      if (p != null) used.add(p.id);
-      out.add(p);
+  /// الخمسة مترتّبين على الخماسي. وقت التصويت المكان المتنازع عليه بيفضل فاضي لحد ما يتحسم.
+  List<WeekPlayer?> get spots {
+    final t = tie;
+    final List<String> winners;
+    if (!contested) {
+      winners = team.tied.map((p) => p.id).toList(); // مباشر: أول المتعادلين
+    } else if (t != null && !t.poll.open) {
+      winners = t.winners.map((o) => o.playerId ?? '').toList();
+    } else {
+      winners = const [];
     }
-    out.add(best((x) => x.position != 'GK', used));
-    return out;
+    return TeamOfWeek.arrange(team.lineup(winnerIds: winners));
   }
 
-  TeamOfWeekState copyWith({WeekWindow? window, TeamOfWeekStatus? status, List<WeekPlayer>? players}) =>
-      TeamOfWeekState(
-        window: window ?? this.window,
-        status: status ?? this.status,
-        players: players ?? this.players,
-      );
+  TeamOfWeekState copyWith({TeamOfWeekStatus? status}) =>
+      TeamOfWeekState(window: window, status: status ?? this.status, players: players, tie: tie);
 
   @override
-  List<Object?> get props => [window, status, players];
+  List<Object?> get props => [window, status, players, tie];
 }

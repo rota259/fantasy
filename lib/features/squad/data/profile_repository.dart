@@ -1,13 +1,21 @@
+import 'dart:typed_data';
+
 import '../../auth/data/models/app_user.dart';
 
 /// عقد بيانات البروفايل.
 abstract interface class ProfileRepository {
-  /// حفظ ids لاعيبة التشكيلة والكابتن في profiles.
-  Future<void> updateTeam(String userId, List<String> playerIds, String? captainId);
+  /// بروفايلي أنا كامل (null لو مش مسجّل).
+  Future<AppUser?> fetchMine();
 
-  /// جلب بروفايل أي مستخدم (لخصم التحدّي مثلًا).
-  Future<AppUser?> fetchProfile(String userId);
+  /// نقاط يوزر (للهوم).
+  Future<int> points(String userId);
+
+  /// أعلى نقط جابها في ماتش واحد.
+  Future<int> bestMatch(String userId);
 
   /// حفظ توكن الإشعارات (FCM) للمستخدم.
   Future<void> saveFcmToken(String userId, String token);
+
+  /// رفع صورة البروفايل وحفظها — بيرجّع الرابط.
+  Future<String> uploadAvatar(String userId, Uint8List bytes, String extension);
 }

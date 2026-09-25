@@ -48,42 +48,54 @@ class SlotGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final day = dayOffset(dayIndex);
     final now = DateTime.now();
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      SizedBox(
-        height: 44,
-        child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12), children: [
-          for (var i = 0; i < bookingDaysAhead; i++)
-            GestureDetector(
-              onTap: () => onDay(i),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: i == dayIndex ? AppColors.black : null,
-                  border: Border.all(color: AppColors.black, width: 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 44,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: [
+              for (var i = 0; i < bookingDaysAhead; i++)
+                GestureDetector(
+                  onTap: () => onDay(i),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: i == dayIndex ? AppColors.black : null,
+                      border: Border.all(color: AppColors.black, width: 2),
+                    ),
+                    child: Text(
+                      _dayLabel(i),
+                      style: AppText.h(12, color: i == dayIndex ? AppColors.white : AppColors.ink),
+                    ),
+                  ),
                 ),
-                child: Text(_dayLabel(i), style: AppText.h(12, color: i == dayIndex ? AppColors.white : AppColors.ink)),
-              ),
-            ),
-        ]),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(16),
-        child: Wrap(spacing: 8, runSpacing: 8, children: [
-          for (final h in venue.hours) _slot(h, day, now),
-        ]),
-      ),
-      Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Wrap(spacing: 12, runSpacing: 6, children: [
-          _legend(AppColors.accent, 'متاح'),
-          _legend(const Color(0xFFCA8A04), 'معلّق'),
-          _legend(AppColors.danger, 'محجوز'),
-          _legend(AppColors.neutral400, 'فات'),
-        ]),
-      ),
-    ]);
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Wrap(spacing: 8, runSpacing: 8, children: [for (final h in venue.hours) _slot(h, day, now)]),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              _legend(AppColors.accent, 'متاح'),
+              _legend(const Color(0xFFCA8A04), 'معلّق'),
+              _legend(AppColors.danger, 'محجوز'),
+              _legend(AppColors.neutral400, 'فات'),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _slot(int h, DateTime day, DateTime now) {
@@ -98,10 +110,10 @@ class SlotGrid extends StatelessWidget {
     final (Color color, String label) = past
         ? (AppColors.neutral400, 'فات')
         : b == null
-            ? (AppColors.accent, 'متاح')
-            : b.isConfirmed
-                ? (AppColors.danger, mine ? 'حجزك ✅' : 'محجوز')
-                : (const Color(0xFFCA8A04), mine ? 'طلبك ⏳' : 'معلّق');
+        ? (AppColors.accent, 'متاح')
+        : b.isConfirmed
+        ? (AppColors.danger, mine ? 'حجزك ✅' : 'محجوز')
+        : (const Color(0xFFCA8A04), mine ? 'طلبك ⏳' : 'معلّق');
 
     return GestureDetector(
       onTap: (past || b != null) ? null : () => onPick(h),
@@ -112,18 +124,26 @@ class SlotGrid extends StatelessWidget {
           color: selected ? AppColors.accent : null,
           border: Border.all(color: color, width: 2),
         ),
-        child: Column(children: [
-          Text(formatHour(h), style: AppText.h(14, color: selected ? AppColors.white : AppColors.ink)),
-          Text(selected ? 'اخترته ✓' : label,
-              style: AppText.body(10, color: selected ? AppColors.white : color)),
-        ]),
+        child: Column(
+          children: [
+            Text(formatHour(h), style: AppText.h(14, color: selected ? AppColors.white : AppColors.ink)),
+            Text(selected ? 'اخترته ✓' : label, style: AppText.body(10, color: selected ? AppColors.white : color)),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _legend(Color c, String t) => Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 12, height: 12, decoration: BoxDecoration(border: Border.all(color: c, width: 2))),
-        const SizedBox(width: 4),
-        Text(t, style: AppText.body(10, color: AppColors.neutral700)),
-      ]);
+  Widget _legend(Color c, String t) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(border: Border.all(color: c, width: 2)),
+      ),
+      const SizedBox(width: 4),
+      Text(t, style: AppText.body(10, color: AppColors.neutral700)),
+    ],
+  );
 }

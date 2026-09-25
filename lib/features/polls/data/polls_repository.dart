@@ -1,9 +1,12 @@
 import 'models/poll.dart';
 
-/// عقد التصويتات (نجم الجولة / تحدّي الجولة).
+/// عقد التصويتات (هدف/تصدّي الجولة والموسم + تعادل تشكيلة الجولة).
 abstract interface class PollsRepository {
-  /// أحدث تصويت من النوع ده (مفتوح أو مقفول) + اختياراته ونتايجه وصوت اليوزر.
+  /// أحدث تصويت من النوع ده + اختياراته ونتايجه وصوت اليوزر.
   Future<PollView?> latestPoll(String kind, String userId);
+
+  /// تصويت التعادل بتاع جولة معيّنة (لو اتعمل).
+  Future<PollView?> tieFor(DateTime windowEnd, String userId);
 
   /// (مدير) قفل التصويت.
   Future<void> closePoll(String pollId);
@@ -11,9 +14,9 @@ abstract interface class PollsRepository {
   /// (يوزر) يصوّت لاختيار (بيستبدل صوته القديم في نفس التصويت).
   Future<void> vote(String pollId, String optionId, String userId);
 
-  /// (مدير) يعمل نجم الجولة من لاعيبة مرشّحين. بيرجّع id التصويت.
-  Future<String> createStar(List<({String id, String name})> players);
+  /// (مدير) تصويت هدف/تصدّي الجولة بمرشّحين + لينكات فيديو.
+  Future<String> createAward(String kind, String question, List<NewPollOption> options, DateTime? closesAt);
 
-  /// (مدير) يعمل تحدّي بسؤال واختيارات نصّية.
-  Future<String> createChallenge(String question, List<String> options);
+  /// (مدير) هدف/تصدّي الموسم من فايزين الجولات. kind = goal | save.
+  Future<String> createSeasonAward(String kind);
 }

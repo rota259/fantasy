@@ -9,15 +9,30 @@ class LeagueStanding extends Equatable {
     required this.userId,
     required this.name,
     required this.points,
+    this.photoUrl,
+    this.lowPicks = 0,
   });
+
+  factory LeagueStanding.fromMap(Map<String, dynamic> m) => LeagueStanding(
+    rank: (m['rank'] as num).toInt(),
+    userId: m['user_id'].toString(),
+    name: (m['name'] ?? '') as String,
+    points: (m['points'] as num?)?.toInt() ?? 0,
+    photoUrl: m['photo_url'] as String?,
+    lowPicks: (m['low_picks'] as num?)?.toInt() ?? 0,
+  );
 
   final int rank;
   final String userId;
   final String name;
   final int points;
+  final String? photoUrl;
+  final int lowPicks; // لاعيبة امتلاكها أقل من ٢٥٪ (كسر التعادل)
+
+  String get initials => name.trim().length >= 2 ? name.trim().substring(0, 2) : (name.isEmpty ? '؟' : name);
 
   @override
-  List<Object?> get props => [rank, userId, name, points];
+  List<Object?> get props => [rank, userId, name, points, photoUrl, lowPicks];
 }
 
 /// دوري المستخدم مع ترتيبه فيه (لصفوف قائمة الدوريات).

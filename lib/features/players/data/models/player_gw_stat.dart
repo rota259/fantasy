@@ -23,14 +23,14 @@ class PlayerGwStat extends Equatable {
   static int _i(dynamic v) => (v as num?)?.toInt() ?? 0;
 
   factory PlayerGwStat.fromMap(Map<String, dynamic> m) => PlayerGwStat(
-        playerId: m['id'].toString(),
-        points: _i(m['points']),
-        owners: _i(m['owners']),
-        ownership: (m['ownership'] as num?)?.toDouble() ?? 0,
-        transfersIn: _i(m['transfers_in']),
-        transfersOut: _i(m['transfers_out']),
-        managers: _i(m['managers']),
-      );
+    playerId: m['id'].toString(),
+    points: _i(m['points']),
+    owners: _i(m['owners']),
+    ownership: (m['ownership'] as num?)?.toDouble() ?? 0,
+    transfersIn: _i(m['transfers_in']),
+    transfersOut: _i(m['transfers_out']),
+    managers: _i(m['managers']),
+  );
 
   @override
   List<Object?> get props => [playerId, points, owners, ownership, transfersIn, transfersOut, managers];

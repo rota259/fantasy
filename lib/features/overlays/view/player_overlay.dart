@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../auth/cubit/auth_cubit.dart';
+import '../../claims/widgets/claim_button.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
 import '../widgets/player_stats_section.dart';
@@ -37,12 +39,14 @@ class PlayerOverlay extends StatelessWidget {
       );
     }
 
+    final userId = context.read<AuthCubit>().state.user?.id;
     return OverlayShell(
       title: 'لاعب',
       subtitle: 'PLAYER',
       onBack: nav.back,
       header: PlayerHeader(onBack: nav.back, player: player),
       children: [
+        if (userId != null) ClaimButton(player: player, userId: userId),
         PlayerStatGrid(player: player),
         PlayerStatsSection(playerId: player.id),
       ],

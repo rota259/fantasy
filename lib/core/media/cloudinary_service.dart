@@ -9,8 +9,7 @@ abstract final class CloudinaryService {
   static const _cloudName = 'dmsfxoble';
   static const _uploadPreset = 'fantasy';
 
-  static Uri get _endpoint =>
-      Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
+  static Uri get _endpoint => Uri.parse('https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
 
   /// بترفع صورة من مسار محلي وبترجّع secure_url.
   static Future<String> uploadImage(String filePath) async {

@@ -4,7 +4,7 @@ enum AppRoute { splash, onboard, login, register, app }
 
 enum AppTab { home, team, market, leagues, account }
 
-enum AppOverlayView { none, coach, pitch, challenge, fixtures, player, star }
+enum AppOverlayView { none, coach, pitch, challenge, fixtures, player, awards }
 
 class AppNavState extends Equatable {
   const AppNavState({
@@ -21,12 +21,7 @@ class AppNavState extends Equatable {
   final AppOverlayView overlay;
   final Player? selectedPlayer; // اللاعب المفتوح في overlay اللاعب
 
-  AppNavState copyWith({
-    AppRoute? route,
-    int? onboardIndex,
-    AppTab? tab,
-    AppOverlayView? overlay,
-  }) {
+  AppNavState copyWith({AppRoute? route, int? onboardIndex, AppTab? tab, AppOverlayView? overlay}) {
     return AppNavState(
       route: route ?? this.route,
       onboardIndex: onboardIndex ?? this.onboardIndex,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 
-/// علامة "الخماسي": مضلّع أخضر ثابت مع رقم ٥ في النص.
+/// علامة "الخماسي": مضلّع أخضر ثابت مع رقم 5 في النص.
 class PentagonMark extends StatelessWidget {
   const PentagonMark({super.key, this.size = 56, this.stroke = 5});
 
@@ -11,8 +11,11 @@ class PentagonMark extends StatelessWidget {
   final double stroke;
 
   static const List<Offset> _pts = [
-    Offset(50, 16), Offset(82.3, 39.5), Offset(70, 77.5),
-    Offset(30, 77.5), Offset(17.7, 39.5),
+    Offset(50, 16),
+    Offset(82.3, 39.5),
+    Offset(70, 77.5),
+    Offset(30, 77.5),
+    Offset(17.7, 39.5),
   ];
 
   @override
@@ -24,7 +27,7 @@ class PentagonMark extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Positioned.fill(child: CustomPaint(painter: _MarkPainter(stroke))),
-          Text('٥', style: AppText.h(size * 0.42, color: AppColors.accent)),
+          Text('5', style: AppText.h(size * 0.42, color: AppColors.accent)),
         ],
       ),
     );

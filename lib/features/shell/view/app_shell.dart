@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../account/view/account_screen.dart';
+import '../../awards/view/awards_overlay.dart';
+import '../../challenge/view/challenge_overlay.dart';
 import '../../home/view/home_screen.dart';
 import '../../leagues/view/leagues_screen.dart';
 import '../../market/view/market_screen.dart';
@@ -10,7 +12,6 @@ import '../../overlays/view/coach_overlay.dart';
 import '../../overlays/view/fixtures_overlay.dart';
 import '../../overlays/view/pitch_overlay.dart';
 import '../../overlays/view/player_overlay.dart';
-import '../../polls/view/poll_overlay.dart';
 import '../../team/view/team_screen.dart';
 import '../cubit/app_nav_cubit.dart';
 import '../widgets/bottom_tab_bar.dart';
@@ -19,9 +20,7 @@ import '../widgets/bottom_tab_bar.dart';
 class AppShell extends StatelessWidget {
   const AppShell({super.key});
 
-  static const _tabs = [
-    HomeScreen(), TeamScreen(), MarketScreen(), LeaguesScreen(), AccountScreen(),
-  ];
+  static const _tabs = [HomeScreen(), TeamScreen(), MarketScreen(), LeaguesScreen(), AccountScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +39,7 @@ class AppShell extends StatelessWidget {
                   BottomTabBar(current: state.tab, onTap: nav.setTab),
                 ],
               ),
-              if (state.overlay != AppOverlayView.none)
-                Positioned.fill(child: _overlay(state.overlay)),
+              if (state.overlay != AppOverlayView.none) Positioned.fill(child: _overlay(state.overlay)),
             ],
           );
         },
@@ -53,8 +51,8 @@ class AppShell extends StatelessWidget {
     return switch (o) {
       AppOverlayView.coach => const CoachOverlay(),
       AppOverlayView.pitch => const PitchOverlay(),
-      AppOverlayView.challenge => const PollOverlay(kind: 'challenge', title: 'تحدّي الجولة', subtitle: 'CHALLENGE'),
-      AppOverlayView.star => const PollOverlay(kind: 'star', title: 'نجم الجولة', subtitle: 'STAR OF THE WEEK'),
+      AppOverlayView.challenge => const ChallengeOverlay(),
+      AppOverlayView.awards => const AwardsOverlay(),
       AppOverlayView.fixtures => const FixturesOverlay(),
       AppOverlayView.player => const PlayerOverlay(),
       AppOverlayView.none => const SizedBox.shrink(),

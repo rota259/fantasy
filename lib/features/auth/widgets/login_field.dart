@@ -5,13 +5,7 @@ import '../../../core/theme/app_text.dart';
 
 /// حقل إدخال بستايل الديزاين: كيكر + مربّع بحد أسود 2px، صفر انحناء.
 class LoginField extends StatelessWidget {
-  const LoginField({
-    super.key,
-    required this.label,
-    required this.hint,
-    this.obscure = false,
-    this.controller,
-  });
+  const LoginField({super.key, required this.label, required this.hint, this.obscure = false, this.controller});
 
   final String label;
   final String hint;

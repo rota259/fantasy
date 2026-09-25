@@ -14,11 +14,9 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
-        ..forward();
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
+    ..forward();
 
   @override
   void initState() {
@@ -48,17 +46,17 @@ class _SplashScreenState extends State<SplashScreen>
             // اللوجو في نص الشاشة بالظبط
             Center(child: SplashLogo(animation: _c, size: 240)),
             // الاسم تحت المنتصف
-            Align(
-              alignment: const Alignment(0, 0.42),
-              child: _wordmark(),
-            ),
+            Align(alignment: const Alignment(0, 0.42), child: _wordmark()),
             Positioned(bottom: 70, child: _loadingBar()),
             Positioned(
               bottom: 46,
               child: Text(
                 'اضغط للتخطّي',
-                style: AppText.h(9, weight: FontWeight.w600, spacingEm: 0.2)
-                    .copyWith(color: AppColors.white.withValues(alpha: 0.35)),
+                style: AppText.h(
+                  9,
+                  weight: FontWeight.w600,
+                  spacingEm: 0.2,
+                ).copyWith(color: AppColors.white.withValues(alpha: 0.35)),
               ),
             ),
           ],

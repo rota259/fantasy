@@ -25,24 +25,23 @@ class AppNavCubit extends Cubit<AppNavState> {
 
   void goLogin() => emit(state.copyWith(route: AppRoute.login));
 
-  void login() =>
-      emit(state.copyWith(route: AppRoute.app, tab: AppTab.home));
+  void login() => emit(state.copyWith(route: AppRoute.app, tab: AppTab.home));
 
   /// تغيير التبويب بيقفل أي overlay مفتوح.
-  void setTab(AppTab tab) =>
-      emit(state.copyWith(tab: tab, overlay: AppOverlayView.none));
+  void setTab(AppTab tab) => emit(state.copyWith(tab: tab, overlay: AppOverlayView.none));
 
-  void openOverlay(AppOverlayView overlay) =>
-      emit(state.copyWith(overlay: overlay));
+  void openOverlay(AppOverlayView overlay) => emit(state.copyWith(overlay: overlay));
 
   /// فتح overlay اللاعب مع تمرير اللاعب المختار (null = بيانات ثابتة).
-  void openPlayer(Player? player) => emit(AppNavState(
-        route: state.route,
-        onboardIndex: state.onboardIndex,
-        tab: state.tab,
-        overlay: AppOverlayView.player,
-        selectedPlayer: player,
-      ));
+  void openPlayer(Player? player) => emit(
+    AppNavState(
+      route: state.route,
+      onboardIndex: state.onboardIndex,
+      tab: state.tab,
+      overlay: AppOverlayView.player,
+      selectedPlayer: player,
+    ),
+  );
 
   void back() => emit(state.copyWith(overlay: AppOverlayView.none));
 

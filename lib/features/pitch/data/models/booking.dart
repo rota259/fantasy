@@ -50,11 +50,11 @@ class Booking extends Equatable {
   bool get isPast => start.isBefore(DateTime.now());
 
   String get statusLabel => switch (status) {
-        'confirmed' => 'مؤكد ✅',
-        'rejected' => 'مرفوض ❌',
-        'cancelled' => 'ملغي',
-        _ => 'معلّق ⏳',
-      };
+    'confirmed' => 'مؤكد ✅',
+    'rejected' => 'مرفوض ❌',
+    'cancelled' => 'ملغي',
+    _ => 'معلّق ⏳',
+  };
 
   factory Booking.fromMap(Map<String, dynamic> m) {
     final venue = m['venues'] as Map<String, dynamic>?;
@@ -63,13 +63,13 @@ class Booking extends Equatable {
     return Booking(
       id: m['id'].toString(),
       venueId: m['venue_id'].toString(),
-      userId: m['user_id'].toString(),
+      userId: m['user_id']?.toString() ?? '', // فاضي = حجز حد تاني (مخفي)
       day: DateTime.parse(m['day'] as String),
       hour: (m['hour'] as num).toInt(),
       status: (m['status'] ?? 'pending') as String,
       note: m['note'] as String?,
       venueName: venue?['name'] as String?,
-      userName: (userName == null || userName.isEmpty) ? (user?['email'] as String?) : userName,
+      userName: (userName == null || userName.isEmpty) ? null : userName,
       userPhone: user?['phone'] as String?,
     );
   }

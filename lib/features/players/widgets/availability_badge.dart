@@ -15,13 +15,7 @@ class AvailabilityBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Availability.color(availability);
-    return Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      color: color,
-      child: _inner(color),
-    );
+    return Container(width: size, height: size, alignment: Alignment.center, color: color, child: _inner(color));
   }
 
   Widget _inner(Color color) {

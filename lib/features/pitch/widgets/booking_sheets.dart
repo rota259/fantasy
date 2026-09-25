@@ -45,31 +45,38 @@ class _ConfirmSheetState extends State<_ConfirmSheet> {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('تأكيد طلب الحجز', style: AppText.h(17)),
-            const SizedBox(height: 10),
-            Text(v.name, style: AppText.h(15, color: AppColors.accent)),
-            Text(slotText(widget.day, widget.hour), style: AppText.h(14)),
-            Text('السعر: ${v.price} جنيه للساعة', style: AppText.body(12, color: AppColors.neutral700)),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-              child: TextField(
-                controller: _note,
-                style: AppText.h(13),
-                decoration: const InputDecoration(
-                  isDense: true, border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  hintText: 'اسم فريقك / ملاحظة لصاحب الملعب (اختياري)',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('تأكيد طلب الحجز', style: AppText.h(17)),
+              const SizedBox(height: 10),
+              Text(v.name, style: AppText.h(15, color: AppColors.accent)),
+              Text(slotText(widget.day, widget.hour), style: AppText.h(14)),
+              Text('السعر: ${v.price} جنيه للساعة', style: AppText.body(12, color: AppColors.neutral700)),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                child: TextField(
+                  controller: _note,
+                  style: AppText.h(13),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    hintText: 'اسم فريقك / ملاحظة لصاحب الملعب (اختياري)',
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text('الحجز هيبقى معلّق ⏳ لحد ما صاحب الملعب يوافق.',
-                style: AppText.body(11, color: AppColors.neutral700)),
-            const SizedBox(height: 14),
-            _btn('ابعت طلب الحجز', AppColors.accent, () => Navigator.pop(context, _note.text)),
-          ]),
+              const SizedBox(height: 8),
+              Text(
+                'الحجز هيبقى معلّق ⏳ لحد ما صاحب الملعب يوافق.',
+                style: AppText.body(11, color: AppColors.neutral700),
+              ),
+              const SizedBox(height: 14),
+              _btn('ابعت طلب الحجز', AppColors.accent, () => Navigator.pop(context, _note.text)),
+            ],
+          ),
         ),
       ),
     );
@@ -86,35 +93,44 @@ Future<void> showBookingSentSheet(BuildContext context, Venue v, DateTime day, i
     builder: (ctx) => SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Icon(Icons.hourglass_top, size: 40, color: Color(0xFFCA8A04)),
-          const SizedBox(height: 8),
-          Text('طلبك اتبعت ✓', textAlign: TextAlign.center, style: AppText.h(18)),
-          const SizedBox(height: 4),
-          Text('الحجز معلّق لحد ما صاحب الملعب يأكّده، وهيوصلك إشعار أول ما يرد.',
-              textAlign: TextAlign.center, style: AppText.body(12, color: AppColors.neutral700)),
-          if (phone != null && phone.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Row(children: [
-              Expanded(child: _btn('📞 اتصل بالملعب', AppColors.black, () => Launchers.call(phone))),
-              const SizedBox(width: 8),
-              Expanded(child: _btn('واتساب', const Color(0xFF16A34A), () => Launchers.whatsapp(phone, msg))),
-            ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Icon(Icons.hourglass_top, size: 40, color: Color(0xFFCA8A04)),
+            const SizedBox(height: 8),
+            Text('طلبك اتبعت ✓', textAlign: TextAlign.center, style: AppText.h(18)),
+            const SizedBox(height: 4),
+            Text(
+              'الحجز معلّق لحد ما صاحب الملعب يأكّده، وهيوصلك إشعار أول ما يرد.',
+              textAlign: TextAlign.center,
+              style: AppText.body(12, color: AppColors.neutral700),
+            ),
+            if (phone != null && phone.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(child: _btn('📞 اتصل بالملعب', AppColors.black, () => Launchers.call(phone))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _btn('واتساب', const Color(0xFF16A34A), () => Launchers.whatsapp(phone, msg))),
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
+            _btn('تمام', AppColors.accent, () => Navigator.pop(ctx)),
           ],
-          const SizedBox(height: 8),
-          _btn('تمام', AppColors.accent, () => Navigator.pop(ctx)),
-        ]),
+        ),
       ),
     ),
   );
 }
 
 Widget _btn(String label, Color color, VoidCallback onTap) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        color: color,
-        padding: const EdgeInsets.all(12),
-        alignment: Alignment.center,
-        child: Text(label, style: AppText.h(13, color: AppColors.white)),
-      ),
-    );
+  onTap: onTap,
+  child: Container(
+    color: color,
+    padding: const EdgeInsets.all(12),
+    alignment: Alignment.center,
+    child: Text(label, style: AppText.h(13, color: AppColors.white)),
+  ),
+);

@@ -12,11 +12,7 @@ class OnboardingScreen extends StatelessWidget {
   final int index; // 0..2
 
   static const _kickers = ['01 · تشكيل خماسي', '02 · بث حي', '03 · نافس واحجز'];
-  static const _titles = [
-    'كوّن فريقك الخماسي',
-    'تابع نقاطك لحظة بلحظة',
-    'نافس أصحابك واحجز ملعبك',
-  ];
+  static const _titles = ['كوّن فريقك الخماسي', 'تابع نقاطك لحظة بلحظة', 'نافس أصحابك واحجز ملعبك'];
   static const _bodies = [
     'اختار 5 لاعبين من ملاعب مصر بميزانية محدودة، وحطّهم على أرض على شكل خماسي حقيقي.',
     'كل جوول وتمريرة وشباك نظيفة تظهر فورًا وهي الماتشات شغّالة. مفيش انتظار.',
@@ -80,8 +76,7 @@ class OnboardingScreen extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 onTap: nav.onboardSkip,
-                child: Text('تخطّي ✕',
-                    style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
+                child: Text('تخطّي ✕', style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
               ),
             ],
           ),
@@ -114,8 +109,7 @@ class OnboardingScreen extends StatelessWidget {
               color: AppColors.accent,
               padding: const EdgeInsets.all(14),
               alignment: Alignment.center,
-              child: Text(index >= 2 ? 'يلا نبدأ' : 'التالي',
-                  style: AppText.h(15, color: AppColors.white)),
+              child: Text(index >= 2 ? 'يلا نبدأ' : 'التالي', style: AppText.h(15, color: AppColors.white)),
             ),
           ),
         ],

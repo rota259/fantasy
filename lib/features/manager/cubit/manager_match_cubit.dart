@@ -1,22 +1,22 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/supabase_service.dart';
 import '../../events/data/events_repository.dart';
 import '../../events/data/models/match_event.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
-import '../../points/points_engine.dart';
+import '../data/admin_repository.dart';
 import '../data/lineup_repository.dart';
 
 part 'manager_match_state.dart';
 
 /// ViewModel لصفحة إدارة ماتش (المدير يدخّل التشكيلة والأحداث).
 class ManagerMatchCubit extends Cubit<ManagerMatchState> {
-  ManagerMatchCubit(this._players, this._events, this._lineups, this.match)
-      : super(const ManagerMatchState());
+  ManagerMatchCubit(this._players, this._events, this._lineups, this._admin, this.match)
+    : super(const ManagerMatchState());
 
+  final AdminRepository _admin;
   final PlayersRepository _players;
   final EventsRepository _events;
   final LineupRepository _lineups;
@@ -28,37 +28,32 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
       final players = await _players.fetchByTeams(match.teams);
       final events = await _events.fetchByMatch(match.id);
       final lineup = await _lineups.fetchForMatch(match.id);
-      emit(ManagerMatchState(
-        status: ManagerMatchStatus.ready,
-        players: players,
-        events: events,
-        lineup: {for (final l in lineup) l.playerId: l.status},
-      ));
+      emit(
+        ManagerMatchState(
+          status: ManagerMatchStatus.ready,
+          players: players,
+          events: events,
+          lineup: {for (final l in lineup) l.playerId: l.status},
+        ),
+      );
     } catch (_) {
       emit(const ManagerMatchState(status: ManagerMatchStatus.ready));
     }
   }
 
-  /// (مدير) إبلاغ كل اليوزرز إن التشكيلة نزلت.
-  /// بيسجّل الإشعار في الجدول (يظهر جوه التطبيق) + يبعت push عبر Edge Function.
+  /// (مدير) إبلاغ كل اليوزرز إن التشكيلة نزلت (جوه التطبيق + push من الداتابيز).
   Future<String> notifyUsers() async {
-    final title = 'تشكيلة نزلت ⚽';
-    final body = '${match.teamA} ضد ${match.teamB} — اختار تشكيلتك قبل الديدلاين';
-    await _record(title, body, 'lineup');
     try {
-      await SupabaseService.client.functions.invoke('notify-match', body: {'match_id': match.id});
+      await _admin.notify(
+        title: 'تشكيلة نزلت ⚽',
+        body: '${match.teamA} ضد ${match.teamB} — اختار تشكيلتك قبل الديدلاين',
+        kind: 'lineup',
+        matchId: match.id,
+      );
       return 'اتبعت إشعار لليوزرز ✓';
-    } catch (_) {
-      return 'اتسجّل الإشعار جوه التطبيق (الـ push لسه مش مفعّل)';
+    } catch (e) {
+      return 'فشل الإرسال: $e';
     }
-  }
-
-  /// تسجيل إشعار في جدول notifications عشان يظهر لليوزرز جوه التطبيق.
-  Future<void> _record(String title, String body, String kind) async {
-    try {
-      await SupabaseService.table('notifications')
-          .insert({'title': title, 'body': body, 'kind': kind, 'match_id': match.id});
-    } catch (_) {}
   }
 
   /// (مدير) إضافة لاعب لفريق في الماتش (بيظهر بره لحد ما المدير يحطّه أساسي/احتياطي).
@@ -159,23 +154,9 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
     } catch (e) {
       return 'تعذّر تسجيل الحدث: $e';
     }
+    // إشعار الحدث لمتابعين الماتش بيتبعت من الداتابيز لوحده
     await _reloadEvents();
-    _notifyEvent(playerId, type); // إشعار لكل اليوزرز بالحدث
     return null;
-  }
-
-  /// إشعار بكل حدث بيتضاف (goal/assist/…) — في التطبيق + push.
-  Future<void> _notifyEvent(String playerId, String type) async {
-    final title = '${PointsEngine.eventLabel(type)} ⚽';
-    final body = '${playerName(playerId)} · ${match.teamA} ضد ${match.teamB}';
-    await _record(title, body, 'event');
-    try {
-      await SupabaseService.client.functions.invoke('notify-match', body: {
-        'match_id': match.id,
-        'title': title,
-        'body': body,
-      });
-    } catch (_) {}
   }
 
   Future<void> removeEvent(String id) async {

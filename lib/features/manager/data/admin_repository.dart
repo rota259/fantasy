@@ -11,9 +11,9 @@ abstract interface class AdminRepository {
   /// ids اليوزرز اللي نزّلوا تشكيلة للماتش ده.
   Future<Set<String>> pickedUserIds(String matchId);
 
-  /// إشعار: بيتسجّل جوه التطبيق + push.
-  /// userIds فاضية = للكل. بيرجّع true لو الـ push اتبعت.
-  Future<bool> notify({
+  /// إشعار: بيتسجّل جوه التطبيق، والداتابيز بتبعته push لوحدها.
+  /// userIds فاضية = للكل.
+  Future<void> notify({
     required String title,
     required String body,
     String kind = 'event',

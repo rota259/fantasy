@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/pentagon_avatar.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/manager_players_cubit.dart';
 
 const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
 
-/// (مدير) شيت تعديل اسم/نادي/مركز لاعب.
+/// (مدير) شيت تعديل صورة/اسم/نادي/مركز لاعب.
 Future<void> showPlayerEditSheet(BuildContext context, ManagerPlayersCubit cubit, Player p) {
   return showModalBottomSheet(
     context: context,
@@ -30,6 +32,25 @@ class _EditSheetState extends State<_EditSheet> {
   late final _name = TextEditingController(text: widget.player.name);
   late final _team = TextEditingController(text: widget.player.team);
   late String _pos = widget.player.position;
+  late String? _photo = widget.player.imageUrl;
+  bool _uploading = false;
+
+  Future<void> _pickPhoto() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final f = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 75, maxWidth: 800);
+    if (f == null) return;
+    setState(() => _uploading = true);
+    final ext = f.name.contains('.') ? f.name.split('.').last : 'jpg';
+    final err = await widget.cubit.setPhoto(widget.player.id, await f.readAsBytes(), ext);
+    if (!mounted) return;
+    setState(() => _uploading = false);
+    if (err != null) {
+      messenger.showSnackBar(SnackBar(content: Text(err)));
+    } else {
+      final fresh = widget.cubit.state.players.where((p) => p.id == widget.player.id).firstOrNull;
+      setState(() => _photo = fresh?.imageUrl);
+    }
+  }
 
   @override
   void dispose() {
@@ -59,53 +80,76 @@ class _EditSheetState extends State<_EditSheet> {
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('تعديل اللاعب', style: AppText.h(16)),
-            const SizedBox(height: 12),
-            _field(_name, 'اسم اللاعب'),
-            const SizedBox(height: 10),
-            _field(_team, 'النادي'),
-            const SizedBox(height: 10),
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final p in _positions)
-                GestureDetector(
-                  onTap: () => setState(() => _pos = p.$1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _pos == p.$1 ? AppColors.accent : null,
-                      border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
-                    ),
-                    child: Text(p.$2, style: AppText.h(12, color: _pos == p.$1 ? AppColors.white : AppColors.ink)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: _uploading ? null : _pickPhoto,
+                    child: PentagonAvatar(initials: widget.player.initials, photoUrl: _photo, size: 56),
                   ),
-                ),
-            ]),
-            const SizedBox(height: 14),
-            GestureDetector(
-              onTap: _save,
-              child: Container(
-                color: AppColors.accent,
-                padding: const EdgeInsets.all(13),
-                alignment: Alignment.center,
-                child: Text('احفظ التعديل', style: AppText.h(14, color: AppColors.white)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _uploading ? 'بترفع الصورة…' : 'تعديل اللاعب — دوس على الصورة تغيّرها',
+                      style: AppText.h(14),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ]),
+              const SizedBox(height: 12),
+              _field(_name, 'اسم اللاعب'),
+              const SizedBox(height: 10),
+              _field(_team, 'النادي'),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final p in _positions)
+                    GestureDetector(
+                      onTap: () => setState(() => _pos = p.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _pos == p.$1 ? AppColors.accent : null,
+                          border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
+                        ),
+                        child: Text(p.$2, style: AppText.h(12, color: _pos == p.$1 ? AppColors.white : AppColors.ink)),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              GestureDetector(
+                onTap: _save,
+                child: Container(
+                  color: AppColors.accent,
+                  padding: const EdgeInsets.all(13),
+                  alignment: Alignment.center,
+                  child: Text('احفظ التعديل', style: AppText.h(14, color: AppColors.white)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _field(TextEditingController c, String hint) => Container(
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-        child: TextField(
-          controller: c,
-          style: AppText.h(14),
-          decoration: InputDecoration(
-            isDense: true, border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-            hintText: hint,
-          ),
-        ),
-      );
+    decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+    child: TextField(
+      controller: c,
+      style: AppText.h(14),
+      decoration: InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+        hintText: hint,
+      ),
+    ),
+  );
 }

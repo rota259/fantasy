@@ -25,10 +25,7 @@ class MarketScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (c) => PlayersCubit(c.read<PlayersRepository>())..load(),
-      child: const _PlayersView(),
-    );
+    return BlocProvider(create: (c) => PlayersCubit(c.read<PlayersRepository>())..load(), child: const _PlayersView());
   }
 }
 
@@ -48,7 +45,8 @@ class _PlayersViewState extends State<_PlayersView> {
     super.initState();
     _loadStats();
     // حد حفظ/غيّر تشكيلته → الامتلاك يتحدّث
-    _sub = liveTable('picks', _loadStats, primaryKey: const ['user_id', 'match_id', 'player_id']);
+    // التشكيلات بتتغيّر كتير — نحدّث الامتلاك مرة كل ١٥ ثانية بالكتير
+    _sub = liveTable('picks', _loadStats, debounce: const Duration(seconds: 15));
   }
 
   @override
@@ -81,7 +79,9 @@ class _PlayersViewState extends State<_PlayersView> {
               }
               final players = [...s.players]..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
               if (players.isEmpty) {
-                return Center(child: Text('لسه مفيش لاعيبة', style: AppText.body(13, color: AppColors.neutral600)));
+                return Center(
+                  child: Text('لسه مفيش لاعيبة', style: AppText.body(13, color: AppColors.neutral600)),
+                );
               }
               return ListView(
                 padding: EdgeInsets.zero,
@@ -100,30 +100,43 @@ class _PlayersViewState extends State<_PlayersView> {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-        child: Row(children: [
-          InitialsTile(p.initials),
-          const SizedBox(width: 11),
-          AvailabilityBadge(p.availability, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(14)),
-              Text(
-                p.availability != Availability.ready && (p.news?.isNotEmpty ?? false)
-                    ? '${p.team} · ${Availability.statusLine(p.availability)}: ${p.news}'
-                    : '${p.team} · ${p.positionAr}',
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: AppText.body(10, color: AppColors.neutral700),
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppColors.divider)),
+        ),
+        child: Row(
+          children: [
+            InitialsTile(p.initials, photoUrl: p.imageUrl),
+            const SizedBox(width: 11),
+            AvailabilityBadge(p.availability, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(14)),
+                  Text(
+                    p.availability != Availability.ready && (p.news?.isNotEmpty ?? false)
+                        ? '${p.team} · ${Availability.statusLine(p.availability)}: ${p.news}'
+                        : '${p.team} · ${p.positionAr}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.body(10, color: AppColors.neutral700),
+                  ),
+                ],
               ),
-            ]),
-          ),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('${p.totalPoints}', style: AppText.h(18)),
-            Text('امتلاك ${(_stats[p.id]?.ownership ?? 0).toStringAsFixed(0)}%',
-                style: AppText.body(9, color: AppColors.neutral700)),
-          ]),
-        ]),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('${p.totalPoints}', style: AppText.h(18)),
+                Text(
+                  'امتلاك ${(_stats[p.id]?.ownership ?? 0).toStringAsFixed(0)}%',
+                  style: AppText.body(9, color: AppColors.neutral700),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

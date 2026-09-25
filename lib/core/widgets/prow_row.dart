@@ -33,9 +33,7 @@ class ProwRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: background,
-          border: topBorder
-              ? const Border(top: BorderSide(color: AppColors.divider))
-              : null,
+          border: topBorder ? const Border(top: BorderSide(color: AppColors.divider)) : null,
         ),
         child: Row(
           children: [

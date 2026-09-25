@@ -8,56 +8,55 @@ class SupabaseMatchesRepository implements MatchesRepository {
 
   @override
   Future<List<GameMatch>> fetchAll() async {
-    final rows =
-        await SupabaseService.table(_table).select().order('date_time');
+    final rows = await SupabaseService.table(_table).select().order('date_time');
     return rows.map(GameMatch.fromMap).toList();
   }
 
   @override
   Future<List<GameMatch>> fetchUpcoming() async {
-    final rows = await SupabaseService.table(_table)
-        .select()
-        .eq('status', 'upcoming')
-        .order('date_time');
+    final rows = await SupabaseService.table(_table).select().eq('status', 'upcoming').order('date_time');
     return rows.map(GameMatch.fromMap).toList();
   }
 
   @override
-  Future<void> addMatch({
-    required List<String> teams,
-    required DateTime dateTime,
-    required int week,
-  }) async {
-    await SupabaseService.table(_table).insert({
-      'teams': teams,
-      'date_time': dateTime.toIso8601String(),
-      'week': week,
-      'status': 'upcoming',
-    });
+  Future<void> addMatch({required List<String> teams, required DateTime dateTime, required int week}) async {
+    await SupabaseService.table(
+      _table,
+    ).insert({'teams': teams, 'date_time': GameMatch.dbTime(dateTime), 'week': week, 'status': 'upcoming'});
+  }
+
+  @override
+  Future<List<GameMatch>> fetchByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final rows = await SupabaseService.table(_table).select().inFilter('id', ids);
+    return rows.map(GameMatch.fromMap).toList();
   }
 
   @override
   Future<List<GameMatch>> fetchFinished() async {
-    final rows = await SupabaseService.table(_table)
-        .select()
-        .eq('status', 'finished')
-        .order('date_time', ascending: false);
+    final rows = await SupabaseService.table(
+      _table,
+    ).select().eq('status', 'finished').order('date_time', ascending: false).limit(20);
     return rows.map(GameMatch.fromMap).toList();
   }
 
   @override
   Future<void> finishMatch(String id, int scoreA, int scoreB) async {
-    await SupabaseService.table(_table)
-        .update({'status': 'finished', 'score_a': scoreA, 'score_b': scoreB})
-        .eq('id', id);
+    await SupabaseService.table(
+      _table,
+    ).update({'status': 'finished', 'score_a': scoreA, 'score_b': scoreB}).eq('id', id);
   }
 
   @override
-  Future<void> updateMatch(String id,
-      {required List<String> teams, required DateTime dateTime, required int week}) async {
-    await SupabaseService.table(_table)
-        .update({'teams': teams, 'date_time': dateTime.toIso8601String(), 'week': week})
-        .eq('id', id);
+  Future<void> updateMatch(
+    String id, {
+    required List<String> teams,
+    required DateTime dateTime,
+    required int week,
+  }) async {
+    await SupabaseService.table(
+      _table,
+    ).update({'teams': teams, 'date_time': GameMatch.dbTime(dateTime), 'week': week}).eq('id', id);
   }
 
   @override

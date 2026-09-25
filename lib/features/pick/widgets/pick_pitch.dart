@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/pentagon_avatar.dart';
 import '../../../core/widgets/pentagon_pitch.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/match_pick_cubit.dart';
@@ -68,41 +69,43 @@ class PickPitch extends StatelessWidget {
         PentagonPitch(height: 360, tokens: tokens),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
-          child: Row(children: [
-            Text('الاحتياطي', style: AppText.kicker(color: AppColors.accent)),
-            const Spacer(),
-            Text('${bench.length}/2', style: AppText.h(12)),
-          ]),
+          child: Row(
+            children: [
+              Text('الاحتياطي', style: AppText.kicker(color: AppColors.accent)),
+              const Spacer(),
+              Text('${bench.length}/2', style: AppText.h(12)),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: Row(children: [
-            Expanded(child: _benchSlot(at(bench, 0))),
-            const SizedBox(width: 10),
-            Expanded(child: _benchSlot(at(bench, 1))),
-          ]),
+          child: Row(
+            children: [
+              Expanded(child: _benchSlot(at(bench, 0))),
+              const SizedBox(width: 10),
+              Expanded(child: _benchSlot(at(bench, 1))),
+            ],
+          ),
         ),
       ],
     );
   }
 
   PitchToken _token(double l, double t, Player? p, String kind) => PitchToken(
-        leftPct: l,
-        topPct: t,
-        child: p == null ? _plus(() => onSlotTap(kind)) : _filled(p, () => onPlayerTap(p)),
-      );
+    leftPct: l,
+    topPct: t,
+    child: p == null ? _plus(() => onSlotTap(kind)) : _filled(p, () => onPlayerTap(p)),
+  );
 
   Widget _plus(VoidCallback onTap) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 46, height: 46, alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.night2,
-            border: Border.all(color: AppColors.white.withValues(alpha: 0.5), width: 2),
-          ),
-          child: Text('+', style: AppText.h(22, color: AppColors.white)),
-        ),
-      );
+    onTap: onTap,
+    child: PentagonIcon(
+      size: 48,
+      fill: AppColors.night2,
+      stroke: AppColors.white.withValues(alpha: 0.5),
+      child: Text('+', style: AppText.h(22, color: AppColors.white)),
+    ),
+  );
 
   Widget _filled(Player p, VoidCallback onTap) {
     final badge = state.captainId == p.id ? 'C' : (state.viceId == p.id ? 'V' : null);
@@ -110,40 +113,48 @@ class PickPitch extends StatelessWidget {
       onTap: onTap,
       child: SizedBox(
         width: 76,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Stack(clipBehavior: Clip.none, children: [
-            Container(
-              width: 46, height: 46, alignment: Alignment.center,
-              color: AppColors.accent,
-              child: Text(p.initials, style: AppText.h(16, color: AppColors.white)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 48, verified: p.isVerified),
+                if (badge != null)
+                  Positioned(
+                    top: -6,
+                    right: -6,
+                    child: Container(
+                      width: 18,
+                      height: 18,
+                      alignment: Alignment.center,
+                      color: AppColors.black,
+                      child: Text(badge, style: AppText.h(9, color: AppColors.white)),
+                    ),
+                  ),
+              ],
             ),
-            if (badge != null)
-              Positioned(
-                top: -6, right: -6,
-                child: Container(
-                  width: 18, height: 18, alignment: Alignment.center,
-                  color: AppColors.black,
-                  child: Text(badge, style: AppText.h(9, color: AppColors.white)),
-                ),
-              ),
-          ]),
-          const SizedBox(height: 3),
-          Text(p.name,
-              maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: AppText.h(10, color: AppColors.white)),
-          if (pointsFor != null) _pts(pointsFor![p.id] ?? 0),
-        ]),
+            const SizedBox(height: 3),
+            Text(
+              p.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.h(10, color: AppColors.white),
+            ),
+            if (pointsFor != null) _pts(pointsFor![p.id] ?? 0),
+          ],
+        ),
       ),
     );
   }
 
   /// شارة النقط تحت اللاعب.
   Widget _pts(int n) => Container(
-        margin: const EdgeInsets.only(top: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-        color: n > 0 ? AppColors.accent : (n < 0 ? AppColors.danger : AppColors.neutral600),
-        child: Text('$n', style: AppText.h(11, color: AppColors.white)),
-      );
+    margin: const EdgeInsets.only(top: 2),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+    color: n > 0 ? AppColors.accent : (n < 0 ? AppColors.danger : AppColors.neutral600),
+    child: Text('$n', style: AppText.h(11, color: AppColors.white)),
+  );
 
   Widget _benchSlot(Player? p) {
     if (p == null) {
@@ -162,20 +173,23 @@ class PickPitch extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-        child: Row(children: [
-          Container(
-            width: 28, height: 28, alignment: Alignment.center,
-            color: AppColors.neutral200,
-            child: Text(p.initials, style: AppText.h(11)),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(12)),
-          ),
-          // الاحتياطي نقطه بتظهر بس مش بتتحسب
-          if (pointsFor != null)
-            Text('${pointsFor![p.id] ?? 0}', style: AppText.h(12, color: AppColors.neutral500)),
-        ]),
+        child: Row(
+          children: [
+            PentagonAvatar(
+              initials: p.initials,
+              photoUrl: p.imageUrl,
+              size: 30,
+              background: AppColors.neutral200,
+              color: AppColors.ink,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(12)),
+            ),
+            // الاحتياطي نقطه بتظهر بس مش بتتحسب
+            if (pointsFor != null) Text('${pointsFor![p.id] ?? 0}', style: AppText.h(12, color: AppColors.neutral500)),
+          ],
+        ),
       ),
     );
   }

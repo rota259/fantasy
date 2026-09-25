@@ -3,24 +3,30 @@ import 'models/league_standing.dart';
 
 /// عقد بيانات الدوريات والترتيب.
 abstract interface class LeaguesRepository {
-  /// الترتيب العام للمستخدم (حسب total_points).
+  /// الترتيب العام للمستخدم (النقط، والتعادل: اللاعيبة قليلة الامتلاك).
   Future<int> globalRank(String userId);
 
   /// دوريات المستخدم مع ترتيبه في كل واحد.
   Future<List<MyLeague>> myLeagues(String userId);
 
-  /// جدول ترتيب دوري معيّن (مرتّب بالنقاط).
+  /// جدول ترتيب دوري معيّن (النقط، والتعادل: اللاعيبة قليلة الامتلاك). العام = كل اليوزرز.
   Future<List<LeagueStanding>> standings(String leagueId);
 
-  /// الانضمام لدوري بكود الدعوة.
-  Future<void> joinByCode(String inviteCode, String userId);
+  /// الانضمام لدوري بكود الدعوة (بيرمي رسالة السيرفر لو الكود غلط).
+  Future<void> joinByCode(String inviteCode);
 
-  /// (مدير) كل الدوريات بعدد أعضائها.
+  /// (مدير) كل الدوريات بأصحابها وعدد أعضائها.
   Future<List<League>> fetchAll();
 
-  /// (مدير) إنشاء دوري بكود دعوة أوتوماتيك.
-  Future<League> createLeague(String name, String type);
+  /// أي يوزر يعمل دوري (لحد ١٠) بكود دعوة أوتوماتيك وبيبقى عضو فيه.
+  Future<League> createLeague(String name, String type, String ownerId);
 
-  /// (مدير) حذف دوري.
+  /// حذف دوري — صاحبه أو المدير.
   Future<void> deleteLeague(String id);
+
+  /// (مدير) الدوري العام — فيه كل اليوزرز أوتوماتيك (واحد بس).
+  Future<void> createGlobalLeague(String name);
+
+  /// الخروج من دوري.
+  Future<void> leave(String leagueId, String userId);
 }

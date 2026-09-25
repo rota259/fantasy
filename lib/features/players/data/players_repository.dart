@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'models/player.dart';
 
 /// عقد بيانات اللاعيبة.
@@ -12,11 +14,7 @@ abstract interface class PlayersRepository {
   Future<List<Player>> fetchByTeams(List<String> teams);
 
   /// (مدير) إضافة لاعب جديد؛ بيرجّع id اللاعب.
-  Future<String> addPlayer({
-    required String name,
-    required String team,
-    required String position,
-  });
+  Future<String> addPlayer({required String name, required String team, required String position});
 
   /// (مدير) حذف لاعب — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
   Future<int> deletePlayer(String id);
@@ -26,4 +24,7 @@ abstract interface class PlayersRepository {
 
   /// (مدير) تحديث حالة اللاعب (جاهز/مصاب/…) وسببها.
   Future<void> setAvailability(String id, String availability, String? news);
+
+  /// (مدير) رفع صورة اللاعب وحفظها — بيرجّع الرابط.
+  Future<String> uploadPhoto(String id, Uint8List bytes, String extension);
 }

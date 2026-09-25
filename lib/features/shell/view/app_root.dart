@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/notifications/notification_service.dart';
 import '../../auth/cubit/auth_cubit.dart';
-import '../../auth/data/auth_repository.dart';
 import '../../auth/view/login_screen.dart';
 import '../../auth/view/register_screen.dart';
 import '../../onboarding/view/onboarding_screen.dart';
@@ -12,29 +11,19 @@ import '../../squad/data/profile_repository.dart';
 import '../cubit/app_nav_cubit.dart';
 import 'app_shell.dart';
 
-/// جذر التطبيق: بيوفّر الـ cubits، والمصادقة بتقود التنقّل.
-/// (الـ repositories متوفّرة فوقه في AppRepositories.)
+/// جذر التطبيق: المصادقة بتقود التنقّل.
+/// (الـ repositories والـ cubits العامة متوفّرة فوقه في main.)
 class AppRoot extends StatelessWidget {
   const AppRoot({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => AppNavCubit()),
-        BlocProvider(create: (c) => AuthCubit(c.read<AuthRepository>())..checkSession()),
-      ],
-      child: MultiBlocListener(
-        listeners: [
-          BlocListener<AuthCubit, AuthState>(
-            listenWhen: (p, c) => p.status != c.status,
-            listener: _onAuthChanged,
-          ),
-        ],
-        child: BlocBuilder<AppNavCubit, AppNavState>(
-          buildWhen: (p, c) => p.route != c.route || p.onboardIndex != c.onboardIndex,
-          builder: (context, state) => _screen(state),
-        ),
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (p, c) => p.status != c.status,
+      listener: _onAuthChanged,
+      child: BlocBuilder<AppNavCubit, AppNavState>(
+        buildWhen: (p, c) => p.route != c.route || p.onboardIndex != c.onboardIndex,
+        builder: (context, state) => _screen(state),
       ),
     );
   }
@@ -48,6 +37,7 @@ class AppRoot extends StatelessWidget {
       }
       nav.login();
     } else if (s.status == AuthStatus.unauthenticated && nav.state.route == AppRoute.app) {
+      NotificationService.unregister();
       nav.logout();
     }
   }

@@ -10,12 +10,15 @@ abstract interface class VenuesRepository {
   /// الملاعب اللي اليوزر ده صاحبها.
   Future<List<Venue>> fetchOwned(String userId);
 
-  /// (مدير) إضافة ملعب (id فاضي) أو تعديله.
+  /// إضافة ملعب (id فاضي) أو تعديله — صاحبه أو المدير.
   Future<void> save(Venue venue);
 
-  /// (مدير) حذف ملعب.
+  /// حذف ملعب — صاحبه أو المدير.
   Future<void> deleteVenue(String id);
 
-  /// (مدير) رفع صورة وبيرجّع رابطها.
-  Future<String> uploadPhoto(Uint8List bytes, String extension);
+  /// رفع صورة في فولدر اليوزر وبيرجّع رابطها.
+  Future<String> uploadPhoto(String userId, Uint8List bytes, String extension);
+
+  /// متوسط تقييم كل ملعب: venueId → (المتوسط، العدد).
+  Future<Map<String, ({double avg, int count})>> ratings();
 }

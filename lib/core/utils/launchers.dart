@@ -19,16 +19,14 @@ abstract final class Launchers {
   }
 
   /// يفتح المكان في جوجل ماب (أو المتصفح لو التطبيق مش موجود).
-  static Future<bool> maps(double lat, double lng) => _open(
-        Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng'),
-      );
+  static Future<bool> maps(double lat, double lng) =>
+      _open(Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng'));
 
   static Future<bool> call(String phone) => _open(Uri(scheme: 'tel', path: _digits(phone)));
 
   /// واتساب مع رسالة جاهزة.
-  static Future<bool> whatsapp(String phone, String message) => _open(
-        Uri.https('wa.me', '/${_international(phone)}', {'text': message}),
-      );
+  static Future<bool> whatsapp(String phone, String message) =>
+      _open(Uri.https('wa.me', '/${_international(phone)}', {'text': message}));
 
   static String _digits(String p) => p.replaceAll(RegExp(r'[^0-9+]'), '');
 

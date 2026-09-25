@@ -45,40 +45,54 @@ class Venue extends Equatable {
   List<int> get hours => [for (var h = openHour; h < closeHour; h++) h];
 
   factory Venue.fromMap(Map<String, dynamic> m) => Venue(
-        id: m['id'].toString(),
-        name: (m['name'] ?? '') as String,
-        price: (m['price'] as num?)?.toInt() ?? 0,
-        surface: (m['surface'] ?? 'نجيلة صناعية') as String,
-        feature: m['feature'] as String?,
-        lat: (m['lat'] as num?)?.toDouble(),
-        lng: (m['lng'] as num?)?.toDouble(),
-        phone: m['phone'] as String?,
-        address: m['address'] as String?,
-        openHour: (m['open_hour'] as num?)?.toInt() ?? 16,
-        closeHour: (m['close_hour'] as num?)?.toInt() ?? 24,
-        photos: List<String>.from(m['photos'] ?? const []),
-        ownerId: m['owner_id']?.toString(),
-        mapsUrl: m['maps_url'] as String?,
-      );
+    id: m['id'].toString(),
+    name: (m['name'] ?? '') as String,
+    price: (m['price'] as num?)?.toInt() ?? 0,
+    surface: (m['surface'] ?? 'نجيلة صناعية') as String,
+    feature: m['feature'] as String?,
+    lat: (m['lat'] as num?)?.toDouble(),
+    lng: (m['lng'] as num?)?.toDouble(),
+    phone: m['phone'] as String?,
+    address: m['address'] as String?,
+    openHour: (m['open_hour'] as num?)?.toInt() ?? 16,
+    closeHour: (m['close_hour'] as num?)?.toInt() ?? 24,
+    photos: List<String>.from(m['photos'] ?? const []),
+    ownerId: m['owner_id']?.toString(),
+    mapsUrl: m['maps_url'] as String?,
+  );
 
   /// الأعمدة القابلة للكتابة (للإضافة/التعديل).
   Map<String, dynamic> toWrite() => {
-        'name': name,
-        'price': price,
-        'surface': surface,
-        'feature': feature,
-        'lat': lat,
-        'lng': lng,
-        'phone': phone,
-        'address': address,
-        'open_hour': openHour,
-        'close_hour': closeHour,
-        'photos': photos,
-        'owner_id': ownerId,
-        'maps_url': mapsUrl,
-      };
+    'name': name,
+    'price': price,
+    'surface': surface,
+    'feature': feature,
+    'lat': lat,
+    'lng': lng,
+    'phone': phone,
+    'address': address,
+    'open_hour': openHour,
+    'close_hour': closeHour,
+    'photos': photos,
+    'owner_id': ownerId,
+    'maps_url': mapsUrl,
+  };
 
   @override
-  List<Object?> get props =>
-      [id, name, price, surface, feature, lat, lng, phone, address, openHour, closeHour, photos, ownerId, mapsUrl];
+  List<Object?> get props => [
+    id,
+    name,
+    price,
+    surface,
+    feature,
+    lat,
+    lng,
+    phone,
+    address,
+    openHour,
+    closeHour,
+    photos,
+    ownerId,
+    mapsUrl,
+  ];
 }

@@ -66,8 +66,12 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
     final when = '${arabicWeekday(_kickoff!)} ${arabicTime(_kickoff!)}';
     try {
       if (_isEdit) {
-        await widget.matchesRepo.updateMatch(widget.editing!.id,
-            teams: [teamA, teamB], dateTime: _kickoff!, week: week);
+        await widget.matchesRepo.updateMatch(
+          widget.editing!.id,
+          teams: [teamA, teamB],
+          dateTime: _kickoff!,
+          week: week,
+        );
         // تعديل الماتش بيأثّر على الديدلاين — نبلّغ الناس
         await notifs.add(
           title: 'تعديل في ماتش 📝',
@@ -78,11 +82,7 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
       } else {
         await widget.matchesRepo.addMatch(teams: [teamA, teamB], dateTime: _kickoff!, week: week);
         // إشعار بتفاصيل الماتش الجديد (يظهر لكل اليوزرز فورًا)
-        await notifs.add(
-          title: 'ماتش جديد ⚽',
-          body: '$teamA ضد $teamB · GW$week · $when',
-          kind: 'match',
-        );
+        await notifs.add(title: 'ماتش جديد ⚽', body: '$teamA ضد $teamB · GW$week · $when', kind: 'match');
       }
       navigator.pop(true);
     } catch (_) {
@@ -127,8 +127,10 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
                 ),
                 if (k != null) ...[
                   const SizedBox(height: 6),
-                  Text('الديدلاين أوتوماتيك: ${arabicTime(k.subtract(const Duration(hours: 1)))} (قبل الماتش بساعة)',
-                      style: AppText.body(11, color: AppColors.accent700)),
+                  Text(
+                    'الديدلاين أوتوماتيك: ${arabicTime(k.subtract(const Duration(hours: 1)))} (قبل الماتش بساعة)',
+                    style: AppText.body(11, color: AppColors.accent700),
+                  ),
                 ],
                 const SizedBox(height: 16),
                 GestureDetector(
@@ -138,7 +140,11 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
                     padding: const EdgeInsets.all(13),
                     alignment: Alignment.center,
                     child: _saving
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white))
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white),
+                          )
                         : Text('احفظ الماتش', style: AppText.h(14, color: AppColors.white)),
                   ),
                 ),

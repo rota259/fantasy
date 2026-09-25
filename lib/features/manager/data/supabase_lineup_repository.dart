@@ -8,25 +8,20 @@ class SupabaseLineupRepository implements LineupRepository {
 
   @override
   Future<List<Lineup>> fetchForMatch(String matchId) async {
-    final rows =
-        await SupabaseService.table(_table).select().eq('match_id', matchId);
+    final rows = await SupabaseService.table(_table).select().eq('match_id', matchId);
     return rows.map(Lineup.fromMap).toList();
   }
 
   @override
   Future<void> setStatus(String matchId, String playerId, String status) async {
-    await SupabaseService.table(_table).upsert(
-      {'match_id': matchId, 'player_id': playerId, 'status': status},
-      onConflict: 'match_id,player_id',
-    );
+    await SupabaseService.table(
+      _table,
+    ).upsert({'match_id': matchId, 'player_id': playerId, 'status': status}, onConflict: 'match_id,player_id');
   }
 
   @override
   Future<void> remove(String matchId, String playerId) async {
-    await SupabaseService.table(_table)
-        .delete()
-        .eq('match_id', matchId)
-        .eq('player_id', playerId);
+    await SupabaseService.table(_table).delete().eq('match_id', matchId).eq('player_id', playerId);
   }
 
   @override
@@ -34,8 +29,7 @@ class SupabaseLineupRepository implements LineupRepository {
     await SupabaseService.table(_table).delete().eq('match_id', matchId);
     final rows = [
       for (final e in entries.entries)
-        if (e.value == 'starting' || e.value == 'bench')
-          {'match_id': matchId, 'player_id': e.key, 'status': e.value},
+        if (e.value == 'starting' || e.value == 'bench') {'match_id': matchId, 'player_id': e.key, 'status': e.value},
     ];
     if (rows.isNotEmpty) {
       await SupabaseService.table(_table).insert(rows);

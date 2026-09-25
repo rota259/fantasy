@@ -25,11 +25,7 @@ class NotificationsScreen extends StatelessWidget {
         body: Column(
           children: [
             const StatusArea(),
-            Masthead(
-              title: 'الإشعارات',
-              subtitle: 'NOTIFICATIONS',
-              onBack: () => Navigator.pop(context),
-            ),
+            Masthead(title: 'الإشعارات', subtitle: 'NOTIFICATIONS', onBack: () => Navigator.pop(context)),
             Expanded(
               child: BlocBuilder<NotificationsCubit, NotificationsState>(
                 builder: (context, s) {
@@ -38,17 +34,13 @@ class NotificationsScreen extends StatelessWidget {
                   }
                   if (s.items.isEmpty) {
                     return Center(
-                      child: Text('لسه مفيش إشعارات',
-                          style: AppText.body(13, color: AppColors.neutral600)),
+                      child: Text('لسه مفيش إشعارات', style: AppText.body(13, color: AppColors.neutral600)),
                     );
                   }
                   return RefreshIndicator(
                     color: AppColors.accent,
                     onRefresh: () => context.read<NotificationsCubit>().load(),
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      children: [for (final n in s.items) _row(n)],
-                    ),
+                    child: ListView(padding: EdgeInsets.zero, children: [for (final n in s.items) _row(n)]),
                   );
                 },
               ),
@@ -62,27 +54,39 @@ class NotificationsScreen extends StatelessWidget {
   Widget _row(AppNotification n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Container(
-          width: 34, height: 34, alignment: Alignment.center,
-          color: AppColors.accent,
-          child: const Icon(Icons.notifications, size: 18, color: AppColors.white),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(n.title, style: AppText.h(14)),
-            if (n.body.isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(n.body, style: AppText.body(11, color: AppColors.neutral700)),
-            ],
-            const SizedBox(height: 3),
-            Text('${arabicWeekday(n.createdAt)} ${arabicTime(n.createdAt)}',
-                style: AppText.body(9, color: AppColors.neutral500)),
-          ]),
-        ),
-      ]),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            color: AppColors.accent,
+            child: const Icon(Icons.notifications, size: 18, color: AppColors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(n.title, style: AppText.h(14)),
+                if (n.body.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(n.body, style: AppText.body(11, color: AppColors.neutral700)),
+                ],
+                const SizedBox(height: 3),
+                Text(
+                  '${arabicWeekday(n.createdAt)} ${arabicTime(n.createdAt)}',
+                  style: AppText.body(9, color: AppColors.neutral500),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

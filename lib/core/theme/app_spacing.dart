@@ -29,10 +29,8 @@ abstract final class AppBorders {
   static Border get solid => Border.all(color: AppColors.black, width: 2);
 
   /// حد فاصل خفيف 2px.
-  static Border get divider =>
-      Border.all(color: AppColors.divider, width: 2);
+  static Border get divider => Border.all(color: AppColors.divider, width: 2);
 
   /// حد أبيض شفّاف (على الأسطح الغامقة).
-  static Border white(double opacity) =>
-      Border.all(color: AppColors.white.withValues(alpha: opacity), width: 2);
+  static Border white(double opacity) => Border.all(color: AppColors.white.withValues(alpha: opacity), width: 2);
 }

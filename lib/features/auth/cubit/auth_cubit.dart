@@ -21,10 +21,7 @@ class AuthCubit extends Cubit<AuthState> {
     if (!_live) return;
     try {
       final user = await _repo.currentUser();
-      emit(AuthState(
-        status: user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
-        user: user,
-      ));
+      emit(AuthState(status: user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated, user: user));
     } catch (_) {
       emit(const AuthState(status: AuthStatus.unauthenticated));
     }
@@ -49,7 +46,7 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     required String password,
     String? phone,
-    String role = 'user',
+    String? referralCode,
   }) async {
     emit(const AuthState(status: AuthStatus.authenticating));
     if (!_live) {
@@ -62,12 +59,21 @@ class AuthCubit extends Cubit<AuthState> {
         email: email.trim(),
         password: password,
         phone: phone,
-        role: role,
+        referralCode: referralCode,
       );
       emit(AuthState(status: AuthStatus.authenticated, user: user));
     } catch (e) {
       emit(AuthState(status: AuthStatus.error, message: _msg(e)));
     }
+  }
+
+  /// إعادة تحميل البروفايل (بعد تغيير الصورة مثلًا).
+  Future<void> refresh() async {
+    if (!_live || state.user == null) return;
+    try {
+      final user = await _repo.currentUser();
+      if (user != null) emit(AuthState(status: AuthStatus.authenticated, user: user));
+    } catch (_) {}
   }
 
   Future<void> signOut() async {

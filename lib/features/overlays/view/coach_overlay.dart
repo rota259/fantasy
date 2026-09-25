@@ -20,11 +20,8 @@ class CoachOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (c) => CoachCubit(
-        c.read<PlayersRepository>(),
-        c.read<StatsRepository>(),
-        c.read<MatchesRepository>(),
-      )..load(),
+      create: (c) =>
+          CoachCubit(c.read<PlayersRepository>(), c.read<StatsRepository>(), c.read<MatchesRepository>())..load(),
       child: const _CoachView(),
     );
   }
@@ -44,22 +41,30 @@ class _CoachView extends StatelessWidget {
           subtitle: 'COACH · من داتا الجولة',
           onBack: nav.back,
           children: s.isLoading
-              ? [const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(color: AppColors.accent)))]
+              ? [
+                  const Padding(
+                    padding: EdgeInsets.all(40),
+                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                  ),
+                ]
               : (r == null || (r.captain == null && r.sections.isEmpty))
-                  ? [
-                      Padding(
-                        padding: const EdgeInsets.all(40),
-                        child: Center(
-                          child: Text('لسه مفيش داتا كفاية — بعد أول ماتشات وأحداث هتظهر النصايح',
-                              textAlign: TextAlign.center, style: AppText.body(13, color: AppColors.neutral600)),
-                        ),
+              ? [
+                  Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Center(
+                      child: Text(
+                        'لسه مفيش داتا كفاية — بعد أول ماتشات وأحداث هتظهر النصايح',
+                        textAlign: TextAlign.center,
+                        style: AppText.body(13, color: AppColors.neutral600),
                       ),
-                    ]
-                  : [
-                      if (r.captain != null) _captain(nav, r),
-                      for (final sec in r.sections) ..._section(nav, sec),
-                      const SizedBox(height: 16),
-                    ],
+                    ),
+                  ),
+                ]
+              : [
+                  if (r.captain != null) _captain(nav, r),
+                  for (final sec in r.sections) ..._section(nav, sec),
+                  const SizedBox(height: 16),
+                ],
         );
       },
     );
@@ -73,51 +78,64 @@ class _CoachView extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(18, 16, 18, 4),
         padding: const EdgeInsets.all(14),
         color: AppColors.black,
-        child: Row(children: [
-          Container(
-            width: 46, height: 46, alignment: Alignment.center,
-            color: AppColors.accent,
-            child: Text('C', style: AppText.h(20, color: AppColors.white)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('الكابتن المقترح', style: AppText.kicker(color: AppColors.accent400)),
-              Text('${p.name} · ${p.team}', style: AppText.h(16, color: AppColors.white)),
-              Text(r.captainReason, style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.7))),
-            ]),
-          ),
-        ]),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              color: AppColors.accent,
+              child: Text('C', style: AppText.h(20, color: AppColors.white)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('الكابتن المقترح', style: AppText.kicker(color: AppColors.accent400)),
+                  Text('${p.name} · ${p.team}', style: AppText.h(16, color: AppColors.white)),
+                  Text(r.captainReason, style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.7))),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   List<Widget> _section(AppNavCubit nav, CoachSection sec) => [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 2),
-          child: Text(sec.title, style: AppText.h(15)),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
-          child: Text(sec.hint, style: AppText.body(10, color: AppColors.neutral600)),
-        ),
-        for (final it in sec.items)
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => nav.openPlayer(it.player),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 18),
-              padding: const EdgeInsets.symmetric(vertical: 9),
-              decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-              child: Row(children: [
-                InitialsTile(it.player.initials, size: 30, fontSize: 11),
-                const SizedBox(width: 8),
-                AvailabilityBadge(it.player.availability, size: 16),
-                const SizedBox(width: 8),
-                Expanded(child: Text(it.player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(13))),
-                Text(it.value, style: AppText.h(12, color: AppColors.accent)),
-              ]),
-            ),
+    Padding(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 2),
+      child: Text(sec.title, style: AppText.h(15)),
+    ),
+    Padding(
+      padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
+      child: Text(sec.hint, style: AppText.body(10, color: AppColors.neutral600)),
+    ),
+    for (final it in sec.items)
+      GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => nav.openPlayer(it.player),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 18),
+          padding: const EdgeInsets.symmetric(vertical: 9),
+          decoration: const BoxDecoration(
+            border: Border(top: BorderSide(color: AppColors.divider)),
           ),
-      ];
+          child: Row(
+            children: [
+              InitialsTile(it.player.initials, size: 30, photoUrl: it.player.imageUrl),
+              const SizedBox(width: 8),
+              AvailabilityBadge(it.player.availability, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(it.player.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(13)),
+              ),
+              Text(it.value, style: AppText.h(12, color: AppColors.accent)),
+            ],
+          ),
+        ),
+      ),
+  ];
 }

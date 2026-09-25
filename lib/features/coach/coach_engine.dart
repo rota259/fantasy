@@ -45,19 +45,40 @@ abstract final class CoachEngine {
     }
 
     final sections = [
-      CoachSection('في الفورمة 🔥', 'أعلى متوسط نقاط في آخر ٣ جولات',
-          top(ready, (p) => p.form, (p) => 'فورمة ${p.form.toStringAsFixed(1)}')),
-      CoachSection('نجوم الجولة ⭐', 'أعلى نقاط في الجولة',
-          top(players, (p) => st(p).points, (p) => '${st(p).points} نقطة')),
-      CoachSection('جواهر مخفية 💎', 'فورمة حلوة وامتلاك قليل (أقل من ٢٠٪)',
-          top(ready.where((p) => st(p).ownership < 20), (p) => p.form,
-              (p) => '${st(p).ownership.toStringAsFixed(0)}% امتلاك')),
-      CoachSection('الأكثر امتلاكًا 👥', 'أكتر لاعيبة الناس مختارينها',
-          top(players, (p) => st(p).ownership, (p) => '${st(p).ownership.toStringAsFixed(1)}%')),
-      CoachSection('الأكثر دخولًا ↗', 'الناس بتختارهم الجولة دي',
-          top(players, (p) => st(p).transfersIn, (p) => '+${st(p).transfersIn}')),
-      CoachSection('الأكثر خروجًا ↘', 'الناس بتشيلهم الجولة دي',
-          top(players, (p) => st(p).transfersOut, (p) => '-${st(p).transfersOut}')),
+      CoachSection(
+        'في الفورمة 🔥',
+        'أعلى متوسط نقاط في آخر ٣ جولات',
+        top(ready, (p) => p.form, (p) => 'فورمة ${p.form.toStringAsFixed(1)}'),
+      ),
+      CoachSection(
+        'نجوم الجولة ⭐',
+        'أعلى نقاط في الجولة',
+        top(players, (p) => st(p).points, (p) => '${st(p).points} نقطة'),
+      ),
+      CoachSection(
+        'جواهر مخفية 💎',
+        'فورمة حلوة وامتلاك قليل (أقل من ٢٠٪)',
+        top(
+          ready.where((p) => st(p).ownership < 20),
+          (p) => p.form,
+          (p) => '${st(p).ownership.toStringAsFixed(0)}% امتلاك',
+        ),
+      ),
+      CoachSection(
+        'الأكثر امتلاكًا 👥',
+        'أكتر لاعيبة الناس مختارينها',
+        top(players, (p) => st(p).ownership, (p) => '${st(p).ownership.toStringAsFixed(1)}%'),
+      ),
+      CoachSection(
+        'الأكثر دخولًا ↗',
+        'الناس بتختارهم الجولة دي',
+        top(players, (p) => st(p).transfersIn, (p) => '+${st(p).transfersIn}'),
+      ),
+      CoachSection(
+        'الأكثر خروجًا ↘',
+        'الناس بتشيلهم الجولة دي',
+        top(players, (p) => st(p).transfersOut, (p) => '-${st(p).transfersOut}'),
+      ),
       CoachSection('تجنّبهم ⚠️', 'مصابين / مشكوك فيهم / موقوفين', [
         for (final p in players.where((p) => p.availability != Availability.ready).take(5))
           (player: p, value: Availability.label(p.availability)),
@@ -66,9 +87,7 @@ abstract final class CoachEngine {
 
     return CoachReport(
       captain: cap,
-      captainReason: cap == null
-          ? ''
-          : 'جاهز · فورمة ${cap.form.toStringAsFixed(1)} · إجمالي ${cap.totalPoints} نقطة',
+      captainReason: cap == null ? '' : 'جاهز · فورمة ${cap.form.toStringAsFixed(1)} · إجمالي ${cap.totalPoints} نقطة',
       sections: sections,
     );
   }

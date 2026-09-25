@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/pentagon_avatar.dart';
 import '../../players/data/availability.dart';
 import '../../players/data/models/player.dart';
 import '../../players/widgets/availability_badge.dart';
@@ -24,48 +25,62 @@ class PlayerHeader extends StatelessWidget {
           GestureDetector(
             onTap: onBack,
             child: Container(
-              width: 30, height: 30, alignment: Alignment.center,
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
               decoration: BoxDecoration(border: Border.all(color: AppColors.white.withValues(alpha: 0.4), width: 2)),
               child: Text('‹', style: AppText.h(16, color: AppColors.white)),
             ),
           ),
           const SizedBox(height: 14),
-          Row(children: [
-            Container(
-              width: 66, height: 66, alignment: Alignment.center,
-              color: AppColors.accent,
-              child: Text(player.initials, style: AppText.h(24, color: AppColors.white)),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(player.name,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: AppText.h(24, color: AppColors.white, height: 1)),
-                  const SizedBox(height: 3),
-                  Text('${player.team} · ${player.positionAr}',
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
-                  const SizedBox(height: 6),
-                  Row(children: [
-                    AvailabilityBadge(player.availability, size: 18),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        player.availability != Availability.ready && player.news?.isNotEmpty == true
-                            ? '${Availability.statusLine(player.availability)} · ${player.news}'
-                            : Availability.statusLine(player.availability),
-                        maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: AppText.h(11, color: Availability.color(player.availability)),
-                      ),
-                    ),
-                  ]),
-                ],
+          Row(
+            children: [
+              PentagonAvatar(
+                initials: player.initials,
+                photoUrl: player.imageUrl,
+                size: 70,
+                verified: player.isVerified,
               ),
-            ),
-          ]),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      player.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.h(24, color: AppColors.white, height: 1),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${player.team} · ${player.positionAr}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7)),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        AvailabilityBadge(player.availability, size: 18),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            player.availability != Availability.ready && player.news?.isNotEmpty == true
+                                ? '${Availability.statusLine(player.availability)} · ${player.news}'
+                                : Availability.statusLine(player.availability),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.h(11, color: Availability.color(player.availability)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -78,18 +93,20 @@ class PlayerStatGrid extends StatelessWidget {
   final Player player;
 
   List<(String, String, bool)> get _stats => [
-        ('${player.totalPoints}', 'إجمالي النقاط', false),
-        (player.form.toStringAsFixed(1), 'الفورمة', true),
-        ('${player.goals}', 'أهداف', false),
-        ('${player.assists}', 'صناعة', false),
-        ('${player.cleanSheets}', 'شباك نظيفة', false),
-        ('${player.yellowCards}', 'كروت صفرا', false),
-      ];
+    ('${player.totalPoints}', 'إجمالي النقاط', false),
+    (player.form.toStringAsFixed(1), 'الفورمة', true),
+    ('${player.goals}', 'أهداف', false),
+    ('${player.assists}', 'صناعة', false),
+    ('${player.cleanSheets}', 'شباك نظيفة', false),
+    ('${player.yellowCards}', 'كروت صفرا', false),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppColors.divider, width: 2))),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.divider, width: 2)),
+      ),
       child: GridView.count(
         crossAxisCount: 3,
         shrinkWrap: true,

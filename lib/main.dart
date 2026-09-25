@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/notifications/notification_service.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/supabase/supabase_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/cubit/auth_cubit.dart';
+import 'features/auth/data/auth_repository.dart';
+import 'features/shell/cubit/app_nav_cubit.dart';
 import 'features/shell/view/app_repositories.dart';
 import 'features/shell/view/app_root.dart';
 
@@ -13,10 +17,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // شريط حالة شفّاف بأيقونات فاتحة (خلفياتنا غامقة فوق).
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.light),
+  );
 
   // تهيئة Supabase فقط لو المفاتيح ممرّرة بـ --dart-define.
   if (SupabaseConfig.isConfigured) {
@@ -33,13 +36,21 @@ class FantasyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // الـ repositories والـ cubits العامة (المصادقة + التنقّل) فوق الـ MaterialApp
+    // عشان أي شاشة بتتفتح بـ push تقدر توصلهم.
     return AppRepositories(
-      child: MaterialApp(
-        title: 'الخماسي',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.theme,
-        builder: (context, child) => _responsiveShell(context, child!),
-        home: const AppRoot(),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => AppNavCubit()),
+          BlocProvider(create: (c) => AuthCubit(c.read<AuthRepository>())..checkSession()),
+        ],
+        child: MaterialApp(
+          title: 'الخماسي',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.theme,
+          builder: (context, child) => _responsiveShell(context, child!),
+          home: const AppRoot(),
+        ),
       ),
     );
   }
@@ -63,10 +74,7 @@ class FantasyApp extends StatelessWidget {
     return ColoredBox(
       color: AppColors.ink,
       child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
-          child: scaled,
-        ),
+        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 640), child: scaled),
       ),
     );
   }

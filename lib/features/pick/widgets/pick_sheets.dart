@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/initials_tile.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/match_pick_cubit.dart';
 
@@ -39,40 +40,37 @@ Future<void> showAddPlayerSheet(
 }
 
 /// شيت خيارات لاعب مختار: كابتن / كابتن احتياطي / تبديل / شيل.
-Future<void> showPlayerOptionsSheet(
-  BuildContext context,
-  MatchPickCubit cubit,
-  MatchPickState s,
-  Player p,
-) {
+Future<void> showPlayerOptionsSheet(BuildContext context, MatchPickCubit cubit, MatchPickState s, Player p) {
   final starting = s.sel[p.id] == 'starting';
   return showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.bg,
     builder: (_) => SafeArea(
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        _title(p.name),
-        if (starting) ...[
-          _option(context, 'اعمله كابتن (×٢)', () => cubit.setCaptain(p.id)),
-          _option(context, 'اعمله كابتن احتياطي', () => cubit.setVice(p.id)),
-          _option(context, 'بدّله باحتياطي', () {
-            Navigator.pop(context);
-            _swapSheet(context, cubit, s, p, wantStarting: false);
-          }, keepOpen: true),
-        ] else
-          _option(context, 'بدّله بأساسي', () {
-            Navigator.pop(context);
-            _swapSheet(context, cubit, s, p, wantStarting: true);
-          }, keepOpen: true),
-        _option(context, 'شيله من التشكيلة', () => cubit.removePick(p.id), danger: true),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _title(p.name),
+          if (starting) ...[
+            _option(context, 'اعمله كابتن (×٢)', () => cubit.setCaptain(p.id)),
+            _option(context, 'اعمله كابتن احتياطي', () => cubit.setVice(p.id)),
+            _option(context, 'بدّله باحتياطي', () {
+              Navigator.pop(context);
+              _swapSheet(context, cubit, s, p, wantStarting: false);
+            }, keepOpen: true),
+          ] else
+            _option(context, 'بدّله بأساسي', () {
+              Navigator.pop(context);
+              _swapSheet(context, cubit, s, p, wantStarting: true);
+            }, keepOpen: true),
+          _option(context, 'شيله من التشكيلة', () => cubit.removePick(p.id), danger: true),
+        ],
+      ),
     ),
   );
 }
 
 /// شيت اختيار الطرف التاني للتبديل.
-void _swapSheet(BuildContext context, MatchPickCubit cubit, MatchPickState s, Player p,
-    {required bool wantStarting}) {
+void _swapSheet(BuildContext context, MatchPickCubit cubit, MatchPickState s, Player p, {required bool wantStarting}) {
   final target = wantStarting ? 'starting' : 'bench';
   final list = <Player>[];
   s.sel.forEach((id, st) {
@@ -85,12 +83,7 @@ void _swapSheet(BuildContext context, MatchPickCubit cubit, MatchPickState s, Pl
   });
 }
 
-Future<void> _listSheet(
-  BuildContext context,
-  String title,
-  List<Player> players,
-  void Function(Player) onPick,
-) {
+Future<void> _listSheet(BuildContext context, String title, List<Player> players, void Function(Player) onPick) {
   return showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.bg,
@@ -98,54 +91,56 @@ Future<void> _listSheet(
     builder: (_) => SafeArea(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          _title(title),
-          if (players.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text('مفيش لاعيبة متاحة', style: AppText.body(13, color: AppColors.neutral600)),
-            ),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                for (final p in players)
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onPick(p),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-                      child: Row(children: [
-                        Container(
-                          width: 30, height: 30, alignment: Alignment.center,
-                          color: AppColors.neutral200,
-                          child: Text(p.initials, style: AppText.h(11)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _title(title),
+            if (players.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('مفيش لاعيبة متاحة', style: AppText.body(13, color: AppColors.neutral600)),
+              ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final p in players)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onPick(p),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(
+                          border: Border(top: BorderSide(color: AppColors.divider)),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(p.name, style: AppText.h(13))),
-                        Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
-                      ]),
+                        child: Row(
+                          children: [
+                            InitialsTile(p.initials, size: 32, photoUrl: p.imageUrl),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(p.name, style: AppText.h(13))),
+                            Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ]),
+          ],
+        ),
       ),
     ),
   );
 }
 
 Widget _title(String t) => Container(
-      width: double.infinity,
-      color: AppColors.black,
-      padding: const EdgeInsets.all(14),
-      child: Text(t, style: AppText.h(15, color: AppColors.white)),
-    );
+  width: double.infinity,
+  color: AppColors.black,
+  padding: const EdgeInsets.all(14),
+  child: Text(t, style: AppText.h(15, color: AppColors.white)),
+);
 
-Widget _option(BuildContext context, String label, VoidCallback onTap,
-    {bool danger = false, bool keepOpen = false}) {
+Widget _option(BuildContext context, String label, VoidCallback onTap, {bool danger = false, bool keepOpen = false}) {
   return GestureDetector(
     behavior: HitTestBehavior.opaque,
     onTap: () {
@@ -155,7 +150,9 @@ Widget _option(BuildContext context, String label, VoidCallback onTap,
     child: Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
       child: Text(label, style: AppText.h(14, color: danger ? AppColors.danger : AppColors.ink)),
     ),
   );

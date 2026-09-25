@@ -25,59 +25,75 @@ class _VenuesMapViewState extends State<VenuesMapView> {
   Widget build(BuildContext context) {
     final located = widget.venues.where((v) => v.hasLocation).toList();
     final center = located.isEmpty ? cairo : LatLng(located.first.lat!, located.first.lng!);
-    return Stack(children: [
-      FlutterMap(
-        options: MapOptions(
-          initialCenter: center,
-          initialZoom: located.isEmpty ? 10 : 12,
-          onTap: (_, __) => setState(() => _selected = null),
-        ),
-        children: [
-          osmTiles(),
-          MarkerLayer(markers: [
-            for (final v in located)
-              venuePin(
-                LatLng(v.lat!, v.lng!),
-                selected: v.id == _selected?.id,
-                onTap: () => setState(() => _selected = v),
-              ),
-          ]),
-          osmAttribution(),
-        ],
-      ),
-      if (located.isEmpty)
-        Positioned(
-          top: 12, left: 12, right: 12,
-          child: Container(
-            color: AppColors.black,
-            padding: const EdgeInsets.all(10),
-            child: Text('لسه مفيش ملاعب متحدّد مكانها على الخريطة',
-                textAlign: TextAlign.center, style: AppText.h(12, color: AppColors.white)),
+    return Stack(
+      children: [
+        FlutterMap(
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: located.isEmpty ? 10 : 12,
+            onTap: (_, __) => setState(() => _selected = null),
           ),
+          children: [
+            osmTiles(),
+            MarkerLayer(
+              markers: [
+                for (final v in located)
+                  venuePin(
+                    LatLng(v.lat!, v.lng!),
+                    selected: v.id == _selected?.id,
+                    onTap: () => setState(() => _selected = v),
+                  ),
+              ],
+            ),
+            osmAttribution(),
+          ],
         ),
-      if (_selected != null)
-        Positioned(
-          left: 12, right: 12, bottom: 30,
-          child: GestureDetector(
-            onTap: () => widget.onOpen(_selected!),
+        if (located.isEmpty)
+          Positioned(
+            top: 12,
+            left: 12,
+            right: 12,
             child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.bg,
-                border: Border.all(color: AppColors.black, width: 2),
+              color: AppColors.black,
+              padding: const EdgeInsets.all(10),
+              child: Text(
+                'لسه مفيش ملاعب متحدّد مكانها على الخريطة',
+                textAlign: TextAlign.center,
+                style: AppText.h(12, color: AppColors.white),
               ),
-              child: Row(children: [
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(_selected!.name, style: AppText.h(15)),
-                    Text('${_selected!.price}ج/ساعة', style: AppText.body(11, color: AppColors.neutral700)),
-                  ]),
-                ),
-                Text('افتح ›', style: AppText.h(13, color: AppColors.accent)),
-              ]),
             ),
           ),
-        ),
-    ]);
+        if (_selected != null)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 30,
+            child: GestureDetector(
+              onTap: () => widget.onOpen(_selected!),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.bg,
+                  border: Border.all(color: AppColors.black, width: 2),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_selected!.name, style: AppText.h(15)),
+                          Text('${_selected!.price}ج/ساعة', style: AppText.body(11, color: AppColors.neutral700)),
+                        ],
+                      ),
+                    ),
+                    Text('افتح ›', style: AppText.h(13, color: AppColors.accent)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }

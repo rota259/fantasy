@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,11 +26,7 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
     }
   }
 
-  Future<void> add({
-    required String name,
-    required String team,
-    required String position,
-  }) async {
+  Future<void> add({required String name, required String team, required String position}) async {
     await _repo.addPlayer(name: name, team: team, position: position);
     await load();
   }
@@ -44,6 +42,17 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
     }
   }
 
+  /// (مدير) صورة اللاعب. بيرجّع رسالة خطأ أو null.
+  Future<String?> setPhoto(String id, Uint8List bytes, String ext) async {
+    try {
+      await _repo.uploadPhoto(id, bytes, ext);
+      await load();
+      return null;
+    } catch (e) {
+      return 'الصورة مترفعتش: $e';
+    }
+  }
+
   /// (مدير) تحديث حالة اللاعب (جاهز/مصاب/…) وسببها + إشعار لكل اليوزرز.
   Future<void> setAvailability(String id, String availability, String? news) async {
     await _repo.setAvailability(id, availability, news);
@@ -56,11 +65,9 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
     final name = _playerName(id);
     final body = (news != null && news.isNotEmpty) ? news : 'تحديث حالة اللاعب';
     try {
-      await SupabaseService.table('notifications').insert({
-        'title': '${Availability.label(availability)} — $name 🩺',
-        'body': body,
-        'kind': 'status',
-      });
+      await SupabaseService.table(
+        'notifications',
+      ).insert({'title': '${Availability.label(availability)} — $name 🩺', 'body': body, 'kind': 'status'});
     } catch (_) {}
   }
 

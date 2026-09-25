@@ -12,8 +12,7 @@ class BlinkDot extends StatefulWidget {
 }
 
 class _BlinkDotState extends State<BlinkDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat();
 
   @override
   void dispose() {

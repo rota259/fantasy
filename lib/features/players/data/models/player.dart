@@ -17,6 +17,7 @@ class Player extends Equatable {
     this.yellowCards = 0,
     this.availability = 'ready',
     this.news,
+    this.userId,
   });
 
   final String id;
@@ -33,51 +34,34 @@ class Player extends Equatable {
   final int yellowCards;
   final String availability; // ready | injured | doubtful | suspended
   final String? news; // سبب الحالة
+  final String? userId; // اليوزر اللي وثّق البروفايل (اللاعب الحقيقي)
+
+  bool get isVerified => userId != null;
 
   /// المركز بالعربي للعرض.
-  String get positionAr => const {
-        'GK': 'حارس',
-        'DEF': 'دفاع',
-        'MID': 'وسط',
-        'FWD': 'مهاجم',
-      }[position] ??
-      position;
+  String get positionAr => const {'GK': 'حارس', 'DEF': 'دفاع', 'MID': 'وسط', 'FWD': 'مهاجم'}[position] ?? position;
 
   /// أول حرفين من الاسم (بديل الصورة).
   String get initials => name.trim().length >= 2 ? name.trim().substring(0, 2) : name;
 
   factory Player.fromMap(Map<String, dynamic> map) => Player(
-        id: map['id'].toString(),
-        name: (map['name'] ?? '') as String,
-        team: (map['team'] ?? '') as String,
-        position: (map['position'] ?? '') as String,
-        price: (map['price'] as num?)?.toDouble() ?? 0,
-        imageUrl: map['image_url'] as String?,
-        totalPoints: (map['total_points'] ?? 0) as int,
-        form: (map['form'] as num?)?.toDouble() ?? 0,
-        goals: (map['goals'] ?? 0) as int,
-        assists: (map['assists'] ?? 0) as int,
-        cleanSheets: (map['clean_sheets'] ?? 0) as int,
-        yellowCards: (map['yellow_cards'] ?? 0) as int,
-        availability: (map['availability'] ?? 'ready') as String,
-        news: map['news'] as String?,
-      );
-
-  Map<String, dynamic> toMap() => {
-        'id': id,
-        'name': name,
-        'team': team,
-        'position': position,
-        'price': price,
-        'image_url': imageUrl,
-        'total_points': totalPoints,
-        'form': form,
-        'goals': goals,
-        'assists': assists,
-        'clean_sheets': cleanSheets,
-        'yellow_cards': yellowCards,
-      };
+    id: map['id'].toString(),
+    name: (map['name'] ?? '') as String,
+    team: (map['team'] ?? '') as String,
+    position: (map['position'] ?? '') as String,
+    price: (map['price'] as num?)?.toDouble() ?? 0,
+    imageUrl: map['image_url'] as String?,
+    totalPoints: (map['total_points'] ?? 0) as int,
+    form: (map['form'] as num?)?.toDouble() ?? 0,
+    goals: (map['goals'] ?? 0) as int,
+    assists: (map['assists'] ?? 0) as int,
+    cleanSheets: (map['clean_sheets'] ?? 0) as int,
+    yellowCards: (map['yellow_cards'] ?? 0) as int,
+    availability: (map['availability'] ?? 'ready') as String,
+    news: map['news'] as String?,
+    userId: map['user_id']?.toString(),
+  );
 
   @override
-  List<Object?> get props => [id, name, team, position, price, totalPoints, form];
+  List<Object?> get props => [id, name, team, position, price, imageUrl, totalPoints, form, availability, news, userId];
 }

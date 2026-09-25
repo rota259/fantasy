@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/net_image.dart';
 
 /// صور الملعب بالتقليب + نقط العدّ. الضغط على صورة بيكبّرها.
 class VenueGallery extends StatefulWidget {
@@ -19,7 +20,9 @@ class _VenueGalleryState extends State<VenueGallery> {
       context: context,
       builder: (_) => GestureDetector(
         onTap: () => Navigator.pop(context),
-        child: InteractiveViewer(child: Center(child: Image.network(url))),
+        child: InteractiveViewer(
+          child: Center(child: NetImage(url, fit: BoxFit.contain)),
+        ),
       ),
     );
   }
@@ -35,35 +38,38 @@ class _VenueGalleryState extends State<VenueGallery> {
     }
     return SizedBox(
       height: 230,
-      child: Stack(children: [
-        PageView(
-          onPageChanged: (i) => setState(() => _page = i),
-          children: [
-            for (final url in widget.photos)
-              GestureDetector(
-                onTap: () => _zoom(url),
-                child: Image.network(url, fit: BoxFit.cover,
-                    loadingBuilder: (_, child, p) =>
-                        p == null ? child : Container(color: AppColors.night2),
-                    errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.night2,
-                        child: const Icon(Icons.broken_image_outlined, color: AppColors.white))),
-              ),
-          ],
-        ),
-        if (widget.photos.length > 1)
-          Positioned(
-            bottom: 8, left: 0, right: 0,
-            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              for (var i = 0; i < widget.photos.length; i++)
-                Container(
-                  width: 8, height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  color: i == _page ? AppColors.white : AppColors.white.withValues(alpha: 0.4),
+      child: Stack(
+        children: [
+          PageView(
+            onPageChanged: (i) => setState(() => _page = i),
+            children: [
+              for (final url in widget.photos)
+                GestureDetector(
+                  onTap: () => _zoom(url),
+                  child: NetImage(url, fallback: Container(color: AppColors.night2)),
                 ),
-            ]),
+            ],
           ),
-      ]),
+          if (widget.photos.length > 1)
+            Positioned(
+              bottom: 8,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < widget.photos.length; i++)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      color: i == _page ? AppColors.white : AppColors.white.withValues(alpha: 0.4),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

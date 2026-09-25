@@ -39,7 +39,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   }
 
   void _reload() {
-    if (mounted) setState(() { _future = _repo.mine(widget.userId); });
+    if (mounted) {
+      setState(() {
+        _future = _repo.mine(widget.userId);
+      });
+    }
   }
 
   Future<void> _cancel(Booking b) async {
@@ -74,25 +78,31 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Column(children: [
-        const StatusArea(),
-        Masthead(title: 'حجوزاتي', subtitle: 'MY BOOKINGS', onBack: () => Navigator.pop(context)),
-        Expanded(
-          child: FutureBuilder<List<Booking>>(
-            future: _future,
-            builder: (context, snap) {
-              if (snap.hasError) {
-                return Center(child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)));
-              }
-              if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-              if (snap.data!.isEmpty) {
-                return Center(child: Text('لسه محجزتش أي ملعب', style: AppText.body(13, color: AppColors.neutral600)));
-              }
-              return ListView(padding: EdgeInsets.zero, children: [for (final b in snap.data!) _row(b)]);
-            },
+      body: Column(
+        children: [
+          const StatusArea(),
+          Masthead(title: 'حجوزاتي', subtitle: 'MY BOOKINGS', onBack: () => Navigator.pop(context)),
+          Expanded(
+            child: FutureBuilder<List<Booking>>(
+              future: _future,
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return Center(
+                    child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
+                  );
+                }
+                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (snap.data!.isEmpty) {
+                  return Center(
+                    child: Text('لسه محجزتش أي ملعب', style: AppText.body(13, color: AppColors.neutral600)),
+                  );
+                }
+                return ListView(padding: EdgeInsets.zero, children: [for (final b in snap.data!) _row(b)]);
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -100,32 +110,39 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     final canCancel = b.isActive && !b.isPast;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(b.venueName ?? 'ملعب', style: AppText.h(14)),
-            Text(slotText(b.day, b.hour), style: AppText.body(12, color: AppColors.neutral700)),
-            Text(b.statusLabel, style: AppText.h(12, color: _color(b.status))),
-          ]),
-        ),
-        if (canCancel)
-          GestureDetector(
-            onTap: () => _cancel(b),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.danger, width: 2)),
-              child: Text('إلغاء', style: AppText.h(11, color: AppColors.danger)),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(b.venueName ?? 'ملعب', style: AppText.h(14)),
+                Text(slotText(b.day, b.hour), style: AppText.body(12, color: AppColors.neutral700)),
+                Text(b.statusLabel, style: AppText.h(12, color: _color(b.status))),
+              ],
             ),
           ),
-      ]),
+          if (canCancel)
+            GestureDetector(
+              onTap: () => _cancel(b),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.danger, width: 2)),
+                child: Text('إلغاء', style: AppText.h(11, color: AppColors.danger)),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
   Color _color(String s) => switch (s) {
-        'confirmed' => AppColors.accent,
-        'pending' => const Color(0xFFCA8A04),
-        'rejected' => AppColors.danger,
-        _ => AppColors.neutral600,
-      };
+    'confirmed' => AppColors.accent,
+    'pending' => const Color(0xFFCA8A04),
+    'rejected' => AppColors.danger,
+    _ => AppColors.neutral600,
+  };
 }

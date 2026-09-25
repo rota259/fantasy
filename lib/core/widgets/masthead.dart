@@ -45,8 +45,12 @@ class Masthead extends StatelessWidget {
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.h(8, color: AppColors.white, weight: FontWeight.w600, spacingEm: 0.16)
-                      .copyWith(color: AppColors.white.withValues(alpha: 0.9)),
+                  style: AppText.h(
+                    8,
+                    color: AppColors.white,
+                    weight: FontWeight.w600,
+                    spacingEm: 0.16,
+                  ).copyWith(color: AppColors.white.withValues(alpha: 0.9)),
                 ),
               ],
             ),
@@ -70,9 +74,7 @@ class _BackButton extends StatelessWidget {
         width: 30,
         height: 30,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.white.withValues(alpha: 0.5), width: 2),
-        ),
+        decoration: BoxDecoration(border: Border.all(color: AppColors.white.withValues(alpha: 0.5), width: 2)),
         child: Text('‹', style: AppText.h(16, color: AppColors.white)),
       ),
     );

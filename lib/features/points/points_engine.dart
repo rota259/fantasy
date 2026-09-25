@@ -28,19 +28,19 @@ abstract final class PointsEngine {
 
   /// وصف الحدث بالعربي للبث الحي.
   static String eventLabel(String type) => switch (type) {
-        'goal' => 'جوووول',
-        'assist' => 'تمريرة حاسمة',
-        'cleanSheet' => 'شباك نظيفة',
-        'save' => 'تصدّي مهم',
-        'penaltySave' => 'صدّ بلنتي',
-        'motm' => 'نجم الماتش',
-        'yellowCard' => 'كارت أصفر',
-        'redCard' => 'كارت أحمر',
-        'ownGoal' => 'جول عكسي',
-        'penaltyMiss' => 'أضاع بلنتي',
-        'appearance' => 'شارك',
-        _ => type,
-      };
+    'goal' => 'جوووول',
+    'assist' => 'تمريرة حاسمة',
+    'cleanSheet' => 'شباك نظيفة',
+    'save' => 'تصدّي مهم',
+    'penaltySave' => 'صدّ بلنتي',
+    'motm' => 'رجل المباراة ⭐',
+    'yellowCard' => 'كارت أصفر',
+    'redCard' => 'كارت أحمر',
+    'ownGoal' => 'جول عكسي',
+    'penaltyMiss' => 'أضاع بلنتي',
+    'appearance' => 'شارك',
+    _ => type,
+  };
 
   /// إجمالي نقاط لاعب من أحداثه.
   static int playerPoints(String position, Iterable<MatchEvent> events) {
@@ -55,11 +55,7 @@ abstract final class PointsEngine {
   }
 
   /// نقاط تشكيلة المستخدم في الجولة (نقاط الكابتن × 2).
-  static int squadPoints(
-    List<Player> squad,
-    String? captainId,
-    Iterable<MatchEvent> events,
-  ) {
+  static int squadPoints(List<Player> squad, String? captainId, Iterable<MatchEvent> events) {
     final byId = {for (final p in squad) p.id: p};
     var total = 0;
     for (final e in events) {

@@ -45,12 +45,10 @@ class _ManagerBroadcastScreenState extends State<ManagerBroadcastScreen> {
     }
     setState(() => _sending = true);
     try {
-      final pushed = await context.read<AdminRepository>().notify(title: title, body: body);
+      await context.read<AdminRepository>().notify(title: title, body: body, kind: 'match');
       _title.clear();
       _body.clear();
-      messenger.showSnackBar(SnackBar(
-        content: Text(pushed ? 'اتبعت لكل اليوزرز ✓' : 'اتسجّل جوه التطبيق (الـ push مبعتش)'),
-      ));
+      messenger.showSnackBar(const SnackBar(content: Text('اتبعت لكل اليوزرز ✓')));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text('فشل الإرسال: $e')));
     } finally {
@@ -62,58 +60,68 @@ class _ManagerBroadcastScreenState extends State<ManagerBroadcastScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: Column(children: [
-        const StatusArea(),
-        Masthead(title: 'إشعار للكل', subtitle: 'MANAGER · BROADCAST', onBack: () => Navigator.pop(context)),
-        Expanded(
-          child: ListView(padding: const EdgeInsets.all(16), children: [
-            Text('رسايل جاهزة', style: AppText.kicker()),
-            const SizedBox(height: 8),
-            Wrap(spacing: 8, runSpacing: 8, children: [
-              for (final t in _templates)
+      body: Column(
+        children: [
+          const StatusArea(),
+          Masthead(title: 'إشعار للكل', subtitle: 'MANAGER · BROADCAST', onBack: () => Navigator.pop(context)),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text('رسايل جاهزة', style: AppText.kicker()),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final t in _templates)
+                      GestureDetector(
+                        onTap: () => setState(() {
+                          _title.text = t.$1;
+                          _body.text = t.$2;
+                        }),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                          decoration: BoxDecoration(border: Border.all(color: AppColors.divider, width: 2)),
+                          child: Text(t.$1, style: AppText.body(12)),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _field(_title, 'العنوان'),
+                const SizedBox(height: 10),
+                _field(_body, 'الرسالة (اختياري)', lines: 4),
+                const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => setState(() {
-                    _title.text = t.$1;
-                    _body.text = t.$2;
-                  }),
+                  onTap: _sending ? null : _send,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(border: Border.all(color: AppColors.divider, width: 2)),
-                    child: Text(t.$1, style: AppText.body(12)),
+                    color: _sending ? AppColors.neutral500 : AppColors.accent,
+                    padding: const EdgeInsets.all(13),
+                    alignment: Alignment.center,
+                    child: Text('🔔 ابعت لكل اليوزرز', style: AppText.h(14, color: AppColors.white)),
                   ),
                 ),
-            ]),
-            const SizedBox(height: 16),
-            _field(_title, 'العنوان'),
-            const SizedBox(height: 10),
-            _field(_body, 'الرسالة (اختياري)', lines: 4),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _sending ? null : _send,
-              child: Container(
-                color: _sending ? AppColors.neutral500 : AppColors.accent,
-                padding: const EdgeInsets.all(13),
-                alignment: Alignment.center,
-                child: Text('🔔 ابعت لكل اليوزرز', style: AppText.h(14, color: AppColors.white)),
-              ),
+              ],
             ),
-          ]),
-        ),
-      ]),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _field(TextEditingController c, String hint, {int lines = 1}) => Container(
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-        child: TextField(
-          controller: c,
-          maxLines: lines,
-          style: AppText.h(14),
-          decoration: InputDecoration(
-            isDense: true, border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-            hintText: hint,
-          ),
-        ),
-      );
+    decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+    child: TextField(
+      controller: c,
+      maxLines: lines,
+      style: AppText.h(14),
+      decoration: InputDecoration(
+        isDense: true,
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+        hintText: hint,
+      ),
+    ),
+  );
 }

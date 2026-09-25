@@ -19,10 +19,7 @@ class ManagerPlayersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ManagerPlayersCubit(playersRepo)..load(),
-      child: const _View(),
-    );
+    return BlocProvider(create: (_) => ManagerPlayersCubit(playersRepo)..load(), child: const _View());
   }
 }
 
@@ -49,11 +46,7 @@ class _ViewState extends State<_View> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اكتب الاسم والنادي')));
       return;
     }
-    cubit.add(
-      name: _name.text.trim(),
-      team: _team.text.trim(),
-      position: _pos,
-    );
+    cubit.add(name: _name.text.trim(), team: _team.text.trim(), position: _pos);
     _name.clear();
     _team.clear();
   }
@@ -65,11 +58,7 @@ class _ViewState extends State<_View> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(
-            title: 'إدارة اللاعيبة',
-            subtitle: 'MANAGER · PLAYERS',
-            onBack: () => Navigator.pop(context),
-          ),
+          Masthead(title: 'إدارة اللاعيبة', subtitle: 'MANAGER · PLAYERS', onBack: () => Navigator.pop(context)),
           Expanded(
             child: BlocBuilder<ManagerPlayersCubit, ManagerPlayersState>(
               builder: (context, s) {
@@ -96,17 +85,25 @@ class _ViewState extends State<_View> {
                     Text('اللاعيبة (${s.players.length})', style: AppText.h(15)),
                     const SizedBox(height: 6),
                     if (s.isLoading)
-                      const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator(color: AppColors.accent))),
+                      const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                      ),
                     if (!s.isLoading && s.players.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Text('لسه مضفتش لاعيبة. ضيف أول لاعب من فوق.',
-                            style: AppText.body(12, color: AppColors.neutral600)),
+                        child: Text(
+                          'لسه مضفتش لاعيبة. ضيف أول لاعب من فوق.',
+                          style: AppText.body(12, color: AppColors.neutral600),
+                        ),
                       ),
                     for (final p in s.players)
-                      _playerRow(p.name, '${p.team} · ${p.positionAr}',
-                          onEdit: () => showPlayerEditSheet(context, cubit, p),
-                          onDelete: () => _confirmDelete(cubit, p.id, p.name)),
+                      _playerRow(
+                        p.name,
+                        '${p.team} · ${p.positionAr}',
+                        onEdit: () => showPlayerEditSheet(context, cubit, p),
+                        onDelete: () => _confirmDelete(cubit, p.id, p.name),
+                      ),
                   ],
                 );
               },
@@ -140,10 +137,9 @@ class _ViewState extends State<_View> {
     if (ok != true || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final err = await cubit.remove(id);
-    messenger.showSnackBar(SnackBar(
-      content: Text(err ?? 'اتحذف «$name» ✓'),
-      duration: const Duration(milliseconds: 2200),
-    ));
+    messenger.showSnackBar(
+      SnackBar(content: Text(err ?? 'اتحذف «$name» ✓'), duration: const Duration(milliseconds: 2200)),
+    );
   }
 
   Widget _field(TextEditingController c, String hint, {bool number = false}) {
@@ -184,27 +180,36 @@ class _ViewState extends State<_View> {
     );
   }
 
-  Widget _playerRow(String name, String meta,
-      {required VoidCallback onEdit, required VoidCallback onDelete}) {
+  Widget _playerRow(String name, String meta, {required VoidCallback onEdit, required VoidCallback onDelete}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.divider))),
-      child: Row(children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, style: AppText.h(13)),
-            Text(meta, style: AppText.body(10, color: AppColors.neutral700)),
-          ]),
-        ),
-        GestureDetector(
-          onTap: onEdit,
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Icon(Icons.edit_outlined, size: 18, color: AppColors.neutral700),
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: AppText.h(13)),
+                Text(meta, style: AppText.body(10, color: AppColors.neutral700)),
+              ],
+            ),
           ),
-        ),
-        GestureDetector(onTap: onDelete, child: const Icon(Icons.close, size: 18, color: AppColors.danger)),
-      ]),
+          GestureDetector(
+            onTap: onEdit,
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Icon(Icons.edit_outlined, size: 18, color: AppColors.neutral700),
+            ),
+          ),
+          GestureDetector(
+            onTap: onDelete,
+            child: const Icon(Icons.close, size: 18, color: AppColors.danger),
+          ),
+        ],
+      ),
     );
   }
 }

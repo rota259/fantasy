@@ -3,10 +3,7 @@ part of 'notifications_cubit.dart';
 enum NotificationsStatus { initial, loading, ready }
 
 class NotificationsState extends Equatable {
-  const NotificationsState({
-    this.status = NotificationsStatus.initial,
-    this.items = const [],
-  });
+  const NotificationsState({this.status = NotificationsStatus.initial, this.items = const []});
 
   final NotificationsStatus status;
   final List<AppNotification> items;

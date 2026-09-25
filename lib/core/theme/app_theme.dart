@@ -12,18 +12,15 @@ abstract final class AppTheme {
     final base = ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.bg,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.accent,
-        primary: AppColors.accent,
-        surface: AppColors.bg,
-      ),
+      colorScheme: ColorScheme.fromSeed(seedColor: AppColors.accent, primary: AppColors.accent, surface: AppColors.bg),
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
     );
 
     return base.copyWith(
-      textTheme: GoogleFonts.archivoTextTheme(base.textTheme)
-          .apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
+      textTheme: GoogleFonts.archivoTextTheme(
+        base.textTheme,
+      ).apply(bodyColor: AppColors.ink, displayColor: AppColors.ink),
     );
   }
 }

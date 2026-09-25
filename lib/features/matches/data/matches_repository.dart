@@ -9,16 +9,15 @@ abstract interface class MatchesRepository {
   Future<List<GameMatch>> fetchUpcoming();
 
   /// (مدير) إنشاء ماتش جديد.
-  Future<void> addMatch({
-    required List<String> teams,
-    required DateTime dateTime,
-    required int week,
-  });
+  Future<void> addMatch({required List<String> teams, required DateTime dateTime, required int week});
 
   /// (مدير) حذف ماتش — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
   Future<int> deleteMatch(String id);
 
-  /// الماتشات اللي خلصت (الأحدث الأول).
+  /// ماتشات معيّنة بالـ ids.
+  Future<List<GameMatch>> fetchByIds(List<String> ids);
+
+  /// آخر الماتشات اللي خلصت (الأحدث الأول).
   Future<List<GameMatch>> fetchFinished();
 
   /// (مدير) إنهاء الماتش بنتيجته.
