@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('إحداثيات المكان (!3d!4d) أدق من وسط الشاشة (@)', () {
-    const url = 'https://www.google.com/maps/place/X/@30.1,31.2,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d30.0561!4d31.3302';
+    const url =
+        'https://www.google.com/maps/place/X/@30.1,31.2,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d30.0561!4d31.3302';
     final p = MapsLink.parse(url)!;
     expect(p.latitude, 30.0561);
     expect(p.longitude, 31.3302);

@@ -2,7 +2,7 @@ import '../../../core/supabase/supabase_service.dart';
 import '../../auth/data/models/app_user.dart';
 import 'admin_repository.dart';
 
-/// تنفيذ AdminRepository فوق admin_users / set_user_role / picks / notifications.
+/// تنفيذ AdminRepository فوق admin_users / set_user_role / round_picks / notifications.
 /// الـ push بيتبعت أوتوماتيك من الداتابيز لأي إشعار بيتسجّل (Edge Function push).
 class SupabaseAdminRepository implements AdminRepository {
   @override
@@ -18,8 +18,10 @@ class SupabaseAdminRepository implements AdminRepository {
   }
 
   @override
-  Future<Set<String>> pickedUserIds(String matchId) async {
-    final rows = await SupabaseService.table('picks').select('user_id').eq('match_id', matchId);
+  Future<Set<String>> roundPickerIds(DateTime roundEnd) async {
+    final rows = await SupabaseService.table(
+      'round_picks',
+    ).select('user_id').eq('round_end', roundEnd.toUtc().toIso8601String()).eq('is_captain', true);
     return {for (final r in rows) r['user_id'].toString()};
   }
 

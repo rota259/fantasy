@@ -4,8 +4,11 @@ import 'models/player.dart';
 
 /// عقد بيانات اللاعيبة.
 abstract interface class PlayersRepository {
-  /// كل اللاعيبة المتاحين للاختيار.
+  /// كل اللاعيبة في كل المناطق (للأدمن).
   Future<List<Player>> fetchAll();
+
+  /// لاعيبة منطقتي + العامة (السوق والمدرّب).
+  Future<List<Player>> fetchMyZone();
 
   /// اللاعيبة اللي الـ ids بتاعتهم موجودة في القائمة (تشكيلة مستخدم).
   Future<List<Player>> fetchByIds(List<String> ids);

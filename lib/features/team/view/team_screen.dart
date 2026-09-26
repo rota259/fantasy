@@ -1,20 +1,17 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
-import '../../matches/data/matches_repository.dart';
-import '../../matches/data/models/game_match.dart';
-import '../../matches/widgets/match_format.dart';
-import '../../pick/view/match_pick_screen.dart';
+import '../../pick/view/round_pick_view.dart';
+import '../../week/data/week_window.dart';
 
-/// تبويب فريقي — لكل ماتش قادم تختار تشكيلتك. بيتحدّث لوحده لما المدير يضيف/يعدّل ماتش.
+/// تبويب فريقي — تشكيلة الجولة الجاية.
+/// بين ديدلاين السبت ١٢ الضهر وبداية الجولة ٤ العصر: الجولة الجاية متقفلة (إلا بالوايلد كارد)
+/// فبيظهر اختيار كمان للجولة اللي بعدها.
 class TeamScreen extends StatefulWidget {
   const TeamScreen({super.key});
 
@@ -23,93 +20,46 @@ class TeamScreen extends StatefulWidget {
 }
 
 class _TeamScreenState extends State<TeamScreen> {
-  late Future<List<GameMatch>> _future = context.read<MatchesRepository>().fetchUpcoming();
-  StreamSubscription<void>? _sub;
-
-  @override
-  void initState() {
-    super.initState();
-    _sub = liveTable('matches', () {
-      if (mounted) {
-        setState(() {
-          _future = context.read<MatchesRepository>().fetchUpcoming();
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
+  late final WeekWindow _upcoming = WeekWindow.current().next; // الجولة اللي بتبدأ بعد كده
+  late final WeekWindow _open = WeekWindow.open();
+  late WeekWindow _shown = _open;
 
   @override
   Widget build(BuildContext context) {
-    final userId = context.read<AuthCubit>().state.user?.id;
+    final user = context.read<AuthCubit>().state.user;
     return Column(
       children: [
         const StatusArea(),
-        const Masthead(title: 'فريقي · التشكيلات', subtitle: 'PICK TEAM'),
+        const Masthead(title: 'فريقي · تشكيلة الجولة', subtitle: 'PICK TEAM'),
+        if (_upcoming != _open)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: Row(
+              children: [_tab('الجولة الجاية 🔒', _upcoming), const SizedBox(width: 6), _tab('اللي بعدها', _open)],
+            ),
+          ),
         Expanded(
-          child: userId == null
-              ? _hint('سجّل دخولك عشان تختار تشكيلتك')
-              : FutureBuilder<List<GameMatch>>(
-                  future: _future,
-                  builder: (context, snap) {
-                    if (!snap.hasData) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-                    }
-                    final matches = snap.data!;
-                    if (matches.isEmpty) return _hint('مفيش ماتشات قادمة دلوقتي');
-                    return ListView(
-                      padding: EdgeInsets.zero,
-                      children: [for (final m in matches) _row(context, m, userId)],
-                    );
-                  },
-                ),
+          child: user == null
+              ? Center(child: Text('سجّل دخولك عشان تختار تشكيلتك', style: AppText.body(13)))
+              : RoundPickView(window: _shown, userId: user.id, isOrganizer: user.isOrganizer),
         ),
       ],
     );
   }
 
-  Widget _hint(String text) => Center(
-    child: Text(text, style: AppText.body(13, color: AppColors.neutral600)),
-  );
-
-  Widget _row(BuildContext context, GameMatch m, String userId) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MatchPickScreen(match: m, userId: userId),
-        ),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(15)),
-                  Text(
-                    'GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)}',
-                    style: AppText.body(10, color: AppColors.neutral700),
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              m.isLocked ? 'اتقفلت' : 'اختر ›',
-              style: AppText.h(12, color: m.isLocked ? AppColors.neutral500 : AppColors.accent),
-            ),
-          ],
+  Widget _tab(String label, WeekWindow w) {
+    final on = _shown == w;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _shown = w),
+        child: Container(
+          padding: const EdgeInsets.all(9),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: on ? AppColors.accent : null,
+            border: Border.all(color: on ? AppColors.accent : AppColors.black, width: 2),
+          ),
+          child: Text(label, style: AppText.h(12, color: on ? AppColors.white : AppColors.ink)),
         ),
       ),
     );

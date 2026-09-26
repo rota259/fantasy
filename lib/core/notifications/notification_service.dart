@@ -10,6 +10,9 @@ abstract final class NotificationService {
   /// topic اللي السيرفر بيبعتله الإشعارات العامة (طلب واحد لكل اليوزرز).
   static const _allTopic = 'all';
 
+  /// topic منطقة اليوزر (إشعارات ماتشات منطقته) — `zone_ID`.
+  static String? _zoneTopic;
+
   /// بتتنادى مرة في main() — بتهيّئ Firebase وتطلب إذن الإشعارات.
   static Future<void> init() async {
     try {
@@ -33,9 +36,22 @@ abstract final class NotificationService {
     } catch (_) {}
   }
 
+  /// الاشتراك في إشعارات منطقة اليوزر (وإلغاء القديمة لو غيّرها).
+  static Future<void> setZone(int? zoneId) async {
+    final topic = zoneId == null ? null : 'zone_$zoneId';
+    if (topic == _zoneTopic) return;
+    try {
+      final messaging = FirebaseMessaging.instance;
+      if (_zoneTopic != null) await messaging.unsubscribeFromTopic(_zoneTopic!);
+      if (topic != null) await messaging.subscribeToTopic(topic);
+      _zoneTopic = topic;
+    } catch (_) {}
+  }
+
   /// عند الخروج: الجهاز ميستقبلش إشعارات الحساب ده تاني.
   static Future<void> unregister() async {
     try {
+      await setZone(null);
       await FirebaseMessaging.instance.unsubscribeFromTopic(_allTopic);
       await FirebaseMessaging.instance.deleteToken();
     } catch (_) {}

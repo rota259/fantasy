@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_service.dart';
+import '../../../core/zone/zone_scope.dart';
 import 'models/player.dart';
 import 'players_repository.dart';
 
@@ -13,6 +14,14 @@ class SupabasePlayersRepository implements PlayersRepository {
   @override
   Future<List<Player>> fetchAll() async {
     final rows = await SupabaseService.table(_table).select().order('name');
+    return rows.map(Player.fromMap).toList();
+  }
+
+  @override
+  Future<List<Player>> fetchMyZone() async {
+    final zone = ZoneScope.orFilter;
+    final q = SupabaseService.table(_table).select();
+    final rows = await (zone == null ? q : q.or(zone)).order('name');
     return rows.map(Player.fromMap).toList();
   }
 

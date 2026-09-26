@@ -13,6 +13,9 @@ class HomeState extends Equatable {
     this.weekLabel = '',
     this.toRate = const [],
     this.tieOpen = false,
+    this.toReview = const [],
+    this.openRound,
+    this.roundSaved = true,
   });
 
   final HomeStatus status;
@@ -20,13 +23,29 @@ class HomeState extends Equatable {
   final GameMatch? nextMatch;
   final WeekPlayer? star; // نجم الجولة (أعلى نقط)
   final bool starFromPrevious; // الجولة الجديدة لسه فاضية → نجم اللي فاتت
-  final bool weekFinal; // الجولة قفلت (الجمعة من 4 الفجر لـ 12 بالليل)
+  final bool weekFinal; // الجولة خلصت (الترتيب نهائي)
   final String weekLabel;
   final List<GameMatch> toRate; // ماتشات التقييم فيها مفتوح
   final bool tieOpen; // فيه تصويت تعادل على تشكيلة الجولة
+  final List<PendingReview> toReview; // ماتشات لعبت فيها ومستنية تأكيدي
+  final WeekWindow? openRound; // الجولة اللي التشكيلات مفتوحة ليها
+  final bool roundSaved; // حفظت تشكيلتها
 
   bool get isLoading => status == HomeStatus.loading;
 
   @override
-  List<Object?> get props => [status, points, nextMatch, star, starFromPrevious, weekFinal, weekLabel, toRate, tieOpen];
+  List<Object?> get props => [
+    status,
+    points,
+    nextMatch,
+    star,
+    starFromPrevious,
+    weekFinal,
+    weekLabel,
+    toRate,
+    tieOpen,
+    toReview,
+    openRound,
+    roundSaved,
+  ];
 }

@@ -6,9 +6,10 @@ import '../../../core/theme/app_text.dart';
 import '../../auth/data/models/app_user.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
+import '../../week/data/week_window.dart';
 import '../data/admin_repository.dart';
 
-/// (مدير) مين نزّل تشكيلته للماتش ومين لأ + تذكير اللي لسه.
+/// (مدير) مين حفظ تشكيلة جولة الماتش ده ومين لأ + تذكير اللي لسه.
 class MatchPicksSection extends StatefulWidget {
   const MatchPicksSection({super.key, required this.match});
   final GameMatch match;
@@ -18,25 +19,24 @@ class MatchPicksSection extends StatefulWidget {
 }
 
 class _MatchPicksSectionState extends State<MatchPicksSection> {
+  late final WeekWindow _round = WeekWindow.current(widget.match.dateTime);
   late Future<(List<AppUser>, Set<String>)> _future = _load();
   bool _sending = false;
 
   Future<(List<AppUser>, Set<String>)> _load() async {
     final repo = context.read<AdminRepository>();
     final users = (await repo.fetchUsers()).where((u) => !u.isManager).toList();
-    return (users, await repo.pickedUserIds(widget.match.id));
+    return (users, await repo.roundPickerIds(_round.cutoff));
   }
 
   Future<void> _remind(List<AppUser> missing) async {
-    final m = widget.match;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _sending = true);
     try {
       await context.read<AdminRepository>().notify(
         title: 'متنساش تشكيلتك ⏰',
-        body: '${m.teamA} ضد ${m.teamB} — بتقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)}',
+        body: 'تشكيلة الجولة بتقفل ${arabicWeekday(_round.deadline)} ${arabicTime(_round.deadline)}',
         kind: 'lineup',
-        matchId: m.id,
         userIds: [for (final u in missing) u.id],
       );
       messenger.showSnackBar(SnackBar(content: Text('اتبعت تذكير لـ ${missing.length} ✓')));
@@ -79,7 +79,7 @@ class _MatchPicksSectionState extends State<MatchPicksSection> {
               ],
             ),
             const SizedBox(height: 12),
-            if (missing.isNotEmpty && !widget.match.isLocked)
+            if (missing.isNotEmpty && !_round.isLocked())
               GestureDetector(
                 onTap: _sending ? null : () => _remind(missing),
                 child: Container(

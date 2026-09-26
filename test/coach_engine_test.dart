@@ -4,9 +4,15 @@ import 'package:fantasy_5omasi/features/players/data/models/player_gw_stat.dart'
 import 'package:flutter_test/flutter_test.dart';
 
 Player _p(String id, String team, {double form = 0, int total = 0, String avail = 'ready'}) => Player(
-      id: id, name: 'P$id', team: team, position: 'MID', price: 0,
-      form: form, totalPoints: total, availability: avail,
-    );
+  id: id,
+  name: 'P$id',
+  team: team,
+  position: 'MID',
+  price: 0,
+  form: form,
+  totalPoints: total,
+  availability: avail,
+);
 
 void main() {
   test('الكابتن = أعلى فورمة من لاعيبة الماتش الجاي والجاهزين بس', () {
@@ -31,7 +37,11 @@ void main() {
 
   test('قسم التجنّب فيه المصابين والامتلاك بيترتّب صح', () {
     final r = CoachEngine.build(
-      players: [_p('1', 'A', avail: 'injured'), _p('2', 'A'), _p('3', 'A')],
+      players: [
+        _p('1', 'A', avail: 'injured'),
+        _p('2', 'A'),
+        _p('3', 'A'),
+      ],
       stats: const {
         '2': PlayerGwStat(playerId: '2', ownership: 40),
         '3': PlayerGwStat(playerId: '3', ownership: 70),

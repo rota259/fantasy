@@ -1,14 +1,14 @@
 import 'chip_type.dart';
 import 'models/chip_status.dart';
 
-/// عقد الكروت الخاصة.
+/// عقد الكروت الخاصة (على الجولة).
 abstract interface class ChipsRepository {
-  /// حالة الكروت الأربعة لماتش.
-  Future<List<ChipStatus>> status(String matchId);
+  /// حالة الكروت الأربعة لجولة (بنهايتها).
+  Future<List<ChipStatus>> status(DateTime roundEnd);
 
-  /// تفعيل كارت (مبيتلغيش) — بيرمي رسالة السيرفر لو ممنوع.
-  Future<void> activate(String matchId, ChipType type);
+  /// تفعيل كارت على جولة (مبيتلغيش) — بيرمي رسالة السيرفر لو ممنوع.
+  Future<void> activate(DateTime roundEnd, ChipType type);
 
-  /// الكروت اللي اليوزر فعّلها: matchId → الكارت.
-  Future<Map<String, ChipType>> usedByMatch(String userId);
+  /// الكروت اللي اليوزر فعّلها: نهاية الجولة → الكارت.
+  Future<Map<DateTime, ChipType>> usedByRound(String userId);
 }

@@ -33,6 +33,369 @@
 -- ║ 1) SCHEMA                                                      ║
 -- ╚═══════════════════════════════════════════════════════════════╝
 
+-- المناطق: المحافظة + المنطقة. اليوزر والمنظّم والفرق والماتشات كلهم ليهم منطقة.
+create table if not exists public.zones (
+  id          serial primary key,
+  governorate text not null,
+  name        text not null,
+  sort        int not null default 0,
+  unique (governorate, name)
+);
+alter table public.zones enable row level security;
+drop policy if exists "zones read" on public.zones;
+create policy "zones read" on public.zones for select to anon, authenticated using (true);
+insert into public.zones (governorate, name, sort) values
+  ('القاهرة', 'مدينة نصر', 0),
+  ('القاهرة', 'مصر الجديدة', 1),
+  ('القاهرة', 'النزهة', 2),
+  ('القاهرة', 'شيراتون', 3),
+  ('القاهرة', 'ألماظة', 4),
+  ('القاهرة', 'جسر السويس', 5),
+  ('القاهرة', 'ألف مسكن', 6),
+  ('القاهرة', 'الحي العاشر', 7),
+  ('القاهرة', 'الحي السابع', 8),
+  ('القاهرة', 'العباسية', 9),
+  ('القاهرة', 'الزيتون', 10),
+  ('القاهرة', 'حلمية الزيتون', 11),
+  ('القاهرة', 'حدائق القبة', 12),
+  ('القاهرة', 'القبة', 13),
+  ('القاهرة', 'الوايلي', 14),
+  ('القاهرة', 'الظاهر', 15),
+  ('القاهرة', 'السكاكيني', 16),
+  ('القاهرة', 'غمرة', 17),
+  ('القاهرة', 'شبرا', 18),
+  ('القاهرة', 'روض الفرج', 19),
+  ('القاهرة', 'الساحل', 20),
+  ('القاهرة', 'الشرابية', 21),
+  ('القاهرة', 'الزاوية الحمراء', 22),
+  ('القاهرة', 'الأميرية', 23),
+  ('القاهرة', 'المطرية', 24),
+  ('القاهرة', 'عين شمس', 25),
+  ('القاهرة', 'المرج', 26),
+  ('القاهرة', 'عزبة النخل', 27),
+  ('القاهرة', 'السلام', 28),
+  ('القاهرة', 'النهضة', 29),
+  ('القاهرة', 'الشروق', 30),
+  ('القاهرة', 'بدر', 31),
+  ('القاهرة', 'مدينتي', 32),
+  ('القاهرة', 'الرحاب', 33),
+  ('القاهرة', 'التجمع الخامس', 34),
+  ('القاهرة', 'التجمع الأول', 35),
+  ('القاهرة', 'التجمع الثالث', 36),
+  ('القاهرة', 'القاهرة الجديدة', 37),
+  ('القاهرة', 'القطامية', 38),
+  ('القاهرة', 'العاصمة الإدارية', 39),
+  ('القاهرة', 'مستقبل سيتي', 40),
+  ('القاهرة', 'هليوبوليس الجديدة', 41),
+  ('القاهرة', 'وسط البلد', 42),
+  ('القاهرة', 'عابدين', 43),
+  ('القاهرة', 'الموسكي', 44),
+  ('القاهرة', 'باب الشعرية', 45),
+  ('القاهرة', 'الأزبكية', 46),
+  ('القاهرة', 'بولاق أبو العلا', 47),
+  ('القاهرة', 'الزمالك', 48),
+  ('القاهرة', 'جاردن سيتي', 49),
+  ('القاهرة', 'المنيل', 50),
+  ('القاهرة', 'مصر القديمة', 51),
+  ('القاهرة', 'السيدة زينب', 52),
+  ('القاهرة', 'الخليفة', 53),
+  ('القاهرة', 'المقطم', 54),
+  ('القاهرة', 'منشأة ناصر', 55),
+  ('القاهرة', 'الدرب الأحمر', 56),
+  ('القاهرة', 'الجمالية', 57),
+  ('القاهرة', 'البساتين', 58),
+  ('القاهرة', 'دار السلام', 59),
+  ('القاهرة', 'المعادي', 60),
+  ('القاهرة', 'المعادي الجديدة', 61),
+  ('القاهرة', 'زهراء المعادي', 62),
+  ('القاهرة', 'دجلة', 63),
+  ('القاهرة', 'طرة', 64),
+  ('القاهرة', 'المعصرة', 65),
+  ('القاهرة', 'حلوان', 66),
+  ('القاهرة', 'حدائق حلوان', 67),
+  ('القاهرة', 'عين حلوان', 68),
+  ('القاهرة', '15 مايو', 69),
+  ('القاهرة', 'التبين', 70),
+  ('القاهرة', 'الخلفاوي', 71),
+  ('الجيزة', 'الدقي', 1000),
+  ('الجيزة', 'المهندسين', 1001),
+  ('الجيزة', 'العجوزة', 1002),
+  ('الجيزة', 'الجيزة', 1003),
+  ('الجيزة', 'الهرم', 1004),
+  ('الجيزة', 'فيصل', 1005),
+  ('الجيزة', 'العمرانية', 1006),
+  ('الجيزة', 'الطالبية', 1007),
+  ('الجيزة', 'بولاق الدكرور', 1008),
+  ('الجيزة', 'إمبابة', 1009),
+  ('الجيزة', 'الوراق', 1010),
+  ('الجيزة', 'الكيت كات', 1011),
+  ('الجيزة', 'أرض اللواء', 1012),
+  ('الجيزة', 'بين السرايات', 1013),
+  ('الجيزة', 'المنيب', 1014),
+  ('الجيزة', 'ساقية مكي', 1015),
+  ('الجيزة', 'المريوطية', 1016),
+  ('الجيزة', 'حدائق الأهرام', 1017),
+  ('الجيزة', '6 أكتوبر', 1018),
+  ('الجيزة', 'الشيخ زايد', 1019),
+  ('الجيزة', 'حدائق أكتوبر', 1020),
+  ('الجيزة', 'الحوامدية', 1021),
+  ('الجيزة', 'البدرشين', 1022),
+  ('الجيزة', 'العياط', 1023),
+  ('الجيزة', 'الصف', 1024),
+  ('الجيزة', 'أطفيح', 1025),
+  ('الجيزة', 'كرداسة', 1026),
+  ('الجيزة', 'أبو النمرس', 1027),
+  ('الجيزة', 'أوسيم', 1028),
+  ('القليوبية', 'شبرا الخيمة', 2000),
+  ('القليوبية', 'بهتيم', 2001),
+  ('القليوبية', 'مسطرد', 2002),
+  ('القليوبية', 'الخصوص', 2003),
+  ('القليوبية', 'العبور', 2004),
+  ('القليوبية', 'الخانكة', 2005),
+  ('القليوبية', 'قليوب', 2006),
+  ('القليوبية', 'القناطر الخيرية', 2007),
+  ('القليوبية', 'بنها', 2008),
+  ('القليوبية', 'طوخ', 2009),
+  ('القليوبية', 'قها', 2010),
+  ('القليوبية', 'كفر شكر', 2011),
+  ('القليوبية', 'شبين القناطر', 2012),
+  ('الإسكندرية', 'المنتزه', 3000),
+  ('الإسكندرية', 'أبو قير', 3001),
+  ('الإسكندرية', 'المعمورة', 3002),
+  ('الإسكندرية', 'سيدي بشر', 3003),
+  ('الإسكندرية', 'ميامي', 3004),
+  ('الإسكندرية', 'العصافرة', 3005),
+  ('الإسكندرية', 'المندرة', 3006),
+  ('الإسكندرية', 'سموحة', 3007),
+  ('الإسكندرية', 'سيدي جابر', 3008),
+  ('الإسكندرية', 'كليوباترا', 3009),
+  ('الإسكندرية', 'رشدي', 3010),
+  ('الإسكندرية', 'ستانلي', 3011),
+  ('الإسكندرية', 'لوران', 3012),
+  ('الإسكندرية', 'جليم', 3013),
+  ('الإسكندرية', 'محرم بك', 3014),
+  ('الإسكندرية', 'الإبراهيمية', 3015),
+  ('الإسكندرية', 'كامب شيزار', 3016),
+  ('الإسكندرية', 'الشاطبي', 3017),
+  ('الإسكندرية', 'العطارين', 3018),
+  ('الإسكندرية', 'المنشية', 3019),
+  ('الإسكندرية', 'الجمرك', 3020),
+  ('الإسكندرية', 'الأنفوشي', 3021),
+  ('الإسكندرية', 'اللبان', 3022),
+  ('الإسكندرية', 'كرموز', 3023),
+  ('الإسكندرية', 'مينا البصل', 3024),
+  ('الإسكندرية', 'القباري', 3025),
+  ('الإسكندرية', 'الورديان', 3026),
+  ('الإسكندرية', 'العجمي', 3027),
+  ('الإسكندرية', 'الهانوفيل', 3028),
+  ('الإسكندرية', 'البيطاش', 3029),
+  ('الإسكندرية', 'الدخيلة', 3030),
+  ('الإسكندرية', 'العامرية', 3031),
+  ('الإسكندرية', 'برج العرب', 3032),
+  ('الإسكندرية', 'برج العرب الجديدة', 3033),
+  ('الدقهلية', 'المنصورة', 4000),
+  ('الدقهلية', 'المنصورة الجديدة', 4001),
+  ('الدقهلية', 'طلخا', 4002),
+  ('الدقهلية', 'ميت غمر', 4003),
+  ('الدقهلية', 'السنبلاوين', 4004),
+  ('الدقهلية', 'أجا', 4005),
+  ('الدقهلية', 'دكرنس', 4006),
+  ('الدقهلية', 'بلقاس', 4007),
+  ('الدقهلية', 'شربين', 4008),
+  ('الدقهلية', 'المنزلة', 4009),
+  ('الدقهلية', 'جمصة', 4010),
+  ('الدقهلية', 'نبروه', 4011),
+  ('الدقهلية', 'منية النصر', 4012),
+  ('الدقهلية', 'تمي الأمديد', 4013),
+  ('الدقهلية', 'بني عبيد', 4014),
+  ('الدقهلية', 'الجمالية', 4015),
+  ('الشرقية', 'الزقازيق', 5000),
+  ('الشرقية', 'العاشر من رمضان', 5001),
+  ('الشرقية', 'بلبيس', 5002),
+  ('الشرقية', 'منيا القمح', 5003),
+  ('الشرقية', 'أبو حماد', 5004),
+  ('الشرقية', 'فاقوس', 5005),
+  ('الشرقية', 'ههيا', 5006),
+  ('الشرقية', 'الحسينية', 5007),
+  ('الشرقية', 'أبو كبير', 5008),
+  ('الشرقية', 'ديرب نجم', 5009),
+  ('الشرقية', 'كفر صقر', 5010),
+  ('الشرقية', 'أولاد صقر', 5011),
+  ('الشرقية', 'مشتول السوق', 5012),
+  ('الشرقية', 'القنايات', 5013),
+  ('الشرقية', 'الإبراهيمية', 5014),
+  ('الشرقية', 'الصالحية الجديدة', 5015),
+  ('الغربية', 'طنطا', 6000),
+  ('الغربية', 'المحلة الكبرى', 6001),
+  ('الغربية', 'كفر الزيات', 6002),
+  ('الغربية', 'زفتى', 6003),
+  ('الغربية', 'السنطة', 6004),
+  ('الغربية', 'سمنود', 6005),
+  ('الغربية', 'بسيون', 6006),
+  ('الغربية', 'قطور', 6007),
+  ('المنوفية', 'شبين الكوم', 7000),
+  ('المنوفية', 'مدينة السادات', 7001),
+  ('المنوفية', 'منوف', 7002),
+  ('المنوفية', 'أشمون', 7003),
+  ('المنوفية', 'الباجور', 7004),
+  ('المنوفية', 'قويسنا', 7005),
+  ('المنوفية', 'بركة السبع', 7006),
+  ('المنوفية', 'تلا', 7007),
+  ('المنوفية', 'الشهداء', 7008),
+  ('المنوفية', 'سرس الليان', 7009),
+  ('البحيرة', 'دمنهور', 8000),
+  ('البحيرة', 'كفر الدوار', 8001),
+  ('البحيرة', 'رشيد', 8002),
+  ('البحيرة', 'إدكو', 8003),
+  ('البحيرة', 'أبو المطامير', 8004),
+  ('البحيرة', 'حوش عيسى', 8005),
+  ('البحيرة', 'إيتاي البارود', 8006),
+  ('البحيرة', 'شبراخيت', 8007),
+  ('البحيرة', 'المحمودية', 8008),
+  ('البحيرة', 'الرحمانية', 8009),
+  ('البحيرة', 'كوم حمادة', 8010),
+  ('البحيرة', 'الدلنجات', 8011),
+  ('البحيرة', 'وادي النطرون', 8012),
+  ('البحيرة', 'أبو حمص', 8013),
+  ('كفر الشيخ', 'كفر الشيخ', 9000),
+  ('كفر الشيخ', 'دسوق', 9001),
+  ('كفر الشيخ', 'فوه', 9002),
+  ('كفر الشيخ', 'بلطيم', 9003),
+  ('كفر الشيخ', 'سيدي سالم', 9004),
+  ('كفر الشيخ', 'قلين', 9005),
+  ('كفر الشيخ', 'الرياض', 9006),
+  ('كفر الشيخ', 'بيلا', 9007),
+  ('كفر الشيخ', 'الحامول', 9008),
+  ('كفر الشيخ', 'مطوبس', 9009),
+  ('دمياط', 'دمياط', 10000),
+  ('دمياط', 'دمياط الجديدة', 10001),
+  ('دمياط', 'رأس البر', 10002),
+  ('دمياط', 'فارسكور', 10003),
+  ('دمياط', 'الزرقا', 10004),
+  ('دمياط', 'كفر سعد', 10005),
+  ('دمياط', 'كفر البطيخ', 10006),
+  ('دمياط', 'عزبة البرج', 10007),
+  ('بورسعيد', 'حي الشرق', 11000),
+  ('بورسعيد', 'حي العرب', 11001),
+  ('بورسعيد', 'حي المناخ', 11002),
+  ('بورسعيد', 'حي الضواحي', 11003),
+  ('بورسعيد', 'حي الزهور', 11004),
+  ('بورسعيد', 'حي الجنوب', 11005),
+  ('بورسعيد', 'بورفؤاد', 11006),
+  ('الإسماعيلية', 'الإسماعيلية', 12000),
+  ('الإسماعيلية', 'فايد', 12001),
+  ('الإسماعيلية', 'القنطرة شرق', 12002),
+  ('الإسماعيلية', 'القنطرة غرب', 12003),
+  ('الإسماعيلية', 'التل الكبير', 12004),
+  ('الإسماعيلية', 'أبو صوير', 12005),
+  ('الإسماعيلية', 'القصاصين', 12006),
+  ('السويس', 'حي السويس', 13000),
+  ('السويس', 'الأربعين', 13001),
+  ('السويس', 'الجناين', 13002),
+  ('السويس', 'عتاقة', 13003),
+  ('السويس', 'فيصل', 13004),
+  ('الفيوم', 'الفيوم', 14000),
+  ('الفيوم', 'الفيوم الجديدة', 14001),
+  ('الفيوم', 'سنورس', 14002),
+  ('الفيوم', 'إطسا', 14003),
+  ('الفيوم', 'طامية', 14004),
+  ('الفيوم', 'يوسف الصديق', 14005),
+  ('الفيوم', 'إبشواي', 14006),
+  ('بني سويف', 'بني سويف', 15000),
+  ('بني سويف', 'بني سويف الجديدة', 15001),
+  ('بني سويف', 'الواسطى', 15002),
+  ('بني سويف', 'ناصر', 15003),
+  ('بني سويف', 'إهناسيا', 15004),
+  ('بني سويف', 'ببا', 15005),
+  ('بني سويف', 'الفشن', 15006),
+  ('بني سويف', 'سمسطا', 15007),
+  ('المنيا', 'المنيا', 16000),
+  ('المنيا', 'المنيا الجديدة', 16001),
+  ('المنيا', 'ملوي', 16002),
+  ('المنيا', 'سمالوط', 16003),
+  ('المنيا', 'مطاي', 16004),
+  ('المنيا', 'بني مزار', 16005),
+  ('المنيا', 'مغاغة', 16006),
+  ('المنيا', 'العدوة', 16007),
+  ('المنيا', 'أبو قرقاص', 16008),
+  ('المنيا', 'دير مواس', 16009),
+  ('أسيوط', 'أسيوط', 17000),
+  ('أسيوط', 'أسيوط الجديدة', 17001),
+  ('أسيوط', 'ديروط', 17002),
+  ('أسيوط', 'القوصية', 17003),
+  ('أسيوط', 'منفلوط', 17004),
+  ('أسيوط', 'أبنوب', 17005),
+  ('أسيوط', 'أبو تيج', 17006),
+  ('أسيوط', 'الغنايم', 17007),
+  ('أسيوط', 'ساحل سليم', 17008),
+  ('أسيوط', 'البداري', 17009),
+  ('أسيوط', 'صدفا', 17010),
+  ('سوهاج', 'سوهاج', 18000),
+  ('سوهاج', 'سوهاج الجديدة', 18001),
+  ('سوهاج', 'أخميم', 18002),
+  ('سوهاج', 'طهطا', 18003),
+  ('سوهاج', 'جرجا', 18004),
+  ('سوهاج', 'البلينا', 18005),
+  ('سوهاج', 'المراغة', 18006),
+  ('سوهاج', 'طما', 18007),
+  ('سوهاج', 'جهينة', 18008),
+  ('سوهاج', 'دار السلام', 18009),
+  ('سوهاج', 'المنشأة', 18010),
+  ('سوهاج', 'ساقلتة', 18011),
+  ('قنا', 'قنا', 19000),
+  ('قنا', 'قنا الجديدة', 19001),
+  ('قنا', 'نجع حمادي', 19002),
+  ('قنا', 'دشنا', 19003),
+  ('قنا', 'قوص', 19004),
+  ('قنا', 'أبو تشت', 19005),
+  ('قنا', 'فرشوط', 19006),
+  ('قنا', 'الوقف', 19007),
+  ('قنا', 'نقادة', 19008),
+  ('قنا', 'قفط', 19009),
+  ('الأقصر', 'الأقصر', 20000),
+  ('الأقصر', 'طيبة الجديدة', 20001),
+  ('الأقصر', 'إسنا', 20002),
+  ('الأقصر', 'أرمنت', 20003),
+  ('الأقصر', 'البياضية', 20004),
+  ('الأقصر', 'الطود', 20005),
+  ('الأقصر', 'القرنة', 20006),
+  ('أسوان', 'أسوان', 21000),
+  ('أسوان', 'أسوان الجديدة', 21001),
+  ('أسوان', 'كوم أمبو', 21002),
+  ('أسوان', 'إدفو', 21003),
+  ('أسوان', 'دراو', 21004),
+  ('أسوان', 'نصر النوبة', 21005),
+  ('أسوان', 'أبو سمبل', 21006),
+  ('البحر الأحمر', 'الغردقة', 22000),
+  ('البحر الأحمر', 'سفاجا', 22001),
+  ('البحر الأحمر', 'القصير', 22002),
+  ('البحر الأحمر', 'مرسى علم', 22003),
+  ('البحر الأحمر', 'رأس غارب', 22004),
+  ('البحر الأحمر', 'الشلاتين', 22005),
+  ('مطروح', 'مرسى مطروح', 23000),
+  ('مطروح', 'العلمين', 23001),
+  ('مطروح', 'العلمين الجديدة', 23002),
+  ('مطروح', 'الضبعة', 23003),
+  ('مطروح', 'الحمام', 23004),
+  ('مطروح', 'سيوة', 23005),
+  ('مطروح', 'السلوم', 23006),
+  ('شمال سيناء', 'العريش', 24000),
+  ('شمال سيناء', 'بئر العبد', 24001),
+  ('شمال سيناء', 'الشيخ زويد', 24002),
+  ('شمال سيناء', 'رفح', 24003),
+  ('جنوب سيناء', 'شرم الشيخ', 25000),
+  ('جنوب سيناء', 'الطور', 25001),
+  ('جنوب سيناء', 'دهب', 25002),
+  ('جنوب سيناء', 'نويبع', 25003),
+  ('جنوب سيناء', 'سانت كاترين', 25004),
+  ('جنوب سيناء', 'رأس سدر', 25005),
+  ('الوادي الجديد', 'الخارجة', 26000),
+  ('الوادي الجديد', 'الداخلة', 26001),
+  ('الوادي الجديد', 'الفرافرة', 26002),
+  ('الوادي الجديد', 'باريس', 26003),
+  ('الوادي الجديد', 'بلاط', 26004)
+on conflict (governorate, name) do update set sort = excluded.sort;
+
 create table if not exists public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   name        text not null default '',
@@ -55,6 +418,10 @@ alter table public.profiles add column if not exists badges_dirty boolean not nu
 alter table public.profiles add column if not exists low_picks int not null default 0;
 alter table public.profiles add column if not exists avg_own numeric not null default 100;
 create index if not exists profiles_rank on public.profiles (total_points desc, low_picks desc, avg_own);
+-- منطقة اليوزر (بتتغيّر بـ set_my_zone بس — مرة كل ٣٠ يوم)
+alter table public.profiles add column if not exists zone_id int references public.zones(id);
+alter table public.profiles add column if not exists zone_changed_at timestamptz;
+create index if not exists profiles_zone on public.profiles(zone_id);
 -- كود الدعوة بتاع اليوزر (٦ حروف) — اللي يسجّل بيه يتحسب في شارة "المؤثر"
 alter table public.profiles add column if not exists ref_code text
   default upper(substr(md5(gen_random_uuid()::text), 1, 6));
@@ -82,6 +449,9 @@ alter table public.players add column if not exists news text;
 -- اللاعب الحقيقي اللي وثّق البروفايل ده (يوزر واحد لكل لاعب)
 alter table public.players add column if not exists user_id uuid references public.profiles(id) on delete set null;
 create unique index if not exists players_user_unique on public.players(user_id) where user_id is not null;
+alter table public.players add column if not exists created_by uuid references public.profiles(id) on delete set null;
+alter table public.players add column if not exists zone_id int references public.zones(id);   -- من فريقه (trigger)
+create index if not exists players_zone on public.players(zone_id);
 
 create table if not exists public.matches (
   id         uuid primary key default gen_random_uuid(),
@@ -100,7 +470,41 @@ alter table public.matches add column if not exists motm_done boolean not null d
 alter table public.matches add column if not exists captains_notified boolean not null default false;
 alter table public.matches add column if not exists tiebreak_done boolean not null default false;
 create index if not exists matches_status_date on public.matches(status, date_time);
+-- نزاهة الماتشات: المنظّم + حالة الاعتماد (open → pending → approved | disputed | void)
+alter table public.matches add column if not exists organizer_id uuid references public.profiles(id) on delete set null;
+alter table public.matches add column if not exists review_status text not null default 'open';
+alter table public.matches add column if not exists review_due timestamptz;      -- بيتعتمد لوحده بعدها (لو مفيش علامات)
+alter table public.matches add column if not exists flags text[] not null default '{}';  -- علامات الغرابة
+do $$ begin
+  alter table public.matches add constraint matches_review_status
+    check (review_status in ('open', 'pending', 'approved', 'disputed', 'void'));
+exception when duplicate_object then null; end $$;
+create index if not exists matches_review on public.matches(review_status, review_due);
+create index if not exists matches_organizer on public.matches(organizer_id);
+alter table public.matches add column if not exists zone_id int references public.zones(id);   -- من فريقه الأول
+create index if not exists matches_zone on public.matches(zone_id, status, date_time);
+-- الماتشات القديمة اللي خلصت قبل النظام ده = معتمدة
+update public.matches set review_status = 'approved' where status = 'finished' and review_status = 'open';
 create index if not exists matches_date on public.matches(date_time);
+
+-- الفرق: كل فريق ليه اسم (مميّز في الأبلكيشن كله) + منطقة + صاحب (المنظّم).
+-- اسم الفريق هو اللي في players.team و matches.teams — فمحدش يقدر يستخدم لاعيبة فريق مش بتاعه.
+create table if not exists public.teams (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null check (length(trim(name)) between 1 and 40),
+  zone_id    int references public.zones(id),
+  owner_id   uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists teams_name_unique on public.teams (lower(trim(name)));
+create index if not exists teams_owner on public.teams(owner_id);
+create index if not exists teams_zone on public.teams(zone_id);
+-- الفرق القديمة (من غير صاحب ولا منطقة — الأدمن يحدد منطقتها)
+insert into public.teams (name)
+select distinct on (lower(trim(x.t))) trim(x.t)
+from (select team as t from public.players union select unnest(teams) from public.matches) x
+where trim(x.t) <> ''
+  and not exists (select 1 from public.teams tm where lower(trim(tm.name)) = lower(trim(x.t)));
 
 create table if not exists public.leagues (
   id           uuid primary key default gen_random_uuid(),
@@ -214,17 +618,59 @@ returns boolean language sql stable security definer set search_path = public as
   select exists(select 1 from public.profiles where id = auth.uid() and role = 'manager');
 $$;
 
+-- الأدوار: user · organizer (منظّم ماتشات بموافقة الأدمن) · manager (الأدمن)
+create or replace function public.is_organizer()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists(select 1 from public.profiles where id = auth.uid() and role in ('organizer', 'manager'));
+$$;
+
+-- المنظّم بيدير ماتشاته بس، ولحد ما تتعتمد (بعدها أي تعديل من الأدمن)
+create or replace function public.fn_organizes(p_match uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists(select 1 from public.matches m join public.profiles p on p.id = auth.uid()
+                where m.id = p_match and m.organizer_id = auth.uid() and p.role = 'organizer'
+                  and m.review_status in ('open', 'pending'));
+$$;
+
+-- حدث في ماتش: اللاعب لازم يكون في تشكيلة الماتش، والماتش بدأ (أو فاضله ربع ساعة)
+create or replace function public.fn_event_ok(p_match uuid, p_player uuid)
+returns boolean language plpgsql stable security definer set search_path = public as $$
+begin
+  return exists(select 1 from public.lineups l where l.match_id = p_match and l.player_id = p_player)
+     and exists(select 1 from public.matches m where m.id = p_match and m.date_time - interval '15 minutes' <= now());
+end $$;
+
 drop policy if exists "players manager write" on public.players;
 create policy "players manager write" on public.players for all to authenticated
   using (public.is_manager()) with check (public.is_manager());
+-- المنظّم يضيف لاعيبة ويعدّل اللي هو ضافهم (الإحصائيات والتوثيق محميين بـ trigger)
+drop policy if exists "players organizer insert" on public.players;
+create policy "players organizer insert" on public.players for insert to authenticated
+  with check (public.is_organizer());
+drop policy if exists "players organizer update" on public.players;
+create policy "players organizer update" on public.players for update to authenticated
+  using (created_by = auth.uid() and public.is_organizer()) with check (created_by = auth.uid());
 
 drop policy if exists "matches manager write" on public.matches;
 create policy "matches manager write" on public.matches for all to authenticated
   using (public.is_manager()) with check (public.is_manager());
+drop policy if exists "matches organizer insert" on public.matches;
+create policy "matches organizer insert" on public.matches for insert to authenticated
+  with check (public.is_organizer());
+drop policy if exists "matches organizer update" on public.matches;
+create policy "matches organizer update" on public.matches for update to authenticated
+  using (public.fn_organizes(id)) with check (organizer_id = auth.uid());
+drop policy if exists "matches organizer delete" on public.matches;
+create policy "matches organizer delete" on public.matches for delete to authenticated
+  using (public.fn_organizes(id) and date_time > now());
 
 drop policy if exists "events manager write" on public.events;
 create policy "events manager write" on public.events for all to authenticated
   using (public.is_manager()) with check (public.is_manager());
+drop policy if exists "events organizer write" on public.events;
+create policy "events organizer write" on public.events for all to authenticated
+  using (public.fn_organizes(match_id))
+  with check (public.fn_organizes(match_id) and public.fn_event_ok(match_id, player_id));
 
 -- نقاط الحدث حسب النوع والمركز (نفس PointsEngine في Dart بالظبط)
 create or replace function public.fn_event_points(p_type text, p_pos text)
@@ -277,14 +723,26 @@ returns void language sql security definer set search_path = public as $$
   where pl.id = p_player;
 $$;
 
--- نهاية الجولة اللي فيها وقت معيّن = أول جمعة الساعة ٤ الفجر (القاهرة) بعده أو عنده.
+-- نهاية الجولة اللي فيها وقت معيّن = أول سبت الساعة ٤ العصر (القاهرة) بعده أو عنده.
+-- الجولة = (السبت ٤ العصر , السبت اللي بعده ٤ العصر] · ديدلاين التشكيلات = السبت ١٢ الضهر قبل بدايتها.
 -- (نفس WeekWindow في Dart: الماتش في الجولة لو start < date_time <= cutoff)
 create or replace function public.fn_week_cutoff(ts timestamptz)
 returns timestamptz language sql stable as $$
   select (case when c < l then c + interval '7 days' else c end) at time zone 'Africa/Cairo'
   from (select ts at time zone 'Africa/Cairo' as l) x,
-  lateral (select l::date + ((5 - extract(isodow from l)::int + 7) % 7) * interval '1 day'
-                  + interval '4 hours' as c) y;
+  lateral (select l::date + ((6 - extract(isodow from l)::int + 7) % 7) * interval '1 day'
+                  + interval '16 hours' as c) y;
+$$;
+
+-- ديدلاين جولة (بنهايتها) = قبل بدايتها بـ ٤ ساعات
+create or replace function public.fn_round_deadline(p_round timestamptz)
+returns timestamptz language sql immutable as $$ select p_round - interval '7 days 4 hours'; $$;
+
+-- الجولة اللي التشكيلات مفتوحة ليها دلوقتي (أقرب جولة ديدلاينها لسه مجاش)
+create or replace function public.fn_open_round()
+returns timestamptz language sql stable as $$
+  select case when now() < c - interval '4 hours' then c + interval '7 days' else c + interval '14 days' end
+  from (select public.fn_week_cutoff(now()) as c) x;
 $$;
 
 
@@ -305,6 +763,13 @@ create policy "lineups read" on public.lineups for select to authenticated using
 drop policy if exists "lineups manager write" on public.lineups;
 create policy "lineups manager write" on public.lineups for all to authenticated
   using (public.is_manager()) with check (public.is_manager());
+-- المنظّم: تشكيلة ماتشاته بس، ومن لاعيبة الفريقين بس
+drop policy if exists "lineups organizer write" on public.lineups;
+create policy "lineups organizer write" on public.lineups for all to authenticated
+  using (public.fn_organizes(match_id))
+  with check (public.fn_organizes(match_id) and exists (
+    select 1 from public.players pl join public.matches m on m.id = lineups.match_id
+    where pl.id = lineups.player_id and pl.team = any(m.teams)));
 
 
 -- ╔═══════════════════════════════════════════════════════════════╗
@@ -334,6 +799,39 @@ create policy "picks read" on public.picks for select to authenticated using (
 );
 -- مفيش كتابة مباشرة: الحفظ بدالة save_picks (قسم 15) عشان التحقّق يبقى في السيرفر.
 drop policy if exists "picks own write" on public.picks;
+
+-- تشكيلة الجولة: ٧ لاعيبة من أي فرق في منطقتك (٥ أساسي بحارس + ٢ احتياطي) + كابتن وكابتن بديل.
+-- (picks القديمة = تشكيلات الماتش الواحد قبل نظام الجولة — نقطها المعتمدة لسه في الإجمالي)
+create table if not exists public.round_picks (
+  user_id    uuid references public.profiles(id) on delete cascade,
+  round_end  timestamptz not null,
+  player_id  uuid references public.players(id) on delete cascade,
+  status     text not null check (status in ('starting', 'bench')),
+  is_captain boolean not null default false,
+  is_vice    boolean not null default false,
+  saved_at   timestamptz not null default now(),
+  primary key (user_id, round_end, player_id)
+);
+create index if not exists round_picks_round on public.round_picks(round_end, player_id);
+alter table public.round_picks enable row level security;
+-- تشكيلتك دايمًا، وتشكيلات الناس بعد الديدلاين. مفيش كتابة مباشرة (save_round_picks).
+drop policy if exists "round picks read" on public.round_picks;
+create policy "round picks read" on public.round_picks for select to authenticated using (
+  user_id = auth.uid() or public.is_manager() or now() >= round_end - interval '7 days 4 hours'
+);
+
+-- نقط كل يوزر في كل جولة: points = مباشر (كل الماتشات غير الملغية) · final_points = المعتمد بس
+create table if not exists public.user_round_points (
+  user_id      uuid references public.profiles(id) on delete cascade,
+  round_end    timestamptz not null,
+  points       int not null default 0,
+  final_points int not null default 0,
+  primary key (user_id, round_end)
+);
+create index if not exists urp_round on public.user_round_points(round_end);
+alter table public.user_round_points enable row level security;
+drop policy if exists "urp read" on public.user_round_points;
+create policy "urp read" on public.user_round_points for select to authenticated using (true);
 drop trigger if exists picks_recalc on public.picks;
 drop trigger if exists profile_recalc on public.profiles;
 
@@ -396,8 +894,9 @@ $$;
 grant execute on function public.player_history(uuid) to authenticated;
 
 -- نقاط كل لاعب في فترة + صورته (صورة اللاعب، ولو مفيش صورة اليوزر اللي وثّقه) + موثّق ولا لأ
+-- p_zone: منطقة معيّنة (+ الماتشات العامة) · null = كل المناطق (للموسم)
 drop function if exists public.player_points_between(timestamptz, timestamptz);
-create or replace function public.player_points_between(p_from timestamptz, p_to timestamptz)
+create or replace function public.player_points_between(p_from timestamptz, p_to timestamptz, p_zone int default null)
 returns table(id uuid, name text, team text, "position" text, points bigint,
               image_url text, verified boolean)
 language sql stable security definer set search_path = public as $$
@@ -407,12 +906,13 @@ language sql stable security definer set search_path = public as $$
     pl.user_id is not null
   from public.events e
   join public.matches m on m.id = e.match_id and m.date_time > p_from and m.date_time <= p_to
+    and (p_zone is null or m.zone_id is null or m.zone_id = p_zone)
   join public.players pl on pl.id = e.player_id
   group by pl.id, pl.name, pl.team, pl.position, pl.image_url, pl.user_id
   having sum(public.fn_event_points(e.type, pl.position)) <> 0
   order by points desc, pl.name;
 $$;
-grant execute on function public.player_points_between(timestamptz, timestamptz) to authenticated;
+grant execute on function public.player_points_between(timestamptz, timestamptz, int) to authenticated;
 
 -- الامتلاك الحقيقي في الجولة (security definer: التشكيلات مخفية قبل القفل بس الأرقام الإجمالية مسموحة)
 create or replace function public.player_window_stats(p_from timestamptz, p_to timestamptz)
@@ -420,13 +920,11 @@ returns table(id uuid, points bigint, owners bigint, ownership numeric,
               transfers_in bigint, transfers_out bigint, managers bigint)
 language sql stable security definer set search_path = public as $$
   with cur as (
-    select distinct pk.user_id, pk.player_id from public.picks pk
-    join public.matches m on m.id = pk.match_id
-    where m.date_time > p_from and m.date_time <= p_to
+    select distinct rp.user_id, rp.player_id from public.round_picks rp
+    where rp.round_end > p_from and rp.round_end <= p_to
   ), prev as (
-    select distinct pk.user_id, pk.player_id from public.picks pk
-    join public.matches m on m.id = pk.match_id
-    where m.date_time > p_from - interval '7 days' and m.date_time <= p_from
+    select distinct rp.user_id, rp.player_id from public.round_picks rp
+    where rp.round_end > p_from - interval '7 days' and rp.round_end <= p_from
   ), total as (
     select count(distinct user_id) as n from cur
   ), pts as (
@@ -479,6 +977,7 @@ update public.notifications set audience = 'user' where user_id is not null and 
 create index if not exists notifications_created on public.notifications(created_at desc);
 create index if not exists notifications_user on public.notifications(user_id);
 create index if not exists notifications_match on public.notifications(match_id);
+alter table public.notifications add column if not exists zone_id int references public.zones(id);
 
 -- أي صف فيه user_id يبقى موجّه لليوزر ده بس
 create or replace function public.trg_notifications_audience()
@@ -490,7 +989,9 @@ begin
     raise exception 'إشعار موجّه من غير user_id';   -- عمره ما يتحوّل للكل بالغلط
   elsif new.audience = 'match' and new.match_id is null then
     raise exception 'إشعار متابعين من غير match_id';
-  elsif new.audience not in ('all', 'match') then
+  elsif new.audience = 'zone' and new.zone_id is null then
+    raise exception 'إشعار منطقة من غير zone_id';
+  elsif new.audience not in ('all', 'match', 'zone') then
     raise exception 'audience غلط: %', new.audience;
   end if;
   return new;
@@ -504,6 +1005,14 @@ alter table public.notifications enable row level security;
 drop policy if exists "notifications manager write" on public.notifications;
 create policy "notifications manager write" on public.notifications
   for insert to authenticated with check (public.is_manager());
+
+-- إشعار عن ماتش: لأهل منطقته بس (والماتش العام للكل)
+create or replace function public.fn_notify_match(p_match uuid, p_title text, p_body text, p_kind text)
+returns void language sql security definer set search_path = public as $$
+  insert into public.notifications (title, body, kind, match_id, audience, zone_id)
+  select p_title, p_body, p_kind, m.id, case when m.zone_id is null then 'all' else 'zone' end, m.zone_id
+  from public.matches m where m.id = p_match;
+$$;
 
 do $$ begin
   alter publication supabase_realtime add table public.notifications;
@@ -524,6 +1033,7 @@ create table if not exists public.polls (
 alter table public.polls add column if not exists window_end timestamptz;   -- الجولة (للتعادل)
 alter table public.polls add column if not exists closes_at  timestamptz;   -- بيتقفل لوحده
 alter table public.polls add column if not exists slots      int not null default 1; -- كام فايز
+alter table public.polls add column if not exists zone_id    int references public.zones(id); -- تعادل تشكيلة منطقة
 
 create table if not exists public.poll_options (
   id        uuid primary key default gen_random_uuid(),
@@ -594,6 +1104,7 @@ begin
       new.badges_dirty := false;
       new.low_picks := 0;
       new.avg_own := 100;
+      new.zone_changed_at := case when new.zone_id is null then null else now() end;
       new.ref_code := upper(substr(md5(gen_random_uuid()::text), 1, 6));
     else
       new.role := old.role;
@@ -604,6 +1115,8 @@ begin
       new.email := old.email;
       new.low_picks := old.low_picks;
       new.avg_own := old.avg_own;
+      new.zone_id := old.zone_id;                 -- بـ set_my_zone بس
+      new.zone_changed_at := old.zone_changed_at;
     end if;
   end if;
   return new;
@@ -616,7 +1129,26 @@ for each row execute function public.trg_profiles_guard();
 -- بروفايلك كامل بـ my_profile()، والمدير بـ admin_users().
 revoke select on public.profiles from anon, authenticated;
 grant select (id, name, role, photo_url, total_points, created_at, is_active, team,
-              league_id, position, captain_id) on public.profiles to authenticated;
+              league_id, position, captain_id, zone_id) on public.profiles to authenticated;
+
+-- تغيير منطقتي: أول مرة في أي وقت، بعدها مرة كل ٣٠ يوم. المنظّم لازم يكلّم الإدارة (فرقه في منطقته).
+create or replace function public.set_my_zone(p_zone int)
+returns void language plpgsql security definer set search_path = public as $$
+declare me public.profiles;
+begin
+  select * into me from public.profiles where id = auth.uid();
+  if not found then raise exception 'سجّل دخولك الأول'; end if;
+  if not exists (select 1 from public.zones where id = p_zone) then raise exception 'المنطقة مش موجودة'; end if;
+  if me.zone_id = p_zone then return; end if;
+  if me.role = 'organizer' and me.zone_id is not null then
+    raise exception 'المنظّم ميقدرش يغيّر منطقته — كلّم الإدارة';
+  end if;
+  if me.zone_id is not null and me.zone_changed_at > now() - interval '30 days' then
+    raise exception 'تقدر تغيّر منطقتك مرة كل ٣٠ يوم';
+  end if;
+  update public.profiles set zone_id = p_zone, zone_changed_at = now() where id = me.id;
+end $$;
+grant execute on function public.set_my_zone(int) to authenticated;
 
 create or replace function public.my_profile()
 returns setof public.profiles language sql stable security definer set search_path = public as $$
@@ -639,7 +1171,7 @@ create or replace function public.set_user_role(uid uuid, new_role text)
 returns void language plpgsql security definer set search_path = public as $$
 begin
   if not public.is_manager() then raise exception 'not allowed'; end if;
-  if new_role not in ('user', 'manager') then raise exception 'bad role'; end if;
+  if new_role not in ('user', 'organizer', 'manager') then raise exception 'bad role'; end if;
   update public.profiles set role = new_role where id = uid;
 end; $$;
 grant execute on function public.set_user_role(uuid, text) to authenticated;
@@ -945,7 +1477,7 @@ $$;
 -- الكروت: triple (كابتن ×٣) · bench_boost (الاحتياطي يتحسب) · wildcard (تعدّل بعد القفل لحد البداية)
 --          double (نقط التشكيلة كلها ×٢)
 -- الحدود: triple/bench_boost/wildcard → مرتين في كل نص موسم · double → مرتين في الموسم كله.
--- كارت واحد بس في الجولة، على ماتش واحد، ومبيتلغيش.
+-- كارت واحد بس في الجولة (week_cutoff = نهاية الجولة) ومبيتلغيش. match_id للكروت القديمة بس.
 create table if not exists public.chip_uses (
   user_id     uuid references public.profiles(id) on delete cascade,
   match_id    uuid references public.matches(id) on delete cascade,
@@ -957,6 +1489,10 @@ create table if not exists public.chip_uses (
   primary key (user_id, match_id),
   unique (user_id, week_cutoff)
 );
+do $$ begin
+  alter table public.chip_uses drop constraint chip_uses_pkey;
+exception when undefined_object then null; end $$;
+alter table public.chip_uses alter column match_id drop not null;
 alter table public.chip_uses enable row level security;
 drop policy if exists "chips read" on public.chip_uses;
 create policy "chips read" on public.chip_uses for select to authenticated
@@ -972,23 +1508,18 @@ returns text language sql immutable as $$
     when 'wildcard' then 'الوايلد كارد' when 'double' then 'الدبل ×٢' else p_chip end;
 $$;
 
--- حالة الكروت لماتش معيّن (للشاشة): المستخدم، الحد، مفعّل هنا، وسبب المنع لو ممنوع.
-create or replace function public.chip_status(p_match uuid)
+-- حالة الكروت لجولة (للشاشة): المستخدم، الحد، مفعّل فيها، وسبب المنع لو ممنوع.
+drop function if exists public.chip_status(uuid);
+create or replace function public.chip_status(p_round timestamptz)
 returns table(chip text, used int, lim int, active boolean, blocked text)
 language plpgsql stable security definer set search_path = public as $$
-declare m public.matches; s public.seasons; h int; wc timestamptz; here text; round_used text;
-        has_picks boolean;
+declare st timestamptz := p_round - interval '7 days'; s public.seasons; h int; here text; has_picks boolean;
 begin
-  select * into m from public.matches where id = p_match;
-  if not found then return; end if;
-  s := public.fn_season_at(m.date_time);
-  wc := public.fn_week_cutoff(m.date_time);
-  select c.chip into here from public.chip_uses c where c.user_id = auth.uid() and c.match_id = p_match;
-  select c.chip into round_used from public.chip_uses c
-    where c.user_id = auth.uid() and c.week_cutoff = wc and c.match_id <> p_match;
-  has_picks := exists(select 1 from public.picks p where p.user_id = auth.uid() and p.match_id = p_match);
+  s := public.fn_season_at(st);
+  select c.chip into here from public.chip_uses c where c.user_id = auth.uid() and c.week_cutoff = p_round;
+  has_picks := exists(select 1 from public.round_picks p where p.user_id = auth.uid() and p.round_end = p_round);
   if s.id is not null then
-    h := case when m.date_time < s.mid_at then 1 else 2 end;
+    h := case when st < s.mid_at then 1 else 2 end;
   end if;
 
   return query
@@ -999,19 +1530,17 @@ begin
          else (select count(*)::int from public.chip_uses c
               where c.user_id = auth.uid() and c.season_id = s.id and c.chip = k.chip and c.half = h) end,
     public.fn_chip_limit(k.chip),
-    here = k.chip,
+    coalesce(here = k.chip, false),
     case
-      when here is not null then (case when here = k.chip then null else 'فعّلت ' || public.fn_chip_name(here) || ' في الماتش ده' end)
+      when here is not null then (case when here = k.chip then null else 'فعّلت ' || public.fn_chip_name(here) || ' في الجولة دي' end)
       when s.id is null then 'مفيش موسم شغّال'
-      when round_used is not null then 'استخدمت كارت في الجولة دي'
-      when m.status <> 'upcoming' then 'الماتش خلص'
-      when k.chip = 'wildcard' and now() >= m.date_time then 'الماتش بدأ'
-      when k.chip <> 'wildcard' and now() >= m.date_time - interval '1 hour' then 'التشكيلة اتقفلت'
+      when k.chip = 'wildcard' and now() >= st then 'الجولة بدأت'
+      when k.chip <> 'wildcard' and now() >= public.fn_round_deadline(p_round) then 'التشكيلة اتقفلت'
       when not has_picks then 'احفظ تشكيلتك الأول'
       else null end
   from (values ('triple'), ('bench_boost'), ('wildcard'), ('double')) as k(chip);
 end $$;
-grant execute on function public.chip_status(uuid) to authenticated;
+grant execute on function public.chip_status(timestamptz) to authenticated;
 
 
 -- ╔═══════════════════════════════════════════════════════════════╗
@@ -1040,6 +1569,7 @@ create policy "predictions own write" on public.predictions for all to authentic
   using (user_id = auth.uid())
   with check (user_id = auth.uid() and exists (
     select 1 from public.matches m where m.id = match_id and m.is_challenge
+      and m.organizer_id is distinct from auth.uid()
       and m.status = 'upcoming' and now() < m.date_time - interval '1 hour'));
 
 -- (مدير) يعلن ماتش تحدّي الجولة
@@ -1105,6 +1635,7 @@ drop policy if exists "notifications read" on public.notifications;
 create policy "notifications read" on public.notifications for select to authenticated using (
   audience = 'all'
   or (audience = 'user' and user_id = auth.uid())
+  or (audience = 'zone' and zone_id = (select p.zone_id from public.profiles p where p.id = auth.uid()))
   or (audience = 'match' and exists (select 1 from public.match_follows f
         where f.match_id = notifications.match_id and f.user_id = auth.uid()))
 );
@@ -1202,8 +1733,8 @@ begin
     if w is not null then
       select name into wn from public.players where id = w;
       insert into public.events (match_id, player_id, type) values (r.id, w, 'motm');
-      insert into public.notifications (title, body, kind, match_id)
-      values ('⭐ رجل المباراة: ' || wn, r.teams[1] || ' ضد ' || r.teams[2] || ' · +٣ نقط بتصويت الجمهور', 'match', r.id);
+      perform public.fn_notify_match(r.id, '⭐ رجل المباراة: ' || wn,
+        r.teams[1] || ' ضد ' || r.teams[2] || ' · +٣ نقط بتصويت الجمهور', 'match');
     end if;
   end loop;
 end $$;
@@ -1313,19 +1844,21 @@ language sql stable security definer set search_path = public as $$
           where pl.position = (select position from public.players where id = p_player)),
   since as (select coalesce((public.fn_season_at(now())).starts_at, '-infinity'::timestamptz) as t)
   select me.owners,
-    (select count(distinct p.user_id) from public.picks p join public.matches m on m.id = p.match_id
-     where p.player_id = p_player and p.is_captain and m.date_time > p_from and m.date_time <= p_to),
+    (select count(distinct rp.user_id) from public.round_picks rp
+     where rp.player_id = p_player and rp.is_captain and rp.round_end > p_from and rp.round_end <= p_to),
     me.managers, me.ownership,
     (select count(*) + 1 from pos where pos.ownership > me.ownership),
     (select count(*) from pos),
-    (select coalesce(sum(x.base * case when p.is_captain then 2 else 1 end), 0)
-     from public.picks p
-     join (select e.match_id, sum(public.fn_event_points(e.type, pl.position)) as base
-           from public.events e join public.players pl on pl.id = e.player_id
-           join public.matches m on m.id = e.match_id
-           where e.player_id = p_player and m.date_time >= (select t from since)
-           group by e.match_id) x on x.match_id = p.match_id
-     where p.player_id = p_player and p.status = 'starting')::bigint
+    (select coalesce(sum(x.base * case when rp.is_captain then 2 else 1 end), 0)
+     from public.round_picks rp
+     cross join lateral (
+       select coalesce(sum(public.fn_event_points(e.type, pl.position)), 0) as base
+       from public.events e join public.players pl on pl.id = e.player_id
+       join public.matches m on m.id = e.match_id
+       where e.player_id = rp.player_id and m.review_status <> 'void'
+         and m.date_time > rp.round_end - interval '7 days' and m.date_time <= rp.round_end) x
+     where rp.player_id = p_player and rp.status = 'starting'
+       and rp.round_end > (select t from since))::bigint
   from me;
 $$;
 grant execute on function public.player_fan_stats(uuid, timestamptz, timestamptz) to authenticated;
@@ -1379,16 +1912,88 @@ $$;
 create or replace function public.fn_user_bonus(p_user uuid)
 returns int language sql stable security definer set search_path = public as $$
   select (5 * count(*))::int from public.predictions pr join public.matches m on m.id = pr.match_id
-  where pr.user_id = p_user and m.is_challenge and m.status = 'finished'
+  where pr.user_id = p_user and m.is_challenge and m.status = 'finished' and m.review_status = 'approved'
     and pr.score_a = m.score_a and pr.score_b = m.score_b;
 $$;
 
--- إجمالي نقاط اليوزر = نقط الماتشات + البونص
+-- نقط تشكيلة يوزر في جولة (نفس LineupPoints في Dart بالظبط):
+--   نقط كل لاعب = مجموع أحداثه في كل ماتشات الجولة (p_final: المعتمدة بس)
+--   الأساسيين بس (إلا مع bench_boost الكل) · الكابتن ×٢ لو لعب في الجولة، ولو ملعبش البديل ×٢
+--   triple → المضاعف ×٣ · double → المجموع كله ×٢
+create or replace function public.fn_user_round_points(p_user uuid, p_round timestamptz, p_final boolean)
+returns int language sql stable security definer set search_path = public as $$
+  with chip as (
+    select coalesce((select c.chip from public.chip_uses c
+                     where c.user_id = p_user and c.week_cutoff = p_round), '') as c
+  ), ms as (
+    select m.id from public.matches m
+    where m.date_time > p_round - interval '7 days' and m.date_time <= p_round
+      and m.review_status <> 'void' and (not p_final or m.review_status = 'approved')
+  ), pts as (
+    select rp.status, rp.is_captain, rp.is_vice,
+      coalesce(sum(public.fn_event_points(e.type, pl.position)), 0) as base,
+      count(e.id) > 0 as played
+    from public.round_picks rp
+    join public.players pl on pl.id = rp.player_id
+    left join public.events e on e.player_id = rp.player_id and e.match_id in (select id from ms)
+    where rp.user_id = p_user and rp.round_end = p_round
+    group by rp.player_id, rp.status, rp.is_captain, rp.is_vice
+  ), cap as (
+    select coalesce(bool_or(is_captain and played), false) as cap_played from pts
+  )
+  select (coalesce(sum(
+      pts.base * case
+        when (pts.is_captain and cap.cap_played) or (pts.is_vice and not cap.cap_played)
+          then case when (select c from chip) = 'triple' then 3 else 2 end
+        else 1 end
+    ) filter (where pts.status = 'starting' or (select c from chip) = 'bench_boost'), 0)
+    * case when (select c from chip) = 'double' then 2 else 1 end)::int
+  from pts cross join cap;
+$$;
+
+-- إجمالي نقاط اليوزر = المعتمد من الجولات + ماتشات النظام القديم المعتمدة + البونص
 create or replace function public.fn_user_points(p_user uuid)
 returns int language sql stable security definer set search_path = public as $$
-  select (coalesce((select sum(points) from public.user_match_points where user_id = p_user), 0)
+  select (coalesce((select sum(r.final_points) from public.user_round_points r where r.user_id = p_user), 0)
+          + coalesce((select sum(u.points) from public.user_match_points u
+                      join public.matches m on m.id = u.match_id
+                      where u.user_id = p_user and m.review_status = 'approved'), 0)
           + public.fn_user_bonus(p_user))::int;
 $$;
+
+create or replace function public.fn_recalc_user_round(p_user uuid, p_round timestamptz)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if exists (select 1 from public.round_picks where user_id = p_user and round_end = p_round) then
+    insert into public.user_round_points (user_id, round_end, points, final_points)
+    values (p_user, p_round, public.fn_user_round_points(p_user, p_round, false),
+            public.fn_user_round_points(p_user, p_round, true))
+    on conflict (user_id, round_end) do update
+      set points = excluded.points, final_points = excluded.final_points;
+  else
+    delete from public.user_round_points where user_id = p_user and round_end = p_round;
+  end if;
+  update public.profiles set total_points = public.fn_user_points(p_user), badges_dirty = true
+  where id = p_user;
+end $$;
+
+-- نقط كل اللي اختاروا لاعيبة معيّنة في جولة (بعد حدث أو اعتماد ماتش)
+create or replace function public.fn_recalc_round_players(p_round timestamptz, p_players uuid[])
+returns void language plpgsql security definer set search_path = public as $$
+declare users uuid[];
+begin
+  if p_round is null then return; end if;
+  select array_agg(distinct user_id) into users
+  from public.round_picks where round_end = p_round and player_id = any(p_players);
+  if users is null then return; end if;
+  insert into public.user_round_points (user_id, round_end, points, final_points)
+  select x.u, p_round, public.fn_user_round_points(x.u, p_round, false), public.fn_user_round_points(x.u, p_round, true)
+  from unnest(users) as x(u)
+  on conflict (user_id, round_end) do update
+    set points = excluded.points, final_points = excluded.final_points;
+  update public.profiles set total_points = public.fn_user_points(id), badges_dirty = true
+  where id = any(users);
+end $$;
 
 create or replace function public.fn_recalc_user_match(p_user uuid, p_match uuid)
 returns void language plpgsql security definer set search_path = public as $$
@@ -1427,22 +2032,32 @@ begin
   on conflict (user_id, match_id) do update set points = excluded.points;
   delete from public.user_match_points ump where not exists (
     select 1 from public.picks p where p.user_id = ump.user_id and p.match_id = ump.match_id);
+  insert into public.user_round_points (user_id, round_end, points, final_points)
+  select u.user_id, u.round_end, public.fn_user_round_points(u.user_id, u.round_end, false),
+         public.fn_user_round_points(u.user_id, u.round_end, true)
+  from (select distinct user_id, round_end from public.round_picks) u
+  on conflict (user_id, round_end) do update
+    set points = excluded.points, final_points = excluded.final_points;
   update public.profiles set total_points = public.fn_user_points(id) where id is not null;
 end $$;
 
--- أي تغيير في الأحداث → إحصائيات اللاعب + نقط اليوزرز في الماتش ده بس
+-- أي تغيير في الأحداث → إحصائيات اللاعب + نقط اللي اختاروه في الجولة (+ الماتش القديم لو ليه تشكيلات)
 create or replace function public.trg_events_recalc()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if tg_op in ('UPDATE', 'DELETE') then
     perform public.fn_recalc_player(old.player_id);
     perform public.fn_recalc_match(old.match_id);
+    perform public.fn_recalc_round_players(
+      public.fn_week_cutoff((select date_time from public.matches where id = old.match_id)), array[old.player_id]);
   end if;
   if tg_op in ('INSERT', 'UPDATE') then
     perform public.fn_recalc_player(new.player_id);
     if tg_op = 'INSERT' or new.match_id is distinct from old.match_id then
       perform public.fn_recalc_match(new.match_id);
     end if;
+    perform public.fn_recalc_round_players(
+      public.fn_week_cutoff((select date_time from public.matches where id = new.match_id)), array[new.player_id]);
   end if;
   return null;
 end $$;
@@ -1450,15 +2065,21 @@ drop trigger if exists events_recalc on public.events;
 create trigger events_recalc after insert or update or delete on public.events
 for each row execute function public.trg_events_recalc();
 
--- الماتش خلص/النتيجة اتغيّرت → بونص التوقعات + إشعار للي توقّعوا صح
+-- الاعتماد اتغيّر (أو النتيجة اتعدّلت بعد الاعتماد) → إجمالي نقط اللي لعبوا/توقّعوا
+-- + أول ما ماتش التحدّي يتعتمد: إشعار للي توقّعوا صح
 create or replace function public.trg_match_result()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if new.is_challenge and (new.status, new.score_a, new.score_b, new.is_challenge)
-       is distinct from (old.status, old.score_a, old.score_b, old.is_challenge) then
+  if new.review_status is distinct from old.review_status
+     or (new.review_status = 'approved' and (new.score_a, new.score_b, new.is_challenge)
+           is distinct from (old.score_a, old.score_b, old.is_challenge)) then
     update public.profiles set total_points = public.fn_user_points(id), badges_dirty = true
-    where id in (select user_id from public.predictions where match_id = new.id);
-    if new.status = 'finished' and old.status is distinct from 'finished' then
+    where id in (select user_id from public.picks where match_id = new.id
+                 union select user_id from public.predictions where match_id = new.id);
+    -- تشكيلات الجولة: كل اللي اختاروا حد من لاعيبة الفريقين
+    perform public.fn_recalc_round_players(public.fn_week_cutoff(new.date_time),
+      array(select id from public.players where team = any(new.teams)));
+    if new.is_challenge and new.review_status = 'approved' and old.review_status is distinct from 'approved' then
       insert into public.notifications (title, body, kind, user_id, match_id)
       select '🎯 توقّعك صح! +٥', new.teams[1] || ' ' || new.score_a || ' - ' || new.score_b || ' ' || new.teams[2],
              'challenge', p.user_id, new.id
@@ -1472,95 +2093,87 @@ drop trigger if exists match_result on public.matches;
 create trigger match_result after update on public.matches
 for each row execute function public.trg_match_result();
 
--- هل اليوزر يقدر يعدّل تشكيلته دلوقتي؟ قبل الديدلاين (ساعة قبل الماتش)،
--- أو بالوايلد كارد لحد ما الماتش يبدأ.
-create or replace function public.fn_can_edit_picks(p_match uuid)
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.matches m where m.id = p_match and m.status = 'upcoming' and (
-    now() < m.date_time - interval '1 hour'
-    or (now() < m.date_time and exists (select 1 from public.chip_uses c
-          where c.user_id = auth.uid() and c.match_id = p_match and c.chip = 'wildcard'))));
-$$;
-
--- حفظ التشكيلة (استبدال كامل في transaction واحدة) + التحقّق من القواعد في السيرفر:
--- ٥ أساسيين (حارس + ٢ من كل فريق) + ٢ احتياطي + كابتن من الأساسيين + نائب اختياري.
--- p_picks = [{player_id, status, is_captain, is_vice}, ...]
-create or replace function public.save_picks(p_match uuid, p_picks jsonb)
+-- حفظ تشكيلة الجولة (استبدال كامل في transaction واحدة) + التحقّق من القواعد في السيرفر:
+-- ٧ لاعيبة من منطقتك: ٥ أساسي (حارس واحد) + ٢ احتياطي + كابتن + كابتن بديل (من الأساسيين).
+-- مفتوحة لحد ديدلاين الجولة (السبت ١٢ الضهر)، أو بالوايلد كارد لحد ما الجولة تبدأ (٤ العصر).
+drop function if exists public.save_picks(uuid, jsonb);
+drop function if exists public.fn_can_edit_picks(uuid);
+create or replace function public.save_round_picks(p_round timestamptz, p_picks jsonb)
 returns void language plpgsql security definer set search_path = public as $$
-declare u uuid := auth.uid(); m public.matches;
-        n_start int; n_bench int; n_gk int; n_a int; n_b int; n_cap int; n_vice int; n_bad int; n_dup int;
+declare u uuid := auth.uid(); z int;
+        n_start int; n_bench int; n_gk int; n_cap int; n_vice int; n_bad int; n_dup int; n_zone int; n_mine int;
 begin
   if u is null then raise exception 'سجّل دخولك الأول'; end if;
-  select * into m from public.matches where id = p_match;
-  if not found then raise exception 'الماتش مش موجود'; end if;
-  if not public.fn_can_edit_picks(p_match) then raise exception 'التشكيلة اتقفلت — عدّى الديدلاين'; end if;
   if jsonb_typeof(p_picks) <> 'array' then raise exception 'بيانات غلط'; end if;
+  if public.fn_week_cutoff(p_round) is distinct from p_round then raise exception 'جولة غلط'; end if;
+  if p_round > public.fn_open_round() + interval '7 days' then raise exception 'الجولة دي لسه بعيدة'; end if;
+  if not (now() < public.fn_round_deadline(p_round)
+          or (now() < p_round - interval '7 days' and exists (select 1 from public.chip_uses c
+                where c.user_id = u and c.week_cutoff = p_round and c.chip = 'wildcard'))) then
+    raise exception 'التشكيلة اتقفلت — ديدلاين الجولة (السبت ١٢ الضهر) عدّى';
+  end if;
+  select zone_id into z from public.profiles where id = u;
 
   with sel as (
     select * from jsonb_to_recordset(p_picks) as x(player_id uuid, status text, is_captain boolean, is_vice boolean)
   ), j as (
-    select s.player_id, s.status, coalesce(s.is_captain, false) cap, coalesce(s.is_vice, false) vic,
-           pl.position, pl.team, l.status as lstatus
-    from sel s
-    left join public.players pl on pl.id = s.player_id
-    left join public.lineups l on l.match_id = p_match and l.player_id = s.player_id
+    select s.player_id, s.status, coalesce(s.is_captain, false) as cap, coalesce(s.is_vice, false) as vic,
+           pl.id as pid, pl.position, pl.zone_id, pl.team
+    from sel s left join public.players pl on pl.id = s.player_id
   )
-  select count(*) filter (where status = 'starting'),
-         count(*) filter (where status = 'bench'),
-         count(*) filter (where status = 'starting' and position = 'GK'),
-         count(*) filter (where status = 'starting' and position <> 'GK' and team = m.teams[1]),
-         count(*) filter (where status = 'starting' and position <> 'GK' and team = m.teams[2]),
-         count(*) filter (where cap),
-         count(*) filter (where vic),
-         count(*) filter (where lstatus is null or status not in ('starting', 'bench')
-                          or ((cap or vic) and status <> 'starting') or (cap and vic)),
-         count(*) - count(distinct player_id)
-  into n_start, n_bench, n_gk, n_a, n_b, n_cap, n_vice, n_bad, n_dup
+  select count(*) filter (where j.status = 'starting'),
+         count(*) filter (where j.status = 'bench'),
+         count(*) filter (where j.status = 'starting' and j.position = 'GK'),
+         count(*) filter (where j.cap),
+         count(*) filter (where j.vic),
+         count(*) filter (where j.pid is null or j.status not in ('starting', 'bench')
+                          or ((j.cap or j.vic) and j.status <> 'starting') or (j.cap and j.vic)),
+         count(*) - count(distinct j.player_id),
+         count(*) filter (where j.zone_id is not null and j.zone_id is distinct from z),
+         count(*) filter (where exists (select 1 from public.teams t
+                                        where lower(trim(t.name)) = lower(trim(j.team)) and t.owner_id = u))
+  into n_start, n_bench, n_gk, n_cap, n_vice, n_bad, n_dup, n_zone, n_mine
   from j;
 
-  if n_bad > 0 or n_dup > 0 then raise exception 'فيه لاعب مش في تشكيلة الماتش — حدّث الصفحة'; end if;
-  if n_gk <> 1 then raise exception 'لازم حارس واحد أساسي'; end if;
-  if n_a <> 2 then raise exception 'لازم ٢ أساسيين من %', m.teams[1]; end if;
-  if n_b <> 2 then raise exception 'لازم ٢ أساسيين من %', m.teams[2]; end if;
+  if n_bad > 0 or n_dup > 0 then raise exception 'فيه لاعب غلط في التشكيلة — حدّث الصفحة'; end if;
+  if n_zone > 0 then raise exception 'فيه لاعب مش من منطقتك'; end if;
+  if n_mine > 0 then raise exception 'مينفعش تختار لاعيبة من فرقك انت كمنظّم'; end if;
   if n_start <> 5 then raise exception 'لازم ٥ أساسيين بالظبط'; end if;
   if n_bench <> 2 then raise exception 'لازم ٢ احتياطي'; end if;
-  if n_cap <> 1 then raise exception 'اختار كابتن واحد من الأساسيين'; end if;
-  if n_vice > 1 then raise exception 'كابتن احتياطي واحد بس'; end if;
+  if n_gk <> 1 then raise exception 'لازم حارس واحد في الأساسيين'; end if;
+  if n_cap <> 1 then raise exception 'اختار كابتن من الأساسيين'; end if;
+  if n_vice <> 1 then raise exception 'اختار كابتن بديل من الأساسيين'; end if;
 
-  delete from public.picks where user_id = u and match_id = p_match;
-  insert into public.picks (user_id, match_id, player_id, status, is_captain, is_vice, saved_at)
-  select u, p_match, x.player_id, x.status, coalesce(x.is_captain, false), coalesce(x.is_vice, false), now()
+  delete from public.round_picks where user_id = u and round_end = p_round;
+  insert into public.round_picks (user_id, round_end, player_id, status, is_captain, is_vice, saved_at)
+  select u, p_round, x.player_id, x.status, coalesce(x.is_captain, false), coalesce(x.is_vice, false), now()
   from jsonb_to_recordset(p_picks) as x(player_id uuid, status text, is_captain boolean, is_vice boolean);
-  perform public.fn_recalc_user_match(u, p_match);
+  perform public.fn_recalc_user_round(u, p_round);
 end $$;
-grant execute on function public.save_picks(uuid, jsonb) to authenticated;
+grant execute on function public.save_round_picks(timestamptz, jsonb) to authenticated;
 
--- تفعيل كارت (مبيتلغيش)
-create or replace function public.activate_chip(p_match uuid, p_chip text)
+-- تفعيل كارت على جولة (مبيتلغيش): قبل الديدلاين، والوايلد كارد لحد ما الجولة تبدأ
+drop function if exists public.activate_chip(uuid, text);
+create or replace function public.activate_chip(p_round timestamptz, p_chip text)
 returns void language plpgsql security definer set search_path = public as $$
-declare u uuid := auth.uid(); m public.matches; s public.seasons; h int; wc timestamptz; used int;
+declare u uuid := auth.uid(); st timestamptz := p_round - interval '7 days'; s public.seasons; h int; used int;
 begin
   if u is null then raise exception 'سجّل دخولك الأول'; end if;
   if p_chip not in ('triple', 'bench_boost', 'wildcard', 'double') then raise exception 'كارت مش معروف'; end if;
+  if public.fn_week_cutoff(p_round) is distinct from p_round then raise exception 'جولة غلط'; end if;
   perform pg_advisory_xact_lock(hashtext(u::text));
-  select * into m from public.matches where id = p_match;
-  if not found or m.status <> 'upcoming' then raise exception 'الماتش مش متاح'; end if;
   if p_chip = 'wildcard' then
-    if now() >= m.date_time then raise exception 'الماتش بدأ'; end if;
-  elsif now() >= m.date_time - interval '1 hour' then
+    if now() >= st then raise exception 'الجولة بدأت'; end if;
+  elsif now() >= public.fn_round_deadline(p_round) then
     raise exception 'التشكيلة اتقفلت — الكارت لازم يتفعّل قبل الديدلاين';
   end if;
-  if not exists (select 1 from public.picks where user_id = u and match_id = p_match) then
-    raise exception 'احفظ تشكيلتك في الماتش ده الأول';
+  if not exists (select 1 from public.round_picks where user_id = u and round_end = p_round) then
+    raise exception 'احفظ تشكيلتك للجولة دي الأول';
   end if;
-  s := public.fn_season_at(m.date_time);
+  s := public.fn_season_at(st);
   if s.id is null then raise exception 'مفيش موسم شغّال — المدير لازم يحدّد مواعيد الموسم'; end if;
-  h := case when m.date_time < s.mid_at then 1 else 2 end;
-  wc := public.fn_week_cutoff(m.date_time);
-  if exists (select 1 from public.chip_uses where user_id = u and match_id = p_match) then
-    raise exception 'فعّلت كارت في الماتش ده بالفعل';
-  end if;
-  if exists (select 1 from public.chip_uses where user_id = u and week_cutoff = wc) then
+  h := case when st < s.mid_at then 1 else 2 end;
+  if exists (select 1 from public.chip_uses where user_id = u and week_cutoff = p_round) then
     raise exception 'استخدمت كارت في الجولة دي — كارت واحد بس في الجولة';
   end if;
   if p_chip = 'double' then
@@ -1573,11 +2186,11 @@ begin
       raise exception '% خلص — مرتين بس في النص ده من الموسم', public.fn_chip_name(p_chip);
     end if;
   end if;
-  insert into public.chip_uses (user_id, match_id, chip, season_id, half, week_cutoff)
-  values (u, p_match, p_chip, s.id, h, wc);
-  perform public.fn_recalc_user_match(u, p_match);
+  insert into public.chip_uses (user_id, chip, season_id, half, week_cutoff)
+  values (u, p_chip, s.id, h, p_round);
+  perform public.fn_recalc_user_round(u, p_round);
 end $$;
-grant execute on function public.activate_chip(uuid, text) to authenticated;
+grant execute on function public.activate_chip(timestamptz, text) to authenticated;
 
 select public.fn_recalc_users();
 
@@ -1687,42 +2300,44 @@ begin
 end $$;
 grant execute on function public.create_global_league(text) to authenticated;
 
--- كسر التعادل: كام لاعب أساسي اخترته وامتلاكه في الماتش كان أقل من ٢٥٪ (الأكتر فوق)،
--- ولو لسه متعادلين: متوسط امتلاك اختياراتك الأقل فوق. (الماتشات اللي قفلت بس)
+-- كسر التعادل: كام لاعب أساسي اخترته وامتلاكه في منطقتك في الجولة كان أقل من ٢٥٪ (الأكتر فوق)،
+-- ولو لسه متعادلين: متوسط امتلاك اختياراتك الأقل فوق. (الجولات اللي ديدلاينها عدّى بس)
 create or replace function public.fn_user_tiebreak()
 returns table(user_id uuid, low_picks bigint, avg_own numeric)
 language sql stable security definer set search_path = public as $$
-  with locked as (
-    select id from public.matches where date_time - interval '1 hour' <= now()
+  with rp as (
+    select rp.user_id, rp.round_end, rp.player_id, rp.status, pr.zone_id
+    from public.round_picks rp join public.profiles pr on pr.id = rp.user_id
+    where rp.round_end - interval '7 days 4 hours' <= now()
   ), tot as (
-    select p.match_id, count(distinct p.user_id)::numeric as n from public.picks p
-    where p.match_id in (select id from locked) group by p.match_id
+    select rp.round_end, rp.zone_id, count(distinct rp.user_id)::numeric as n from rp group by rp.round_end, rp.zone_id
   ), own as (
-    select p.match_id, p.player_id, count(distinct p.user_id)::numeric as n from public.picks p
-    where p.match_id in (select id from locked) group by p.match_id, p.player_id
+    select rp.round_end, rp.zone_id, rp.player_id, count(*)::numeric as n from rp
+    group by rp.round_end, rp.zone_id, rp.player_id
   ), mine as (
-    select p.user_id, own.n * 100 / tot.n as pct
-    from public.picks p
-    join tot on tot.match_id = p.match_id
-    join own on own.match_id = p.match_id and own.player_id = p.player_id
-    where p.status = 'starting'
+    select rp.user_id, own.n * 100 / tot.n as pct
+    from rp
+    join tot on tot.round_end = rp.round_end and tot.zone_id is not distinct from rp.zone_id
+    join own on own.round_end = rp.round_end and own.zone_id is not distinct from rp.zone_id
+            and own.player_id = rp.player_id
+    where rp.status = 'starting'
   )
   select mine.user_id, count(*) filter (where mine.pct < 25), round(avg(mine.pct), 1)
   from mine group by mine.user_id;
 $$;
 
--- بيتنادي من fn_tick لما ماتشات تبدأ: يحدّث كسر التعادل لليوزرز اللي لعبوا فيها بس
+-- بيتنادي من fn_tick: أول ما جولة تبدأ، كسر التعادل يتحدّث لليوزرز اللي لعبوها (مرة واحدة)
 create or replace function public.fn_update_tiebreak()
 returns void language plpgsql security definer set search_path = public as $$
-declare ids uuid[];
+declare r timestamptz := public.fn_week_cutoff(now());
 begin
-  select array_agg(id) into ids from public.matches where not tiebreak_done and date_time <= now();
-  if ids is null then return; end if;
-  update public.matches set tiebreak_done = true where id = any(ids);
+  insert into public.app_jobs (key) values ('tiebreak:' || to_char(r at time zone 'UTC', 'YYYYMMDDHH24'))
+  on conflict do nothing;
+  if not found then return; end if;
   update public.profiles p set low_picks = t.low_picks, avg_own = t.avg_own
   from public.fn_user_tiebreak() t
   where p.id = t.user_id
-    and p.id in (select distinct pk.user_id from public.picks pk where pk.match_id = any(ids));
+    and p.id in (select distinct rp.user_id from public.round_picks rp where rp.round_end = r);
 end $$;
 
 -- ترتيب دوري: النقط ثم كسر التعادل (المتعادلين بالظبط لهم نفس المركز). العام = كل اليوزرز.
@@ -1807,38 +2422,53 @@ create or replace function public.fn_close_polls()
 returns void language plpgsql security definer set search_path = public as $$
 declare r record; w text;
 begin
-  for r in select id, kind, question from public.polls
+  for r in select id, kind, question, zone_id from public.polls
            where active and closes_at is not null and closes_at <= now() loop
     update public.polls set active = false where id = r.id;
     select label into w from public.poll_options where id = public.fn_poll_winner(r.id);
-    insert into public.notifications (title, body, kind)
+    insert into public.notifications (title, body, kind, audience, zone_id)
     values (case when r.kind = 'totw_tie' then '⚖️ اتحسم التعادل' else '🏆 ' || r.question end,
-            coalesce('الفايز: ' || w, 'التصويت خلص'), 'vote');
+            coalesce('الفايز: ' || w, 'التصويت خلص'), 'vote',
+            case when r.zone_id is null then 'all' else 'zone' end, r.zone_id);
   end loop;
 end $$;
 
--- تعادل على آخر مكان في تشكيلة الجولة (أعلى ٥) → تصويت لحد نص الليل
-create or replace function public.fn_totw_tie(p_cutoff timestamptz)
+-- تعادل على آخر مكان في تشكيلة الجولة (أعلى ٥) → تصويت لحد نص الليل — لكل منطقة لوحدها
+create or replace function public.fn_totw_tie_zone(p_cutoff timestamptz, p_zone int)
 returns void language plpgsql security definer set search_path = public as $$
 declare ids uuid[]; names text[]; ps bigint[]; above int; slots int; pid uuid;
 begin
-  if exists (select 1 from public.polls where kind = 'totw_tie' and window_end = p_cutoff) then return; end if;
+  if exists (select 1 from public.polls where kind = 'totw_tie' and window_end = p_cutoff
+             and zone_id is not distinct from p_zone) then return; end if;
   select array_agg(t.id order by t.points desc, t.name), array_agg(t.name order by t.points desc, t.name),
          array_agg(t.points order by t.points desc, t.name)
   into ids, names, ps
-  from public.player_points_between(p_cutoff - interval '7 days', p_cutoff) t where t.points > 0;
+  from public.player_points_between(p_cutoff - interval '7 days', p_cutoff, p_zone) t where t.points > 0;
   if ids is null or array_length(ids, 1) < 6 or ps[5] <> ps[6] then return; end if;
   select count(*) into above from unnest(ps) x where x > ps[5];
   slots := 5 - above;
-  insert into public.polls (kind, question, active, window_end, closes_at, slots)
+  insert into public.polls (kind, question, active, window_end, closes_at, slots, zone_id)
   values ('totw_tie', 'تعادل في تشكيلة الجولة — مين يدخل؟', true, p_cutoff,
-          p_cutoff + interval '20 hours', slots)
+          p_cutoff + interval '20 hours', slots, p_zone)
   returning id into pid;
   insert into public.poll_options (poll_id, label, player_id)
   select pid, names[i], ids[i] from generate_subscripts(ids, 1) i where ps[i] = ps[5];
-  insert into public.notifications (title, body, kind)
+  insert into public.notifications (title, body, kind, audience, zone_id)
   values ('⚖️ تعادل في تشكيلة الجولة', 'لاعيبة جابوا نفس النقط على آخر ' ||
-          case when slots = 1 then 'مكان' else slots || ' أماكن' end || ' — صوّت لحد نص الليل', 'vote');
+          case when slots = 1 then 'مكان' else slots || ' أماكن' end || ' — صوّت لحد نص الليل', 'vote',
+          case when p_zone is null then 'all' else 'zone' end, p_zone);
+end $$;
+
+create or replace function public.fn_totw_tie(p_cutoff timestamptz)
+returns void language plpgsql security definer set search_path = public as $$
+declare z record; any_zone boolean := false;
+begin
+  for z in select distinct m.zone_id from public.matches m
+           where m.date_time > p_cutoff - interval '7 days' and m.date_time <= p_cutoff and m.zone_id is not null loop
+    any_zone := true;
+    perform public.fn_totw_tie_zone(p_cutoff, z.zone_id);
+  end loop;
+  if not any_zone then perform public.fn_totw_tie_zone(p_cutoff, null); end if;   -- ماتشات عامة بس
 end $$;
 
 
@@ -1926,40 +2556,45 @@ begin
     coalesce((select value from public.user_badges where user_id = u and badge = b), 0) + 1);
 end $$;
 
--- حقائق كل لاعب في تشكيلات اليوزر في الماتشات اللي خلصت
+-- حقائق كل لاعب في تشكيلات اليوزر في الجولات اللي خلصت
+drop function if exists public.fn_user_pick_facts(uuid);
 create or replace function public.fn_user_pick_facts(u uuid)
-returns table(match_id uuid, player_id uuid, status text, is_captain boolean, is_vice boolean,
-              saved_at timestamptz, date_time timestamptz, base int, played boolean, goals int,
-              match_max int, owner_pct numeric, chip text)
+returns table(round_end timestamptz, player_id uuid, status text, is_captain boolean, is_vice boolean,
+              saved_at timestamptz, deadline timestamptz, base int, played boolean, goals int,
+              round_max int, owner_pct numeric, chip text)
 language sql stable security definer set search_path = public as $$
   with mine as (
-    select p.match_id, p.player_id, p.status, p.is_captain, p.is_vice, p.saved_at, m.date_time
-    from public.picks p join public.matches m on m.id = p.match_id
-    where p.user_id = u and m.status = 'finished'
+    select rp.round_end, rp.player_id, rp.status, rp.is_captain, rp.is_vice, rp.saved_at
+    from public.round_picks rp where rp.user_id = u and rp.round_end <= now()
+  ), rounds as (
+    select distinct mine.round_end from mine
   ), ev as (
-    select e.match_id, e.player_id, sum(public.fn_event_points(e.type, pl.position))::int as pts,
+    select rounds.round_end, e.player_id, sum(public.fn_event_points(e.type, pl.position))::int as pts,
            (count(*) filter (where e.type = 'goal'))::int as goals
-    from public.events e join public.players pl on pl.id = e.player_id
-    where e.match_id in (select mine.match_id from mine)
-    group by e.match_id, e.player_id
+    from rounds
+    join public.matches m on m.date_time > rounds.round_end - interval '7 days' and m.date_time <= rounds.round_end
+                         and m.review_status <> 'void'
+    join public.events e on e.match_id = m.id
+    join public.players pl on pl.id = e.player_id
+    group by rounds.round_end, e.player_id
   ), mx as (
-    select ev.match_id, max(ev.pts) as mx from ev group by ev.match_id
+    select ev.round_end, max(ev.pts) as mx from ev group by ev.round_end
   ), own as (
-    select p.match_id, p.player_id, count(distinct p.user_id)::numeric as n from public.picks p
-    where p.match_id in (select mine.match_id from mine) group by p.match_id, p.player_id
+    select rp.round_end, rp.player_id, count(*)::numeric as n from public.round_picks rp
+    where rp.round_end in (select rounds.round_end from rounds) group by rp.round_end, rp.player_id
   ), tot as (
-    select p.match_id, count(distinct p.user_id)::numeric as n from public.picks p
-    where p.match_id in (select mine.match_id from mine) group by p.match_id
+    select rp.round_end, count(distinct rp.user_id)::numeric as n from public.round_picks rp
+    where rp.round_end in (select rounds.round_end from rounds) group by rp.round_end
   )
-  select mine.match_id, mine.player_id, mine.status, mine.is_captain, mine.is_vice, mine.saved_at,
-    mine.date_time, coalesce(ev.pts, 0), ev.player_id is not null, coalesce(ev.goals, 0),
+  select mine.round_end, mine.player_id, mine.status, mine.is_captain, mine.is_vice, mine.saved_at,
+    public.fn_round_deadline(mine.round_end), coalesce(ev.pts, 0), ev.player_id is not null, coalesce(ev.goals, 0),
     coalesce(mx.mx, 0), round(coalesce(own.n, 0) * 100 / greatest(tot.n, 1), 1),
-    (select c.chip from public.chip_uses c where c.user_id = u and c.match_id = mine.match_id)
+    (select c.chip from public.chip_uses c where c.user_id = u and c.week_cutoff = mine.round_end)
   from mine
-  left join ev on ev.match_id = mine.match_id and ev.player_id = mine.player_id
-  left join mx on mx.match_id = mine.match_id
-  left join own on own.match_id = mine.match_id and own.player_id = mine.player_id
-  left join tot on tot.match_id = mine.match_id;
+  left join ev on ev.round_end = mine.round_end and ev.player_id = mine.player_id
+  left join mx on mx.round_end = mine.round_end
+  left join own on own.round_end = mine.round_end and own.player_id = mine.player_id
+  left join tot on tot.round_end = mine.round_end;
 $$;
 
 -- الشارات الشخصية لليوزر (بتتحسب لما يبقى عنده نشاط جديد)
@@ -1971,49 +2606,42 @@ begin
   create temp table _pf as select * from public.fn_user_pick_facts(u);
 
   perform public.fn_set_badge(u, 'hawk_eye',
-    (select count(distinct match_id) from _pf where is_captain and goals >= 3)::int);
+    (select count(distinct round_end) from _pf where is_captain and goals >= 3)::int);
   perform public.fn_set_badge(u, 'right_captain',
-    (select count(distinct match_id) from _pf where is_captain and base > 0 and base >= match_max)::int);
+    (select count(distinct round_end) from _pf where is_captain and base > 0 and base >= round_max)::int);
   perform public.fn_set_badge(u, 'differential',
-    (select count(distinct match_id) from _pf where status = 'starting' and base >= 10 and owner_pct < 10)::int);
+    (select count(distinct round_end) from _pf where status = 'starting' and base >= 10 and owner_pct < 10)::int);
   perform public.fn_set_badge(u, 'golden_five', (select count(*) from (
-    select match_id from _pf where status = 'starting' group by match_id
+    select round_end from _pf where status = 'starting' group by round_end
     having count(*) filter (where base > 0) = 5) x)::int);
   perform public.fn_set_badge(u, 'bench_betrayal', (select count(*) from (
-    select match_id from _pf group by match_id
+    select round_end from _pf group by round_end
     having coalesce(max(chip), '') <> 'bench_boost'
        and coalesce(sum(base) filter (where status = 'bench'), 0) > coalesce(sum(base) filter (where status = 'starting'), 0)) x)::int);
   perform public.fn_set_badge(u, 'saviour', (select count(*) from (
-    select match_id from _pf group by match_id
+    select round_end from _pf group by round_end
     having not bool_or(is_captain and played)
        and coalesce(max(base) filter (where is_vice), 0) >= 8) x)::int);
   perform public.fn_set_badge(u, 'early_bird', (select count(*) from (
-    select match_id from _pf group by match_id
-    having max(saved_at) <= max(date_time) - interval '24 hours') x)::int);
+    select round_end from _pf group by round_end
+    having max(saved_at) <= max(deadline) - interval '24 hours') x)::int);
   perform public.fn_set_badge(u, 'last_second', (select count(*) from (
-    select match_id from _pf group by match_id
-    having max(saved_at) > max(date_time) - interval '61 minutes'
-       and max(saved_at) <= max(date_time) - interval '1 hour') x)::int);
+    select round_end from _pf group by round_end
+    having max(saved_at) > max(deadline) - interval '1 minute') x)::int);
   drop table if exists _pf;
 
   -- مش بيفوّت: أطول سلسلة جولات ورا بعض فيها تشكيلة
   select coalesce(max(n), 0) into v from (
     select count(*) as n from (
       select wk - (row_number() over (order by wk)) * interval '7 days' as grp
-      from (select distinct public.fn_week_cutoff(m.date_time) as wk
-            from public.picks p join public.matches m on m.id = p.match_id where p.user_id = u) w
+      from (select distinct rp.round_end as wk from public.round_picks rp
+            where rp.user_id = u and rp.round_end <= now()) w
     ) g group by grp) s;
   perform public.fn_set_badge(u, 'streak', v);
 
-  -- المدمن: أطول سلسلة ماتشات ورا بعض (من الماتشات اللي نزلت تشكيلتها) من غير ما يفوّت
-  select coalesce(max(n), 0) into v from (
-    select count(*) as n from (
-      select rn - row_number() over (order by rn) as grp from (
-        select m.id, row_number() over (order by m.date_time) as rn from public.matches m
-        where m.date_time <= now() and exists (select 1 from public.lineups l where l.match_id = m.id)
-      ) am where exists (select 1 from public.picks p where p.user_id = u and p.match_id = am.id)
-    ) g group by grp) s;
-  perform public.fn_set_badge(u, 'addict', v);
+  -- المدمن: كام جولة لعبتها
+  perform public.fn_set_badge(u, 'addict', (select count(distinct rp.round_end) from public.round_picks rp
+    where rp.user_id = u and rp.round_end <= now())::int);
 
   perform public.fn_set_badge(u, 'oracle', (select count(*) from public.predictions pr
     join public.matches m on m.id = pr.match_id
@@ -2031,25 +2659,21 @@ begin
     where l.owner_id = u group by l.id) x)::int);
   perform public.fn_set_badge(u, 'first_100', (select count(*) from public.profiles
     where created_at <= (select created_at from public.profiles where id = u))::int);
-  -- رقم قياسي: كام مرة نقطك في ماتش كسرت أعلى رقم في تاريخ التطبيق وقتها
-  perform public.fn_set_badge(u, 'record', (select count(*) from public.user_match_points a
-    join public.matches ma on ma.id = a.match_id
-    where a.user_id = u and ma.status = 'finished' and a.points > 0
-      and a.points > coalesce((select max(b.points) from public.user_match_points b
-        join public.matches mb on mb.id = b.match_id
-        where mb.status = 'finished' and mb.date_time < ma.date_time), 0))::int);
+  -- رقم قياسي: كام مرة نقطك في جولة كسرت أعلى رقم في تاريخ التطبيق وقتها
+  perform public.fn_set_badge(u, 'record', (select count(*) from public.user_round_points a
+    where a.user_id = u and a.round_end <= now() and a.points > 0
+      and a.points > coalesce((select max(b.points) from public.user_round_points b
+                               where b.round_end < a.round_end), 0))::int);
 end $$;
 
--- شارات الجولة (بتتحسب مرة واحدة لما الجولة تقفل الجمعة ٤ الفجر)
+-- شارات الجولة (بتتحسب مرة واحدة لما الجولة تخلص السبت ٤ العصر)
 create or replace function public.fn_round_badges(p_cutoff timestamptz)
 returns void language plpgsql security definer set search_path = public as $$
 declare f timestamptz := p_cutoff - interval '7 days'; r record; best int;
 begin
   drop table if exists _rt;
   create temp table _rt as
-    select ump.user_id, sum(ump.points)::int as pts
-    from public.user_match_points ump join public.matches m on m.id = ump.match_id
-    where m.date_time > f and m.date_time <= p_cutoff group by ump.user_id;
+    select urp.user_id, urp.points as pts from public.user_round_points urp where urp.round_end = p_cutoff;
 
   select max(pts) into best from _rt;
   if best > 0 then
@@ -2064,21 +2688,27 @@ begin
 
   -- الصاروخ: طلع ٢٠ مركز أو أكتر في الترتيب العام في الجولة دي
   for r in
-    with b as (select ump.user_id, sum(ump.points) as s from public.user_match_points ump
-               join public.matches m on m.id = ump.match_id where m.date_time <= f group by ump.user_id),
-         a as (select ump.user_id, sum(ump.points) as s from public.user_match_points ump
-               join public.matches m on m.id = ump.match_id where m.date_time <= p_cutoff group by ump.user_id),
+    with b as (select urp.user_id, sum(urp.points) as s from public.user_round_points urp
+               where urp.round_end <= f group by urp.user_id),
+         a as (select urp.user_id, sum(urp.points) as s from public.user_round_points urp
+               where urp.round_end <= p_cutoff group by urp.user_id),
          rb as (select user_id, rank() over (order by s desc) as rk from b),
          ra as (select user_id, rank() over (order by s desc) as rk from a)
     select ra.user_id from ra join rb on rb.user_id = ra.user_id where rb.rk - ra.rk >= 20 loop
     perform public.fn_bump_badge(r.user_id, 'rocket');
   end loop;
 
-  -- ملك اليوم: الأعلى في كل يوم من أيام الجولة
+  -- ملك اليوم: الأعلى في نقط أساسييه (والكابتن ×٢) في كل يوم من أيام الجولة
   for r in
-    with d as (select ump.user_id, (m.date_time at time zone 'Africa/Cairo')::date as dy, sum(ump.points) as s
-               from public.user_match_points ump join public.matches m on m.id = ump.match_id
-               where m.date_time > f and m.date_time <= p_cutoff group by 1, 2),
+    with d as (select rp.user_id, (m.date_time at time zone 'Africa/Cairo')::date as dy,
+                      sum(public.fn_event_points(e.type, pl.position) * case when rp.is_captain then 2 else 1 end) as s
+               from public.round_picks rp
+               join public.events e on e.player_id = rp.player_id
+               join public.matches m on m.id = e.match_id
+               join public.players pl on pl.id = rp.player_id
+               where rp.round_end = p_cutoff and rp.status = 'starting' and m.review_status <> 'void'
+                 and m.date_time > f and m.date_time <= p_cutoff
+               group by 1, 2),
          mx as (select dy, max(s) as mx from d group by dy)
     select d.user_id from d join mx on mx.dy = d.dy where d.s = mx.mx and mx.mx > 0 loop
     perform public.fn_bump_badge(r.user_id, 'day_king');
@@ -2099,21 +2729,23 @@ begin
     perform public.fn_bump_badge(r.user_id, 'beloved');
   end loop;
   for r in
-    with c as (select p.player_id, count(*) as n from public.picks p join public.matches m on m.id = p.match_id
-               where p.is_captain and m.date_time > f and m.date_time <= p_cutoff group by p.player_id)
+    with c as (select rp.player_id, count(*) as n from public.round_picks rp
+               where rp.is_captain and rp.round_end = p_cutoff group by rp.player_id)
     select pl.user_id from c join public.players pl on pl.id = c.player_id
     where pl.user_id is not null and c.n = (select max(n) from c) loop
     perform public.fn_bump_badge(r.user_id, 'people_captain');
   end loop;
   for r in
     select pl.user_id from (
-      select p.match_id, p.player_id from public.picks p join public.matches m on m.id = p.match_id
-      where p.is_captain and m.status = 'finished' and m.date_time > f and m.date_time <= p_cutoff
-      group by p.match_id, p.player_id having count(*) >= 30) c
+      select rp.player_id from public.round_picks rp
+      where rp.is_captain and rp.round_end = p_cutoff
+      group by rp.player_id having count(*) >= 30) c
     join public.players pl on pl.id = c.player_id
     where pl.user_id is not null
       and coalesce((select sum(public.fn_event_points(e.type, pl.position)) from public.events e
-                    where e.match_id = c.match_id and e.player_id = c.player_id), 0) <= 0 loop
+                    join public.matches m on m.id = e.match_id
+                    where e.player_id = c.player_id and m.review_status <> 'void'
+                      and m.date_time > f and m.date_time <= p_cutoff), 0) <= 0 loop
     perform public.fn_bump_badge(r.user_id, 'letdown');
   end loop;
 
@@ -2160,22 +2792,20 @@ create table if not exists public.app_jobs (
 );
 alter table public.app_jobs enable row level security;   -- مفيش سياسات = محدش يوصله من التطبيق
 
--- اللاعيبة الموثّقين: "انت كابتن عند N واحد" أول ما التشكيلات تقفل
+-- اللاعيبة الموثّقين: "انت كابتن عند N واحد" أول ما ديدلاين الجولة يعدّي (مرة واحدة)
 create or replace function public.fn_notify_captains()
 returns void language plpgsql security definer set search_path = public as $$
-declare r record;
+declare r timestamptz := public.fn_open_round() - interval '7 days';   -- آخر جولة ديدلاينها عدّى
 begin
-  for r in select id, teams from public.matches
-           where not captains_notified and status = 'upcoming'
-             and date_time - interval '1 hour' <= now() and date_time > now() - interval '6 hours' loop
-    update public.matches set captains_notified = true where id = r.id;
-    insert into public.notifications (title, body, kind, user_id, match_id)
-    select '🔥 انت كابتن عند ' || count(*) || ' واحد', r.teams[1] || ' ضد ' || r.teams[2] || ' — ورّيهم',
-           'status', pl.user_id, r.id
-    from public.picks p join public.players pl on pl.id = p.player_id
-    where p.match_id = r.id and p.is_captain and pl.user_id is not null
-    group by pl.user_id;
-  end loop;
+  if now() < public.fn_round_deadline(r) then return; end if;
+  insert into public.app_jobs (key) values ('captains:' || to_char(r at time zone 'UTC', 'YYYYMMDDHH24'))
+  on conflict do nothing;
+  if not found then return; end if;
+  insert into public.notifications (title, body, kind, user_id)
+  select '🔥 انت كابتن عند ' || count(*) || ' واحد', 'في الجولة اللي جاية — ورّيهم', 'status', pl.user_id
+  from public.round_picks p join public.players pl on pl.id = p.player_id
+  where p.round_end = r and p.is_captain and pl.user_id is not null
+  group by pl.user_id;
 end $$;
 
 -- p_limit: كام يوزر تتحسب شاراتهم في الدورة (pg_cron: 300 · التطبيق: 20)
@@ -2193,6 +2823,7 @@ begin
   perform public.fn_notify_captains();
   perform public.fn_close_polls();
   perform public.fn_update_tiebreak();
+  perform public.fn_review_tick();
 
   c := public.fn_week_cutoff(now());
   cp := c - interval '7 days';                         -- آخر جولة قفلت
@@ -2272,7 +2903,7 @@ for each row execute function public.trg_notification_push();
 do $$
 declare t text;
 begin
-  foreach t in array array['lineups', 'players', 'events', 'polls', 'venues', 'picks', 'matches',
+  foreach t in array array['lineups', 'players', 'events', 'polls', 'venues', 'picks', 'round_picks', 'matches',
                            'bookings', 'user_badges', 'venue_reviews'] loop
     begin
       execute format('alter publication supabase_realtime add table public.%I', t);
@@ -2282,7 +2913,588 @@ begin
 end $$;
 
 
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║ 21) MATCH INTEGRITY — المنظّمين + تأكيد الطرفين + الاعتماد       ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+-- الفكرة: اللي بيدخّل الأهداف ميستفيدش منها، وورقة الماتش بتتأكد من لاعيبة الفريقين.
+--   ١) المنظّم = يوزر الأدمن وافق على طلبه. بيدير ماتشاته بس، ومينفعش يختار منها في الفانتازي.
+--   ٢) الماتش يخلص → pending: اللاعيبة الموثّقين في التشكيلة يأكدوا ✅ أو يعترضوا ❌.
+--   ٣) مفيش اعتراض خلال ١٢ ساعة → معتمد لوحده. لو فيه علامة غرابة → لازم تأكيد صريح من الفريقين.
+--   ٤) اعتراض → disputed → الأدمن يحكم (اعتماد / إلغاء الماتش / إعادة المراجعة).
+--   نقط الماتش بتبان لايف "مبدئية"، والإجمالي والترتيب بيحسبوا المعتمد بس (fn_user_points).
+
+create table if not exists public.match_reviews (
+  match_id   uuid references public.matches(id) on delete cascade,
+  user_id    uuid references public.profiles(id) on delete cascade,
+  team       text not null,
+  ok         boolean not null,
+  note       text check (note is null or length(note) <= 300),
+  created_at timestamptz not null default now(),
+  primary key (match_id, user_id)
+);
+alter table public.match_reviews enable row level security;
+drop policy if exists "match reviews read" on public.match_reviews;
+create policy "match reviews read" on public.match_reviews for select to authenticated using (
+  user_id = auth.uid() or public.is_manager()
+  or exists (select 1 from public.matches m where m.id = match_id and m.organizer_id = auth.uid())
+);
+-- مفيش كتابة مباشرة: بدالة review_match بس
+
+-- منطقة فريق بالاسم
+create or replace function public.fn_team_zone(p_name text)
+returns int language sql stable security definer set search_path = public as $$
+  select zone_id from public.teams where lower(trim(name)) = lower(trim(p_name));
+$$;
+
+create or replace function public.fn_ensure_team(p_name text)
+returns void language sql security definer set search_path = public as $$
+  insert into public.teams (name)
+  select trim(p_name)
+  where not exists (select 1 from public.teams where lower(trim(name)) = lower(trim(p_name)));
+$$;
+
+-- المنظّم: الماتش لازم يتعمل قبل ديدلاين جولته (عشان اليوزرز يختاروا وهما عارفين مين هيلعب)
+create or replace function public.fn_check_round_open(p_when timestamptz)
+returns void language plpgsql stable as $$
+begin
+  if now() >= public.fn_round_deadline(public.fn_week_cutoff(p_when)) then
+    raise exception 'ديدلاين الجولة دي عدّى (السبت ١٢ الضهر) — حط الماتش في الجولة الجاية';
+  end if;
+end $$;
+
+-- المنظّم: الفريقين لازم يكونوا بتوعه
+create or replace function public.fn_check_my_teams(p_teams text[])
+returns void language plpgsql stable security definer set search_path = public as $$
+begin
+  if (select count(*) from public.teams t
+      where t.owner_id = auth.uid() and lower(trim(t.name)) in (lower(trim(p_teams[1])), lower(trim(p_teams[2])))) < 2 then
+    raise exception 'الفريقين لازم يكونوا من فرقك — ضيفهم من "فرقي"';
+  end if;
+end $$;
+
+create or replace function public.fn_reset_reviews(p_match uuid)
+returns void language sql security definer set search_path = public as $$
+  delete from public.match_reviews where match_id = p_match;
+$$;
+
+-- حماية الماتش من التطبيق: المنظّم ميقدرش يلعب في حالة الاعتماد ولا الأعمدة بتاعة السيرفر
+create or replace function public.trg_matches_guard()
+returns trigger language plpgsql as $$
+declare client boolean := current_user in ('authenticated', 'anon') and not public.is_manager();
+begin
+  if tg_op = 'INSERT' then
+    if client then
+      new.organizer_id := auth.uid();
+      new.status := 'upcoming';
+      new.score_a := null;
+      new.score_b := null;
+      new.review_status := 'open';
+      new.review_due := null;
+      new.flags := '{}';
+      new.is_challenge := false;
+      new.motm_player_id := null;
+      new.motm_done := false;
+      new.captains_notified := false;
+      new.tiebreak_done := false;
+      if new.date_time < now() + interval '1 hour' then
+        raise exception 'ميعاد الماتش لازم يكون بعد ساعة على الأقل';
+      end if;
+      if coalesce(array_length(new.teams, 1), 0) <> 2 or new.teams[1] = new.teams[2] then
+        raise exception 'لازم فريقين مختلفين';
+      end if;
+      perform public.fn_check_my_teams(new.teams);
+      perform public.fn_check_round_open(new.date_time);
+    end if;
+    new.zone_id := coalesce(public.fn_team_zone(new.teams[1]), new.zone_id);
+    return new;
+  end if;
+
+  if client then
+    new.organizer_id := old.organizer_id;
+    new.review_status := old.review_status;
+    new.review_due := old.review_due;
+    new.flags := old.flags;
+    new.is_challenge := old.is_challenge;
+    new.motm_player_id := old.motm_player_id;
+    new.motm_done := old.motm_done;
+    new.captains_notified := old.captains_notified;
+    new.tiebreak_done := old.tiebreak_done;
+    if (new.date_time, new.teams) is distinct from (old.date_time, old.teams) then
+      if now() >= old.date_time - interval '1 hour' then
+        raise exception 'مينفعش تغيّر الميعاد أو الفرق بعد قفل التشكيلات';
+      end if;
+      if new.date_time < now() + interval '1 hour' then
+        raise exception 'ميعاد الماتش لازم يكون بعد ساعة على الأقل';
+      end if;
+      if new.teams is distinct from old.teams then perform public.fn_check_my_teams(new.teams); end if;
+      if new.date_time is distinct from old.date_time then perform public.fn_check_round_open(new.date_time); end if;
+    end if;
+    if old.status = 'finished' and new.status <> 'finished' then
+      raise exception 'الماتش خلص — لو فيه غلط كلّم الإدارة';
+    end if;
+    if new.status = 'finished' and old.status <> 'finished' and now() < old.date_time then
+      raise exception 'الماتش لسه مبدأش';
+    end if;
+    -- تعديل النتيجة بعد النهاية = علامة غرابة + التأكيدات تتلغي
+    if old.status = 'finished' and (new.score_a, new.score_b) is distinct from (old.score_a, old.score_b) then
+      new.flags := array(select distinct unnest(old.flags || array['late_edit']));
+      new.review_due := now() + interval '12 hours';
+      perform public.fn_reset_reviews(old.id);
+    end if;
+  end if;
+
+  if new.teams is distinct from old.teams then
+    new.zone_id := coalesce(public.fn_team_zone(new.teams[1]), new.zone_id);
+  end if;
+
+  -- الأدمن رجّع الماتش لـ "لسه" → المراجعة تبدأ من الأول
+  if old.status = 'finished' and new.status <> 'finished' then
+    new.review_status := 'open';
+    new.review_due := null;
+    new.flags := '{}';
+    perform public.fn_reset_reviews(old.id);
+  end if;
+  return new;
+end $$;
+drop trigger if exists matches_guard on public.matches;
+create trigger matches_guard before insert or update on public.matches
+for each row execute function public.trg_matches_guard();
+
+-- حماية اللاعيبة: المنظّم ميقدرش يغيّر الإحصائيات ولا التوثيق
+create or replace function public.trg_players_guard()
+returns trigger language plpgsql as $$
+begin
+  if current_user in ('authenticated', 'anon') and not public.is_manager() then
+    if tg_op = 'INSERT' then
+      new.created_by := auth.uid();
+      new.user_id := null;
+      new.total_points := 0;
+      new.form := 0;
+      new.goals := 0;
+      new.assists := 0;
+      new.clean_sheets := 0;
+      new.yellow_cards := 0;
+    else
+      new.created_by := old.created_by;
+      new.user_id := old.user_id;
+      new.total_points := old.total_points;
+      new.form := old.form;
+      new.goals := old.goals;
+      new.assists := old.assists;
+      new.clean_sheets := old.clean_sheets;
+      new.yellow_cards := old.yellow_cards;
+    end if;
+    if not exists (select 1 from public.teams t
+                   where lower(trim(t.name)) = lower(trim(new.team)) and t.owner_id = auth.uid()) then
+      raise exception 'الفريق ده مش بتاعك — ضيفه من "فرقي" الأول';
+    end if;
+  elsif trim(coalesce(new.team, '')) <> '' then
+    perform public.fn_ensure_team(new.team);          -- الأدمن: أي اسم جديد بيبقى فريق (من غير منطقة)
+  end if;
+  new.zone_id := public.fn_team_zone(new.team);
+  return new;
+end $$;
+drop trigger if exists players_guard on public.players;
+create trigger players_guard before insert or update on public.players
+for each row execute function public.trg_players_guard();
+
+-- علامات الغرابة (مش ممنوعات — بس الماتش ميتعتمدش بالسكوت):
+--   score_mismatch  الأهداف المسجّلة مش نفس النتيجة
+--   big_margin      فرق ١٠ أهداف أو أكتر
+--   organizer_stats المنظّم نفسه عمل ٣ أهداف/أسيست أو أكتر
+--   new_organizer   المنظّم عنده أقل من ٥ ماتشات معتمدة
+--   late_edit       (بيتحط لوحده) أحداث أو نتيجة اتعدّلت بعد النهاية
+create or replace function public.fn_match_flags(p_match uuid)
+returns text[] language sql stable security definer set search_path = public as $$
+  with m as (select * from public.matches where id = p_match),
+  g as (
+    select
+      count(*) filter (where (e.type = 'goal' and pl.team = m.teams[1]) or (e.type = 'ownGoal' and pl.team = m.teams[2])) as ga,
+      count(*) filter (where (e.type = 'goal' and pl.team = m.teams[2]) or (e.type = 'ownGoal' and pl.team = m.teams[1])) as gb,
+      count(*) filter (where e.type in ('goal', 'assist') and pl.user_id = m.organizer_id) as org
+    from m
+    left join public.events e on e.match_id = m.id
+    left join public.players pl on pl.id = e.player_id
+  )
+  select array_remove(array[
+    case when g.ga <> coalesce(m.score_a, 0) or g.gb <> coalesce(m.score_b, 0) then 'score_mismatch' end,
+    case when abs(coalesce(m.score_a, 0) - coalesce(m.score_b, 0)) >= 10 then 'big_margin' end,
+    case when g.org >= 3 then 'organizer_stats' end,
+    case when (select count(*) from public.matches x
+               where x.organizer_id = m.organizer_id and x.review_status = 'approved') < 5 then 'new_organizer' end
+  ], null)
+  from m, g;
+$$;
+
+-- الماتش خلص → إشعار بالنتيجة + (لو منظّم) مراجعة ١٢ ساعة + طلب تأكيد من اللاعيبة الموثّقين
+create or replace function public.fn_start_review(p_match uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare m public.matches;
+begin
+  select * into m from public.matches where id = p_match;
+  perform public.fn_notify_match(p_match, 'انتهى الماتش 🏁',
+    m.teams[1] || ' ' || m.score_a || ' - ' || m.score_b || ' ' || m.teams[2], 'match');
+  -- ماتشات الأدمن معتمدة على طول
+  if m.organizer_id is null or exists (select 1 from public.profiles where id = m.organizer_id and role = 'manager') then
+    update public.matches set review_status = 'approved', review_due = null where id = p_match;
+    return;
+  end if;
+  update public.matches
+  set review_status = 'pending', review_due = now() + interval '12 hours',
+      flags = array(select distinct unnest(m.flags || public.fn_match_flags(p_match)))
+  where id = p_match;
+  perform public.fn_ask_reviewers(p_match);
+end $$;
+
+create or replace function public.fn_ask_reviewers(p_match uuid)
+returns void language sql security definer set search_path = public as $$
+  insert into public.notifications (title, body, kind, user_id, match_id)
+  select distinct on (pl.user_id) '📋 أكّد ورقة الماتش',
+         m.teams[1] || ' ' || m.score_a || ' - ' || m.score_b || ' ' || m.teams[2] || ' — النتيجة والأهداف صح؟',
+         'review', pl.user_id, m.id
+  from public.matches m
+  join public.lineups l on l.match_id = m.id
+  join public.players pl on pl.id = l.player_id
+  where m.id = p_match and pl.user_id is not null and pl.user_id is distinct from m.organizer_id;
+$$;
+
+create or replace function public.trg_match_review()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.status = 'finished' and old.status is distinct from 'finished' then
+    perform public.fn_start_review(new.id);
+  end if;
+  return null;
+end $$;
+drop trigger if exists match_review on public.matches;
+create trigger match_review after update on public.matches
+for each row execute function public.trg_match_review();
+
+-- المنظّم عدّل أحداث بعد النهاية → علامة late_edit + التأكيدات تتلغي + الـ ١٢ ساعة تبدأ من الأول
+create or replace function public.fn_mark_late_edit(p_match uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.matches
+  set flags = array(select distinct unnest(flags || array['late_edit'])), review_due = now() + interval '12 hours'
+  where id = p_match and status = 'finished' and review_status = 'pending';
+  if found then perform public.fn_reset_reviews(p_match); end if;
+end $$;
+
+create or replace function public.trg_events_late()
+returns trigger language plpgsql as $$
+begin
+  if current_user in ('authenticated', 'anon') and not public.is_manager() then
+    perform public.fn_mark_late_edit(coalesce(new.match_id, old.match_id));
+  end if;
+  return null;
+end $$;
+drop trigger if exists events_late on public.events;
+create trigger events_late after insert or update or delete on public.events
+for each row execute function public.trg_events_late();
+
+-- الفريق اللي أنا لاعب موثّق فيه في الماتش ده (null = مش من حقي أراجع)
+create or replace function public.fn_reviewer_team(p_match uuid, p_user uuid)
+returns text language sql stable security definer set search_path = public as $$
+  select pl.team from public.lineups l
+  join public.players pl on pl.id = l.player_id
+  join public.matches m on m.id = l.match_id
+  where l.match_id = p_match and pl.user_id = p_user and m.organizer_id is distinct from p_user
+  limit 1;
+$$;
+
+-- ✅ / ❌ على ورقة الماتش
+create or replace function public.review_match(p_match uuid, p_ok boolean, p_note text default null)
+returns text language plpgsql security definer set search_path = public as $$
+declare u uuid := auth.uid(); m public.matches; t text; n text := nullif(trim(p_note), '');
+begin
+  if u is null then raise exception 'سجّل دخولك الأول'; end if;
+  select * into m from public.matches where id = p_match for update;
+  if not found or m.review_status <> 'pending' then raise exception 'الماتش مش مستني تأكيد'; end if;
+  t := public.fn_reviewer_team(p_match, u);
+  if t is null then raise exception 'لازم تكون لاعب موثّق في تشكيلة الماتش'; end if;
+  if not p_ok and n is null then raise exception 'اكتب إيه الغلط'; end if;
+
+  insert into public.match_reviews (match_id, user_id, team, ok, note)
+  values (p_match, u, t, p_ok, left(n, 300))
+  on conflict (match_id, user_id) do update set ok = excluded.ok, note = excluded.note, created_at = now();
+
+  if not p_ok then
+    update public.matches set review_status = 'disputed' where id = p_match;
+    insert into public.notifications (title, body, kind, user_id, match_id)
+    select '⚠️ اعتراض على ماتش', m.teams[1] || ' ضد ' || m.teams[2] || ' — ' || left(n, 120), 'review', p.id, p_match
+    from public.profiles p where p.role = 'manager' or p.id = m.organizer_id;
+    return 'disputed';
+  end if;
+
+  -- الفريقين أكّدوا → معتمد على طول
+  if exists (select 1 from public.match_reviews r where r.match_id = p_match and r.ok and r.team = m.teams[1])
+     and exists (select 1 from public.match_reviews r where r.match_id = p_match and r.ok and r.team = m.teams[2]) then
+    update public.matches set review_status = 'approved', review_due = null where id = p_match;
+    return 'approved';
+  end if;
+  return 'ok';
+end $$;
+grant execute on function public.review_match(uuid, boolean, text) to authenticated;
+
+-- الماتشات اللي مستنية تأكيدي
+create or replace function public.my_pending_reviews()
+returns table(id uuid, teams text[], date_time timestamptz, score_a int, score_b int, flags text[], my_team text)
+language sql stable security definer set search_path = public as $$
+  select m.id, m.teams, m.date_time, m.score_a, m.score_b, m.flags, public.fn_reviewer_team(m.id, auth.uid())
+  from public.matches m
+  where m.review_status = 'pending'
+    and public.fn_reviewer_team(m.id, auth.uid()) is not null
+    and not exists (select 1 from public.match_reviews r where r.match_id = m.id and r.user_id = auth.uid())
+  order by m.date_time desc;
+$$;
+grant execute on function public.my_pending_reviews() to authenticated;
+
+-- كل دورة: المعتمد بالسكوت (من غير علامات)، والمعلّم عليه اللي عدّى وقته → تنبيه للأدمن مرة واحدة
+create or replace function public.fn_review_tick()
+returns void language plpgsql security definer set search_path = public as $$
+declare r record;
+begin
+  update public.matches set review_status = 'approved', review_due = null
+  where review_status = 'pending' and review_due <= now() and cardinality(flags) = 0;
+  for r in select id, teams from public.matches
+           where review_status = 'pending' and review_due <= now() and cardinality(flags) > 0 loop
+    insert into public.app_jobs (key) values ('review-nudge:' || r.id) on conflict do nothing;
+    if found then
+      insert into public.notifications (title, body, kind, user_id, match_id)
+      select '🔎 ماتش محتاج مراجعتك', r.teams[1] || ' ضد ' || r.teams[2] || ' — فيه علامات ومحدش أكّد', 'review', p.id, r.id
+      from public.profiles p where p.role = 'manager';
+    end if;
+  end loop;
+end $$;
+
+-- (أدمن) الحكم: approve = اعتماد · void = إلغاء الماتش (الأحداث تتمسح والنقط تروح) · reopen = مراجعة من الأول
+create or replace function public.resolve_match(p_match uuid, p_action text)
+returns void language plpgsql security definer set search_path = public as $$
+declare m public.matches;
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  select * into m from public.matches where id = p_match;
+  if not found or m.status <> 'finished' then raise exception 'الماتش لسه مخلصش'; end if;
+  if p_action = 'approve' then
+    update public.matches set review_status = 'approved', review_due = null where id = p_match;
+  elsif p_action = 'void' then
+    delete from public.events where match_id = p_match;
+    update public.matches set review_status = 'void', review_due = null where id = p_match;
+    if m.organizer_id is not null then
+      insert into public.notifications (title, body, kind, user_id, match_id)
+      values ('🚫 ماتشك اتلغى', m.teams[1] || ' ضد ' || m.teams[2] || ' — الإدارة لغت الأحداث بعد المراجعة',
+              'review', m.organizer_id, p_match);
+    end if;
+  elsif p_action = 'reopen' then
+    perform public.fn_reset_reviews(p_match);
+    update public.matches set review_status = 'pending', review_due = now() + interval '12 hours'
+    where id = p_match;
+    perform public.fn_ask_reviewers(p_match);
+  else
+    raise exception 'إجراء مش معروف';
+  end if;
+end $$;
+grant execute on function public.resolve_match(uuid, text) to authenticated;
+
+-- (أدمن) طابور المراجعة: الاعتراضات الأول، وبعدين المعلّم عليه
+create or replace function public.admin_review_queue()
+returns table(id uuid, teams text[], date_time timestamptz, score_a int, score_b int, review_status text,
+              review_due timestamptz, flags text[], organizer_name text, reviews jsonb)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  return query
+  select m.id, m.teams, m.date_time, m.score_a, m.score_b, m.review_status, m.review_due, m.flags, o.name,
+    coalesce((select jsonb_agg(jsonb_build_object('name', p.name, 'team', r.team, 'ok', r.ok, 'note', r.note)
+                               order by r.created_at)
+              from public.match_reviews r join public.profiles p on p.id = r.user_id
+              where r.match_id = m.id), '[]'::jsonb)
+  from public.matches m
+  left join public.profiles o on o.id = m.organizer_id
+  where m.review_status = 'disputed' or (m.review_status = 'pending' and cardinality(m.flags) > 0)
+  order by (m.review_status = 'disputed') desc, m.date_time desc
+  limit 100;
+end $$;
+grant execute on function public.admin_review_queue() to authenticated;
+
+-- (منظّم/أدمن) إشعار "التشكيلة نزلت" — المنظّم مرة واحدة لكل ماتش
+create or replace function public.notify_lineup(p_match uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare m public.matches;
+begin
+  if not (public.is_manager() or public.fn_organizes(p_match)) then raise exception 'مش ماتشك'; end if;
+  select * into m from public.matches where id = p_match;
+  if not public.is_manager() then
+    insert into public.app_jobs (key) values ('lineup:' || p_match) on conflict do nothing;
+    if not found then raise exception 'الإشعار اتبعت قبل كده'; end if;
+  end if;
+  perform public.fn_notify_match(p_match, 'تشكيلة نزلت ⚽',
+    m.teams[1] || ' ضد ' || m.teams[2] || ' — اختار تشكيلتك قبل الديدلاين', 'lineup');
+end $$;
+grant execute on function public.notify_lineup(uuid) to authenticated;
+
+-- ── طلبات "عايز أنظّم ماتشات" ──
+create table if not exists public.organizer_requests (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.profiles(id) on delete cascade,
+  note        text check (note is null or length(note) <= 300),
+  status      text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at  timestamptz not null default now(),
+  reviewed_at timestamptz
+);
+create unique index if not exists organizer_requests_one_pending on public.organizer_requests(user_id)
+  where status = 'pending';
+alter table public.organizer_requests enable row level security;
+drop policy if exists "organizer requests read" on public.organizer_requests;
+create policy "organizer requests read" on public.organizer_requests for select to authenticated
+  using (user_id = auth.uid() or public.is_manager());
+drop policy if exists "organizer requests insert" on public.organizer_requests;
+create policy "organizer requests insert" on public.organizer_requests for insert to authenticated
+  with check (user_id = auth.uid() and status = 'pending'
+              and exists (select 1 from public.profiles p
+                          where p.id = auth.uid() and p.role = 'user' and p.zone_id is not null));
+
+create or replace function public.trg_organizer_request_notify()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare un text;
+begin
+  select name into un from public.profiles where id = new.user_id;
+  insert into public.notifications (title, body, kind, user_id)
+  select '🧑‍⚖️ طلب منظّم ماتشات', coalesce(un, 'يوزر') || coalesce(' — ' || left(new.note, 100), ''), 'status', p.id
+  from public.profiles p where p.role = 'manager';
+  return new;
+end $$;
+drop trigger if exists organizer_request_notify on public.organizer_requests;
+create trigger organizer_request_notify after insert on public.organizer_requests
+for each row execute function public.trg_organizer_request_notify();
+
+create or replace function public.pending_organizer_requests()
+returns table(id uuid, user_id uuid, user_name text, phone text, note text, player_name text, created_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  return query
+  select r.id, r.user_id, p.name, p.phone, r.note,
+         (select pl.name from public.players pl where pl.user_id = r.user_id), r.created_at
+  from public.organizer_requests r join public.profiles p on p.id = r.user_id
+  where r.status = 'pending' order by r.created_at;
+end $$;
+grant execute on function public.pending_organizer_requests() to authenticated;
+
+create or replace function public.review_organizer_request(p_req uuid, p_approve boolean)
+returns void language plpgsql security definer set search_path = public as $$
+declare r public.organizer_requests;
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  select * into r from public.organizer_requests where id = p_req;
+  if not found or r.status <> 'pending' then raise exception 'الطلب مش موجود أو اتراجع'; end if;
+  update public.organizer_requests set status = case when p_approve then 'approved' else 'rejected' end,
+         reviewed_at = now() where id = p_req;
+  if p_approve then
+    update public.profiles set role = 'organizer' where id = r.user_id and role = 'user';
+    insert into public.notifications (title, body, kind, user_id)
+    values ('✓ بقيت منظّم ماتشات', 'افتح "ماتشاتي كمنظّم" من حسابك واعمل أول ماتش', 'status', r.user_id);
+  else
+    insert into public.notifications (title, body, kind, user_id)
+    values ('طلب التنظيم اترفض', 'تقدر تكلّم الإدارة وتقدّم تاني', 'status', r.user_id);
+  end if;
+end $$;
+grant execute on function public.review_organizer_request(uuid, boolean) to authenticated;
+
+-- الإجمالي بقى بيحسب المعتمد بس → نحدّث إجمالي الكل مرة (خفيفة دلوقتي — لو اليوزرز بقوا بالآلاف شيلها بعد أول تشغيل)
+update public.profiles set total_points = public.fn_user_points(id) where id is not null;
+
+
+-- ╔═══════════════════════════════════════════════════════════════╗
+-- ║ 22) ZONES & TEAMS — المناطق والفرق بأصحابها                     ║
+-- ╚═══════════════════════════════════════════════════════════════╝
+-- اليوزر ليه منطقة: بيشوف ماتشاتها وإشعاراتها ونجم وتشكيلة الجولة بتاعتها، وميقدرش يعمل تشكيلة بره منطقته.
+-- المنظّم بيعمل فرق في منطقته، والماتش لازم يكون بين فريقين من فرقه (منطقة الماتش = منطقة فرقه).
+-- الماتشات القديمة/بتاعة الأدمن من غير منطقة = عامة لكل المناطق.
+
+alter table public.teams enable row level security;
+drop policy if exists "teams read" on public.teams;
+create policy "teams read" on public.teams for select to authenticated using (true);
+drop policy if exists "teams organizer insert" on public.teams;
+create policy "teams organizer insert" on public.teams for insert to authenticated
+  with check (public.is_organizer());
+drop policy if exists "teams manager write" on public.teams;
+create policy "teams manager write" on public.teams for update to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+-- الحذف: الأدمن، أو الصاحب لو الفريق لسه ملوش لاعيبة ولا ماتشات
+drop policy if exists "teams delete" on public.teams;
+create policy "teams delete" on public.teams for delete to authenticated using (
+  public.is_manager()
+  or (owner_id = auth.uid()
+      and not exists (select 1 from public.players pl where lower(trim(pl.team)) = lower(trim(teams.name)))
+      and not exists (select 1 from public.matches m
+                      where lower(trim(teams.name)) in (lower(trim(m.teams[1])), lower(trim(m.teams[2])))))
+);
+
+-- المنظّم: الفريق بيتسجّل باسمه وفي منطقته. الاسم مبيتغيّرش (هو المفتاح في اللاعيبة والماتشات).
+create or replace function public.trg_teams_guard()
+returns trigger language plpgsql as $$
+declare z int;
+begin
+  new.name := trim(new.name);
+  if tg_op = 'UPDATE' and new.name <> old.name then
+    raise exception 'مينفعش تغيّر اسم الفريق — اعمل فريق جديد';
+  end if;
+  if current_user in ('authenticated', 'anon') and not public.is_manager() then
+    if tg_op = 'INSERT' then
+      select zone_id into z from public.profiles where id = auth.uid();
+      if z is null then raise exception 'اختار منطقتك الأول'; end if;
+      if (select count(*) from public.teams where owner_id = auth.uid()) >= 30 then
+        raise exception 'آخرك ٣٠ فريق';
+      end if;
+      new.owner_id := auth.uid();
+      new.zone_id := z;
+    else
+      new.owner_id := old.owner_id;
+      new.zone_id := old.zone_id;
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists teams_guard on public.teams;
+create trigger teams_guard before insert or update on public.teams
+for each row execute function public.trg_teams_guard();
+
+-- الأدمن غيّر منطقة فريق → لاعيبته وماتشاته الجاية تتنقل معاه
+create or replace function public.trg_teams_zone()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.zone_id is distinct from old.zone_id then
+    update public.players set zone_id = new.zone_id where lower(trim(team)) = lower(trim(new.name));
+    update public.matches set zone_id = new.zone_id
+    where lower(trim(teams[1])) = lower(trim(new.name)) and status = 'upcoming';
+  end if;
+  return null;
+end $$;
+drop trigger if exists teams_zone on public.teams;
+create trigger teams_zone after update on public.teams
+for each row execute function public.trg_teams_zone();
+
+-- ماتش جديد / ميعاده اتغيّر → إشعار لأهل منطقته (بدل ما التطبيق يبعته)
+create or replace function public.trg_match_announce()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare t text := to_char(new.date_time at time zone 'Africa/Cairo', 'DD/MM · HH12:MI');
+begin
+  if tg_op = 'INSERT' then
+    perform public.fn_notify_match(new.id, 'ماتش جديد ⚽', new.teams[1] || ' ضد ' || new.teams[2] || ' · ' || t, 'match');
+  elsif new.status = 'upcoming' and (new.date_time, new.teams) is distinct from (old.date_time, old.teams) then
+    perform public.fn_notify_match(new.id, 'تعديل في ماتش 📝',
+      new.teams[1] || ' ضد ' || new.teams[2] || ' · الميعاد الجديد ' || t, 'match');
+  end if;
+  return null;
+end $$;
+drop trigger if exists match_announce on public.matches;
+create trigger match_announce after insert or update on public.matches
+for each row execute function public.trg_match_announce();
+
+
 -- ═══════════════════════════════════════════════════════════════
 -- خلصنا. (اختياري) خلّي نفسك مدير — بدّل الإيميل بإيميلك:
 --   update public.profiles set role = 'manager' where email = 'you@email.com';
+-- الأدوار: user · organizer (منظّم ماتشات — الأدمن بيوافق على طلبه) · manager (الأدمن)
 -- ═══════════════════════════════════════════════════════════════

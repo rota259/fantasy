@@ -6,9 +6,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/supabase/live.dart';
 import '../../../core/supabase/server_tick.dart';
 import '../../../core/supabase/supabase_config.dart';
+import '../../integrity/data/integrity_repository.dart';
+import '../../integrity/data/models/pending_review.dart';
 import '../../matches/data/matches_repository.dart';
+import '../../pick/data/models/pick.dart';
+import '../../pick/data/picks_repository.dart';
 import '../../matches/data/models/game_match.dart';
-import '../../polls/data/models/poll.dart';
 import '../../polls/data/polls_repository.dart';
 import '../../squad/data/profile_repository.dart';
 import '../../week/data/models/week_player.dart';
@@ -21,12 +24,15 @@ part 'home_state.dart';
 /// ViewModel للرئيسية: نقاط اليوزر + الماتش القادم + نجم الجولة + التنبيهات.
 /// بيتحدّث فورًا (realtime) ومع الوقت (الجمعة 4 الفجر → نهائي، السبت → جولة جديدة).
 class HomeCubit extends Cubit<HomeState> {
-  HomeCubit(this._profiles, this._matches, this._week, this._polls) : super(const HomeState());
+  HomeCubit(this._profiles, this._matches, this._week, this._polls, this._integrity, this._picks)
+    : super(const HomeState());
 
   final ProfileRepository _profiles;
   final MatchesRepository _matches;
   final WeekRepository _week;
   final PollsRepository _polls;
+  final IntegrityRepository _integrity;
+  final PicksRepository _picks;
 
   String? _userId;
   StreamSubscription<void>? _matchesSub;
@@ -52,19 +58,26 @@ class HomeCubit extends Cubit<HomeState> {
     });
   }
 
+  /// بعد ما اليوزر يأكد ورقة ماتش مثلًا.
+  Future<void> refresh() => _fetch();
+
   Future<void> _fetch() async {
     final userId = _userId;
     if (userId == null) return;
     try {
       final win = WeekWindow.current();
       // كل الطلبات مع بعض (مش ورا بعض) — الوقت = أبطأ طلب بس
-      final (points, upcoming, finished, current, previous, tie) = await (
+      final open = WeekWindow.open();
+      final (points, upcoming, finished, current, previous, tie, reviews, myRound) = await (
         _profiles.points(userId),
         _matches.fetchUpcoming(),
         _matches.fetchFinished(),
         _week.pointsBetween(win.start, win.cutoff),
         _week.pointsBetween(win.previous.start, win.previous.cutoff),
-        win.isFinal() ? _polls.tieFor(win.cutoff, userId) : Future<PollView?>.value(),
+        // تعادل تشكيلة الجولة اللي لسه خالصة (التصويت مفتوح ٢٠ ساعة بعدها)
+        _polls.tieFor(win.previous.cutoff, userId),
+        _integrity.myPendingReviews().catchError((_) => const <PendingReview>[]),
+        _picks.fetchRound(userId, open.cutoff).catchError((_) => const <Pick>[]),
       ).wait;
       final star = current.firstOrNull ?? previous.firstOrNull;
       final fromPrevious = current.isEmpty && star != null;
@@ -81,6 +94,9 @@ class HomeCubit extends Cubit<HomeState> {
           weekLabel: fromPrevious ? win.previous.label : win.label,
           toRate: finished.where((m) => m.ratingOpen).take(3).toList(),
           tieOpen: tie != null && tie.poll.open,
+          toReview: reviews,
+          openRound: open,
+          roundSaved: myRound.isNotEmpty,
         ),
       );
     } catch (_) {

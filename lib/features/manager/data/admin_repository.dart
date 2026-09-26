@@ -8,8 +8,8 @@ abstract interface class AdminRepository {
   /// تغيير دور مستخدم (user | manager).
   Future<void> setRole(String userId, String role);
 
-  /// ids اليوزرز اللي نزّلوا تشكيلة للماتش ده.
-  Future<Set<String>> pickedUserIds(String matchId);
+  /// ids اليوزرز اللي حفظوا تشكيلة للجولة دي (بنهايتها).
+  Future<Set<String>> roundPickerIds(DateTime roundEnd);
 
   /// إشعار: بيتسجّل جوه التطبيق، والداتابيز بتبعته push لوحدها.
   /// userIds فاضية = للكل.

@@ -2,45 +2,35 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/initials_tile.dart';
 import '../../players/data/models/player.dart';
-import '../cubit/match_pick_cubit.dart';
+import '../cubit/round_pick_cubit.dart';
+import 'player_search_list.dart';
 
-/// قائمة اللاعيبة المتاحين للنقطة دي (من تشكيلة المدير، غير المختارين).
-List<Player> _eligible(MatchPickState s, String kind, String teamA, String teamB) {
-  return s.players.where((p) {
-    if (s.sel.containsKey(p.id)) return false;
-    switch (kind) {
-      case 'gk':
-        return p.position == 'GK';
-      case 'teamA':
-        return p.position != 'GK' && p.team == teamA;
-      case 'teamB':
-        return p.position != 'GK' && p.team == teamB;
-      default:
-        return true; // احتياطي: أي لاعب
-    }
-  }).toList();
-}
+/// اللاعيبة المتاحين للنقطة دي (من كل فرق المنطقة، غير المختارين).
+List<Player> _eligible(RoundPickState s, String kind) => s.players.where((p) {
+  if (s.sel.containsKey(p.id)) return false;
+  return switch (kind) {
+    'gk' => p.position == 'GK',
+    'out' => p.position != 'GK',
+    _ => true, // احتياطي: أي لاعب
+  };
+}).toList();
 
-/// شيت اختيار لاعب لنقطة فاضية.
-Future<void> showAddPlayerSheet(
-  BuildContext context,
-  MatchPickCubit cubit,
-  MatchPickState s,
-  String kind,
-  String teamA,
-  String teamB,
-) {
-  final list = _eligible(s, kind, teamA, teamB);
-  return _listSheet(context, 'اختر لاعب', list, (p) {
+/// شيت اختيار لاعب لنقطة فاضية (مع بحث بالاسم أو الفريق).
+Future<void> showAddPlayerSheet(BuildContext context, RoundPickCubit cubit, RoundPickState s, String kind) {
+  final title = switch (kind) {
+    'gk' => 'اختار حارس',
+    'out' => 'اختار لاعب',
+    _ => 'اختار احتياطي',
+  };
+  return _listSheet(context, title, _eligible(s, kind), (p) {
     cubit.setStatus(p.id, kind == 'bench' ? 'bench' : 'starting');
     Navigator.pop(context);
   });
 }
 
-/// شيت خيارات لاعب مختار: كابتن / كابتن احتياطي / تبديل / شيل.
-Future<void> showPlayerOptionsSheet(BuildContext context, MatchPickCubit cubit, MatchPickState s, Player p) {
+/// شيت خيارات لاعب مختار: كابتن / كابتن بديل / تبديل / شيل.
+Future<void> showPlayerOptionsSheet(BuildContext context, RoundPickCubit cubit, RoundPickState s, Player p) {
   final starting = s.sel[p.id] == 'starting';
   return showModalBottomSheet(
     context: context,
@@ -49,10 +39,10 @@ Future<void> showPlayerOptionsSheet(BuildContext context, MatchPickCubit cubit, 
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _title(p.name),
+          _title('${p.name} · ${p.team}'),
           if (starting) ...[
             _option(context, 'اعمله كابتن (×٢)', () => cubit.setCaptain(p.id)),
-            _option(context, 'اعمله كابتن احتياطي', () => cubit.setVice(p.id)),
+            _option(context, 'اعمله كابتن بديل', () => cubit.setVice(p.id)),
             _option(context, 'بدّله باحتياطي', () {
               Navigator.pop(context);
               _swapSheet(context, cubit, s, p, wantStarting: false);
@@ -70,7 +60,7 @@ Future<void> showPlayerOptionsSheet(BuildContext context, MatchPickCubit cubit, 
 }
 
 /// شيت اختيار الطرف التاني للتبديل.
-void _swapSheet(BuildContext context, MatchPickCubit cubit, MatchPickState s, Player p, {required bool wantStarting}) {
+void _swapSheet(BuildContext context, RoundPickCubit cubit, RoundPickState s, Player p, {required bool wantStarting}) {
   final target = wantStarting ? 'starting' : 'bench';
   final list = <Player>[];
   s.sel.forEach((id, st) {
@@ -90,41 +80,13 @@ Future<void> _listSheet(BuildContext context, String title, List<Player> players
     isScrollControlled: true,
     builder: (_) => SafeArea(
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _title(title),
-            if (players.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('مفيش لاعيبة متاحة', style: AppText.body(13, color: AppColors.neutral600)),
-              ),
             Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final p in players)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () => onPick(p),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: const BoxDecoration(
-                          border: Border(top: BorderSide(color: AppColors.divider)),
-                        ),
-                        child: Row(
-                          children: [
-                            InitialsTile(p.initials, size: 32, photoUrl: p.imageUrl),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(p.name, style: AppText.h(13))),
-                            Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              child: PlayerSearchList(players: players, onPick: onPick),
             ),
           ],
         ),

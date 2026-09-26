@@ -17,6 +17,7 @@ class SupabaseAuthRepository implements AuthRepository {
     required String password,
     String? phone,
     String? referralCode,
+    int? zoneId,
   }) async {
     final res = await _auth.signUp(email: email, password: password);
     final id = res.user?.id;
@@ -27,7 +28,7 @@ class SupabaseAuthRepository implements AuthRepository {
       throw Exception('افتح إيميلك وأكّد الحساب، وبعدين سجّل دخول');
     }
 
-    final user = AppUser(id: id, name: name, email: email, phone: phone);
+    final user = AppUser(id: id, name: name, email: email, phone: phone, zoneId: zoneId);
     await SupabaseService.table(_table).insert(user.toInsert());
     final code = referralCode?.trim() ?? '';
     if (code.isNotEmpty) {

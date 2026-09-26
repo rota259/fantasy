@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../events/data/events_repository.dart';
+import '../../integrity/widgets/review_status_chip.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../players/data/players_repository.dart';
 import '../data/lineup_repository.dart';
+import '../widgets/delete_match_dialog.dart';
 import 'manager_add_match_screen.dart';
 import 'manager_match_screen.dart';
 
-/// شاشة المدير: قائمة الماتشات + إنشاء ماتش جديد.
+/// قائمة الماتشات + إنشاء ماتش جديد — الأدمن بيشوف الكل، والمنظّم ماتشاته بس ([organizerId]).
 class ManagerMatchesScreen extends StatefulWidget {
   const ManagerMatchesScreen({
     super.key,
@@ -22,22 +25,29 @@ class ManagerMatchesScreen extends StatefulWidget {
     required this.playersRepo,
     required this.eventsRepo,
     required this.lineupRepo,
+    this.organizerId,
   });
 
   final MatchesRepository matchesRepo;
   final PlayersRepository playersRepo;
   final EventsRepository eventsRepo;
   final LineupRepository lineupRepo;
+  final String? organizerId;
 
   @override
   State<ManagerMatchesScreen> createState() => _ManagerMatchesScreenState();
 }
 
 class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
-  late Future<List<GameMatch>> _future = widget.matchesRepo.fetchAll();
+  late Future<List<GameMatch>> _future = _fetch();
+
+  Future<List<GameMatch>> _fetch() {
+    final org = widget.organizerId;
+    return org == null ? widget.matchesRepo.fetchAll() : widget.matchesRepo.fetchOrganizedBy(org);
+  }
 
   void _reload() => setState(() {
-    _future = widget.matchesRepo.fetchAll();
+    _future = _fetch();
   });
 
   Future<void> _addMatch() async {
@@ -59,36 +69,15 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
   }
 
   Future<void> _confirmDelete(GameMatch m) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
-        title: Text('حذف الماتش', style: AppText.h(16)),
-        content: Text(
-          'متأكد إنك عايز تحذف «${m.teamA} ضد ${m.teamB}»؟\nهيتمسح معاه التشكيلة والأحداث.',
-          style: AppText.body(13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('إلغاء', style: AppText.h(13, color: AppColors.neutral700)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('احذف', style: AppText.h(13, color: AppColors.danger)),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
+    final ok = await confirmDeleteMatch(context, m);
+    if (!ok || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
       final n = await widget.matchesRepo.deleteMatch(m.id);
       if (n == 0) {
         messenger.showSnackBar(
           const SnackBar(
-            content: Text('الحذف محتاج صلاحية مدير — تأكد إن حسابك Role = manager'),
+            content: Text('مينفعش تحذف الماتش ده (بدأ أو مش بتاعك)'),
             duration: Duration(milliseconds: 2600),
           ),
         );
@@ -97,7 +86,12 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
       messenger.showSnackBar(const SnackBar(content: Text('اتحذف الماتش ✓')));
       _reload();
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('فشل الحذف: $e'), duration: const Duration(milliseconds: 2600)));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(dbMessage(e, fallback: 'فشل الحذف')),
+          duration: const Duration(milliseconds: 2600),
+        ),
+      );
     }
   }
 
@@ -109,8 +103,8 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
         children: [
           const StatusArea(),
           Masthead(
-            title: 'إدارة الماتشات',
-            subtitle: 'MANAGER · MATCHES',
+            title: widget.organizerId == null ? 'إدارة الماتشات' : 'ماتشاتي كمنظّم',
+            subtitle: widget.organizerId == null ? 'MANAGER · MATCHES' : 'ORGANIZER',
             onBack: () => Navigator.pop(context),
             trailing: GestureDetector(
               onTap: _addMatch,
@@ -168,7 +162,13 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(14)),
+                  Row(
+                    children: [
+                      Flexible(child: Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(14))),
+                      const SizedBox(width: 6),
+                      ReviewStatusChip(match: m),
+                    ],
+                  ),
                   Text(
                     'GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى ${m.scoreText}' : 'قادم'}',
                     style: AppText.body(10, color: AppColors.neutral700),

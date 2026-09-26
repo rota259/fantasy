@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
+import '../../zones/data/zone.dart';
+import '../../zones/widgets/zone_field.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_header.dart';
@@ -22,6 +24,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phone = TextEditingController();
   final _pass = TextEditingController();
   final _ref = TextEditingController(); // كود دعوة (اختياري)
+  Zone? _zone;
 
   @override
   void dispose() {
@@ -41,6 +44,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       phone: _phone.text,
       password: _pass.text,
       referralCode: _ref.text,
+      zoneId: _zone?.id,
     );
   }
 
@@ -68,6 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   LoginField(label: 'رقم الموبايل', hint: '01xx xxx xxxx', controller: _phone),
                   const SizedBox(height: 14),
                   LoginField(label: 'كلمة السر', hint: '••••••••', obscure: true, controller: _pass),
+                  const SizedBox(height: 14),
+                  ZoneField(value: _zone, onChanged: (z) => setState(() => _zone = z)),
                   const SizedBox(height: 14),
                   LoginField(label: 'كود دعوة صاحبك (اختياري)', hint: 'ABC123', controller: _ref),
                   const SizedBox(height: 18),

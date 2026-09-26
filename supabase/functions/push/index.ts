@@ -2,6 +2,7 @@
 // أي صف بيتسجّل في notifications → الداتابيز بتنادي الفنكشن دي (pg_net) بـ id الإشعار + سر.
 // بتبعت FCM حسب الجمهور:
 //   all   → topic "all" (كل الأجهزة مشتركة فيه) — طلب واحد مهما كان عدد اليوزرز
+//   zone  → topic "zone_<id>" (أجهزة أهل المنطقة) — طلب واحد برضه
 //   user  → توكن اليوزر
 //   match → توكنات متابعين الماتش
 // النشر:  npx supabase functions deploy push --no-verify-jwt --project-ref jhofyglkpwguzodbeyia
@@ -54,7 +55,7 @@ Deno.serve(async (req) => {
     if (ok !== true) return json({ error: "forbidden" }, 403);
 
     const { data: n } = await supabase
-      .from("notifications").select("title, body, kind, audience, user_id, match_id")
+      .from("notifications").select("title, body, kind, audience, user_id, match_id, zone_id")
       .eq("id", id).maybeSingle();
     if (!n) return json({ error: "not found" }, 404);
 
@@ -64,6 +65,11 @@ Deno.serve(async (req) => {
     if (n.audience === "all") {
       const res = await send({ topic: "all" }, n, access_token);
       return json({ topic: "all", ok: res.ok });
+    }
+    if (n.audience === "zone" && n.zone_id) {
+      const topic = `zone_${n.zone_id}`;
+      const res = await send({ topic }, n, access_token);
+      return json({ topic, ok: res.ok });
     }
 
     // توكنات الجمهور المحدّد

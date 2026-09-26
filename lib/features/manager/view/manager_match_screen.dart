@@ -5,18 +5,19 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
+import '../../auth/cubit/auth_cubit.dart';
 import '../../events/data/events_repository.dart';
+import '../../integrity/data/integrity_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/manager_match_cubit.dart';
-import '../data/admin_repository.dart';
 import '../data/lineup_repository.dart';
 import '../widgets/match_events_section.dart';
 import '../widgets/match_lineup_section.dart';
 import '../widgets/match_picks_section.dart';
 import '../widgets/match_result_section.dart';
 
-/// (مدير) إدارة ماتش: التشكيلة · الأحداث · النتيجة · مين نزّل تشكيلته.
+/// (مدير/منظّم) إدارة ماتش: التشكيلة · الأحداث · النتيجة · مين نزّل تشكيلته (للأدمن بس).
 class ManagerMatchScreen extends StatelessWidget {
   const ManagerMatchScreen({
     super.key,
@@ -31,10 +32,19 @@ class ManagerMatchScreen extends StatelessWidget {
   final EventsRepository eventsRepo;
   final LineupRepository lineupRepo;
 
+  /// نفس الشاشة بالـ repositories اللي فوق.
+  static ManagerMatchScreen of(BuildContext context, GameMatch match) => ManagerMatchScreen(
+    match: match,
+    playersRepo: context.read<PlayersRepository>(),
+    eventsRepo: context.read<EventsRepository>(),
+    lineupRepo: context.read<LineupRepository>(),
+  );
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (c) => ManagerMatchCubit(playersRepo, eventsRepo, lineupRepo, c.read<AdminRepository>(), match)..load(),
+      create: (c) =>
+          ManagerMatchCubit(playersRepo, eventsRepo, lineupRepo, c.read<IntegrityRepository>(), match)..load(),
       child: _View(match: match),
     );
   }
@@ -49,12 +59,19 @@ class _View extends StatefulWidget {
 }
 
 class _ViewState extends State<_View> {
-  static const _tabs = [('lineup', 'التشكيلة'), ('events', 'الأحداث'), ('result', 'النتيجة'), ('picks', 'اليوزرز')];
   String _mode = 'lineup';
 
   @override
   Widget build(BuildContext context) {
     final m = widget.match;
+    // "اليوزرز" (مين نزّل تشكيلته) للأدمن بس
+    final isAdmin = context.read<AuthCubit>().state.user?.isManager ?? false;
+    final tabs = [
+      ('lineup', 'التشكيلة'),
+      ('events', 'الأحداث'),
+      ('result', 'النتيجة'),
+      if (isAdmin) ('picks', 'اليوزرز'),
+    ];
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(
@@ -75,9 +92,9 @@ class _ViewState extends State<_View> {
                   children: [
                     Row(
                       children: [
-                        for (var i = 0; i < _tabs.length; i++) ...[
+                        for (var i = 0; i < tabs.length; i++) ...[
                           if (i > 0) const SizedBox(width: 6),
-                          _tab(_tabs[i].$2, _tabs[i].$1),
+                          _tab(tabs[i].$2, tabs[i].$1),
                         ],
                       ],
                     ),
@@ -85,7 +102,7 @@ class _ViewState extends State<_View> {
                     switch (_mode) {
                       'lineup' => MatchLineupSection(match: m, cubit: cubit, state: s),
                       'events' => MatchEventsSection(cubit: cubit, state: s),
-                      'result' => MatchResultSection(match: m),
+                      'result' => MatchResultSection(match: m, isAdmin: isAdmin),
                       _ => MatchPicksSection(match: m),
                     },
                   ],

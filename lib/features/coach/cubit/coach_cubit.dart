@@ -25,7 +25,7 @@ class CoachCubit extends Cubit<CoachState> {
     }
     emit(const CoachState(status: CoachStatus.loading));
     try {
-      final players = await _players.fetchAll();
+      final players = await _players.fetchMyZone();
       final stats = await _stats.windowStats(WeekWindow.current());
       final upcoming = await _matches.fetchUpcoming();
       final report = CoachEngine.build(

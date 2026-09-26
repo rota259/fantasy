@@ -15,6 +15,8 @@ import '../../events/data/events_repository.dart';
 import '../../events/data/supabase_events_repository.dart';
 import '../../follow/data/follows_repository.dart';
 import '../../follow/data/supabase_follows_repository.dart';
+import '../../integrity/data/integrity_repository.dart';
+import '../../integrity/data/supabase_integrity_repository.dart';
 import '../../leagues/data/leagues_repository.dart';
 import '../../leagues/data/supabase_leagues_repository.dart';
 import '../../manager/data/admin_repository.dart';
@@ -45,8 +47,12 @@ import '../../seasons/data/seasons_repository.dart';
 import '../../seasons/data/supabase_seasons_repository.dart';
 import '../../squad/data/profile_repository.dart';
 import '../../squad/data/supabase_profile_repository.dart';
+import '../../teams/data/supabase_teams_repository.dart';
+import '../../teams/data/teams_repository.dart';
 import '../../week/data/supabase_week_repository.dart';
 import '../../week/data/week_repository.dart';
+import '../../zones/data/supabase_zones_repository.dart';
+import '../../zones/data/zones_repository.dart';
 
 /// كل الـ repositories — فوق الـ MaterialApp عشان أي شاشة (حتى اللي بتتفتح بـ push)
 /// تقدر تقرأها بـ context.read.
@@ -82,6 +88,9 @@ class AppRepositories extends StatelessWidget {
         RepositoryProvider<BadgesRepository>(create: (_) => SupabaseBadgesRepository()),
         RepositoryProvider<SeasonsRepository>(create: (_) => SupabaseSeasonsRepository()),
         RepositoryProvider<ReviewsRepository>(create: (_) => SupabaseReviewsRepository()),
+        RepositoryProvider<IntegrityRepository>(create: (_) => SupabaseIntegrityRepository()),
+        RepositoryProvider<ZonesRepository>(create: (_) => SupabaseZonesRepository()),
+        RepositoryProvider<TeamsRepository>(create: (_) => SupabaseTeamsRepository()),
       ],
       child: child,
     );

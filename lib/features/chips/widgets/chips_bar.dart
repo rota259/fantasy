@@ -89,7 +89,7 @@ class _ChipCard extends StatelessWidget {
         content: Text(
           '${chip.type.description}\n\n'
           '${chip.active
-              ? 'الكارت ده مفعّل في الماتش ده.'
+              ? 'الكارت ده مفعّل في الجولة دي.'
               : chip.canActivate
               ? '⚠️ لما تفعّله مش هتقدر تلغيه، ومش هتقدر تستخدم كارت تاني في الجولة دي.'
               : 'مش متاح: ${chip.blocked ?? 'خلص'}'}',

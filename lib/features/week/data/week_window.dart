@@ -1,41 +1,55 @@
 import 'package:equatable/equatable.dart';
 
-/// دورة الجولة:
-///   • من السبت 12 بالليل لحد الجمعة 4 الفجر → **مباشر** (نجوم الجولة وتشكيلة الأسبوع بيتغيّروا مع كل نقطة).
-///   • من الجمعة 4 الفجر لحد 12 بالليل → **النهائي** (بيفضل ظاهر ومتقفل).
-///   • السبت → جولة جديدة.
-/// الحسبة: الجولة = (قفلة الجمعة اللي فاتت 4 الفجر , قفلة الجمعة دي 4 الفجر]،
-/// وأي ماتش بيتحسب في الجولة اللي ميعاده جواها.
+/// الجولة: من السبت ٤ العصر لحد السبت اللي بعده ٤ العصر.
+///   • تشكيلات الجولة بتتقفل **السبت ١٢ الضهر** قبل ما تبدأ (المنظّمين بيكونوا نزّلوا ماتشاتهم).
+///   • أي ماتش بيتحسب في الجولة اللي ميعاده جواها: start < date_time <= cutoff.
+/// (نفس fn_week_cutoff / fn_round_deadline في السيرفر — بتوقيت الموبايل = القاهرة)
 class WeekWindow extends Equatable {
   const WeekWindow(this.cutoff);
 
-  static const cutoffHour = 4; // 4 الفجر
+  static const startHour = 16; // ٤ العصر
+  static const deadlineHour = 12; // ١٢ الضهر
 
-  /// نهاية الجولة (الجمعة 4 الفجر — بتوقيت الموبايل).
+  /// نهاية الجولة (السبت ٤ العصر).
   final DateTime cutoff;
 
-  /// بداية الجولة (الجمعة اللي قبلها 4 الفجر).
-  DateTime get start => DateTime(cutoff.year, cutoff.month, cutoff.day - 7, cutoffHour);
+  /// بداية الجولة (السبت اللي قبلها ٤ العصر).
+  DateTime get start => DateTime(cutoff.year, cutoff.month, cutoff.day - 7, startHour);
 
-  /// الجولة اللي ظاهرة دلوقتي.
-  /// الجمعة قبل 4 → الجولة دي لسه مباشر. الجمعة بعد 4 → نفس الجولة بس نهائي. السبت → الجولة الجاية.
+  /// آخر ميعاد للتشكيلة (السبت ١٢ الضهر يوم البداية).
+  DateTime get deadline => DateTime(cutoff.year, cutoff.month, cutoff.day - 7, deadlineHour);
+
+  /// الجولة اللي فيها وقت معيّن (الافتراضي: دلوقتي = الجولة الشغّالة).
   factory WeekWindow.current([DateTime? now]) {
     final n = now ?? DateTime.now();
-    final daysToFriday = (DateTime.friday - n.weekday) % 7; // الجمعة = 0
-    return WeekWindow(DateTime(n.year, n.month, n.day + daysToFriday, cutoffHour));
+    final daysToSaturday = (DateTime.saturday - n.weekday) % 7; // السبت = 0
+    final c = DateTime(n.year, n.month, n.day + daysToSaturday, startHour);
+    return WeekWindow(n.isAfter(c) ? DateTime(c.year, c.month, c.day + 7, startHour) : c);
   }
 
-  /// الجولة خلصت (من الجمعة 4 الفجر) — الترتيب نهائي.
+  /// الجولة اللي التشكيلات مفتوحة ليها: أقرب جولة ديدلاينها لسه مجاش.
+  factory WeekWindow.open([DateTime? now]) {
+    final n = now ?? DateTime.now();
+    final next = WeekWindow.current(n).next;
+    return n.isBefore(next.deadline) ? next : next.next;
+  }
+
+  /// الجولة خلصت — الترتيب نهائي.
   bool isFinal([DateTime? now]) => (now ?? DateTime.now()).isAfter(cutoff);
 
-  WeekWindow get previous => WeekWindow(DateTime(cutoff.year, cutoff.month, cutoff.day - 7, cutoffHour));
-  WeekWindow get next => WeekWindow(DateTime(cutoff.year, cutoff.month, cutoff.day + 7, cutoffHour));
+  /// التشكيلات اتقفلت (عدّى السبت ١٢ الضهر).
+  bool isLocked([DateTime? now]) => !(now ?? DateTime.now()).isBefore(deadline);
 
-  /// السبت اللي الجولة بتبدأ فيه (للعرض).
-  DateTime get saturday => DateTime(start.year, start.month, start.day + 1);
+  /// الجولة بدأت (السبت ٤ العصر).
+  bool hasStarted([DateTime? now]) => (now ?? DateTime.now()).isAfter(start);
 
-  /// "من السبت 20/9 لحد الجمعة 26/9"
-  String get label => 'من السبت ${saturday.day}/${saturday.month} لحد الجمعة ${cutoff.day}/${cutoff.month}';
+  bool contains(DateTime t) => t.isAfter(start) && !t.isAfter(cutoff);
+
+  WeekWindow get previous => WeekWindow(DateTime(cutoff.year, cutoff.month, cutoff.day - 7, startHour));
+  WeekWindow get next => WeekWindow(DateTime(cutoff.year, cutoff.month, cutoff.day + 7, startHour));
+
+  /// "من السبت 19/9 لحد السبت 26/9"
+  String get label => 'من السبت ${start.day}/${start.month} لحد السبت ${cutoff.day}/${cutoff.month}';
 
   @override
   List<Object?> get props => [cutoff];

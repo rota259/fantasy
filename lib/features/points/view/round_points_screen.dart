@@ -4,31 +4,31 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
-import '../../pick/cubit/match_pick_cubit.dart';
+import '../../pick/cubit/round_pick_cubit.dart';
 import '../../pick/widgets/pick_pitch.dart';
 import '../../players/data/models/player.dart';
-import '../match_points.dart';
+import '../lineup_points.dart';
 import '../points_engine.dart';
 import '../cubit/my_points_cubit.dart';
 
-/// تشكيلتي في ماتش على الخماسي — جنب كل لاعب نقطه + تفصيل عمل إيه.
-class MatchPointsScreen extends StatelessWidget {
-  const MatchPointsScreen({super.key, required this.entry, required this.players});
+/// تشكيلتي في جولة على الخماسي — جنب كل لاعب نقطه + تفصيل عمل إيه في ماتشات الجولة.
+class RoundPointsScreen extends StatelessWidget {
+  const RoundPointsScreen({super.key, required this.entry, required this.players});
 
-  final MatchEntry entry;
+  final RoundEntry entry;
   final Map<String, Player> players;
 
   @override
   Widget build(BuildContext context) {
-    final m = entry.match;
+    final w = entry.window;
     final r = entry.points;
     String? cap, vice;
     for (final p in entry.picks) {
       if (p.isCaptain) cap = p.playerId;
       if (p.isVice) vice = p.playerId;
     }
-    final state = MatchPickState(
-      status: MatchPickStatus.ready,
+    final state = RoundPickState(
+      status: RoundPickStatus.ready,
       players: [
         for (final p in entry.picks)
           if (players[p.playerId] != null) players[p.playerId]!,
@@ -48,22 +48,16 @@ class MatchPointsScreen extends StatelessWidget {
         children: [
           const StatusArea(),
           Masthead(
-            title: '${m.teamA} ضد ${m.teamB}',
-            subtitle: 'نقطك: ${r.total}',
+            title: 'الجولة · ${w.label}',
+            subtitle:
+                'نقطك: ${r.total}${entry.finalPoints.total != r.total ? ' (المعتمد ${entry.finalPoints.total})' : ''}',
             onBack: () => Navigator.pop(context),
           ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                PickPitch(
-                  state: state,
-                  teamA: m.teamA,
-                  teamB: m.teamB,
-                  onSlotTap: (_) {},
-                  onPlayerTap: (_) {},
-                  pointsFor: pointsFor,
-                ),
+                PickPitch(state: state, onSlotTap: (_) {}, onPlayerTap: (_) {}, pointsFor: pointsFor),
                 if (entry.chip != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -76,7 +70,7 @@ class MatchPointsScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                     child: Text(
-                      'الكابتن ملعبش — فالكابتن الاحتياطي خد المضاعفة',
+                      'الكابتن ملعبش ولا ماتش في الجولة — فالكابتن البديل خد المضاعفة',
                       style: AppText.h(12, color: AppColors.accent),
                     ),
                   ),
@@ -99,7 +93,7 @@ class MatchPointsScreen extends StatelessWidget {
     final pos = p?.position ?? '';
     final tag = [
       if (row.pick.isCaptain) 'كابتن',
-      if (row.pick.isVice) 'كابتن احتياطي',
+      if (row.pick.isVice) 'كابتن بديل',
       if (row.pick.status == 'bench') row.counted ? 'احتياطي — اتحسب بالكارت' : 'احتياطي — مش محسوب',
     ].join(' · ');
     return Container(
@@ -128,7 +122,7 @@ class MatchPointsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           if (row.events.isEmpty)
-            Text('ملهوش أحداث في الماتش ده', style: AppText.body(11, color: AppColors.neutral600))
+            Text('ملهوش أحداث في الجولة دي', style: AppText.body(11, color: AppColors.neutral600))
           else
             Wrap(
               spacing: 6,

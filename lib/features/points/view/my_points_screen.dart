@@ -9,13 +9,12 @@ import '../../challenge/data/challenge_repository.dart';
 import '../../chips/data/chips_repository.dart';
 import '../../events/data/events_repository.dart';
 import '../../matches/data/matches_repository.dart';
-import '../../matches/widgets/match_format.dart';
 import '../../pick/data/picks_repository.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/my_points_cubit.dart';
-import 'match_points_screen.dart';
+import 'round_points_screen.dart';
 
-/// نقطك: كل ماتش عملت فيه تشكيلة وجبت فيه كام + بونص التوقعات — تدوس تشوف الخماسي بالتفصيل.
+/// نقطك: كل جولة عملت فيها تشكيلة وجبت فيها كام + بونص التوقعات — تدوس تشوف الخماسي بالتفصيل.
 class MyPointsScreen extends StatelessWidget {
   const MyPointsScreen({super.key, required this.userId});
   final String userId;
@@ -56,7 +55,7 @@ class MyPointsScreen extends StatelessWidget {
     }
     if (s.entries.isEmpty && s.bonuses.isEmpty) {
       return Center(
-        child: Text('لسه معملتش تشكيلة لأي ماتش', style: AppText.body(13, color: AppColors.neutral600)),
+        child: Text('لسه معملتش تشكيلة لأي جولة', style: AppText.body(13, color: AppColors.neutral600)),
       );
     }
     return ListView(
@@ -68,16 +67,26 @@ class MyPointsScreen extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  'إجمالي نقطك من ${s.entries.length} ماتش${s.bonuses.isEmpty ? '' : ' + بونص التوقعات'}',
-                  style: AppText.h(13, color: AppColors.white.withValues(alpha: 0.7)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'نقطك المعتمدة من ${s.entries.length} جولة${s.bonuses.isEmpty ? '' : ' + بونص التوقعات'}',
+                      style: AppText.h(13, color: AppColors.white.withValues(alpha: 0.7)),
+                    ),
+                    if (s.provisional != 0)
+                      Text(
+                        'و ${s.provisional} مبدئية ⏳ — بتدخل لما الماتش يتأكد',
+                        style: AppText.body(11, color: AppColors.accent400),
+                      ),
+                  ],
                 ),
               ),
               Text('${s.total}', style: AppText.h(40, color: AppColors.white)),
             ],
           ),
         ),
-        for (final e in s.entries) _match(context, e, s),
+        for (final e in s.entries) _round(context, e, s),
         for (final m in s.bonuses)
           _line(
             '🎯 توقّعت ${m.teamA} ${m.scoreText} ${m.teamB} صح',
@@ -88,24 +97,20 @@ class MyPointsScreen extends StatelessWidget {
     );
   }
 
-  Widget _match(BuildContext context, MatchEntry e, MyPointsState s) {
-    final m = e.match;
-    final status = m.isFinished ? 'خلص ${m.scoreText}' : (m.hasStarted ? 'شغّال' : 'لسه');
+  Widget _round(BuildContext context, RoundEntry e, MyPointsState s) {
+    final w = e.window;
+    final status = w.isFinal() ? 'خلصت' : (w.hasStarted() ? 'شغّالة' : 'لسه');
+    final pending = e.points.total != e.finalPoints.total ? ' · مبدئي ⏳' : '';
     final chip = e.chip == null ? '' : ' · 🃏 ${e.chip!.label}';
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => MatchPointsScreen(entry: e, players: s.players),
+          builder: (_) => RoundPointsScreen(entry: e, players: s.players),
         ),
       ),
-      child: _line(
-        '${m.teamA} ضد ${m.teamB}',
-        '${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · $status$chip',
-        '${e.points.total}',
-        arrow: true,
-      ),
+      child: _line('الجولة · ${w.label}', '$status$pending$chip', '${e.points.total}', arrow: true),
     );
   }
 

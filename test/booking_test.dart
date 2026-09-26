@@ -45,7 +45,14 @@ void main() {
   });
 
   test('ميعاد محجوز لحد تاني بيرجع من غير صاحبه', () {
-    final b = Booking.fromMap({'id': 'b2', 'venue_id': 'v1', 'user_id': null, 'day': '2026-10-01', 'hour': 20, 'status': 'confirmed'});
+    final b = Booking.fromMap({
+      'id': 'b2',
+      'venue_id': 'v1',
+      'user_id': null,
+      'day': '2026-10-01',
+      'hour': 20,
+      'status': 'confirmed',
+    });
     expect(b.userId, isEmpty);
     expect(b.isConfirmed, isTrue);
   });

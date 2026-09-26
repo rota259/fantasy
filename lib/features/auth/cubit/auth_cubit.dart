@@ -47,7 +47,12 @@ class AuthCubit extends Cubit<AuthState> {
     required String password,
     String? phone,
     String? referralCode,
+    int? zoneId,
   }) async {
+    if (_live && zoneId == null) {
+      emit(const AuthState(status: AuthStatus.error, message: 'اختار منطقتك'));
+      return;
+    }
     emit(const AuthState(status: AuthStatus.authenticating));
     if (!_live) {
       emit(const AuthState(status: AuthStatus.authenticated));
@@ -60,6 +65,7 @@ class AuthCubit extends Cubit<AuthState> {
         password: password,
         phone: phone,
         referralCode: referralCode,
+        zoneId: zoneId,
       );
       emit(AuthState(status: AuthStatus.authenticated, user: user));
     } catch (e) {

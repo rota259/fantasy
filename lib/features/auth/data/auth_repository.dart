@@ -9,6 +9,7 @@ abstract interface class AuthRepository {
     required String password,
     String? phone,
     String? referralCode,
+    int? zoneId,
   });
 
   /// تسجيل دخول بالإيميل.

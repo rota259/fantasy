@@ -7,6 +7,7 @@ import '../../auth/data/models/app_user.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/players_repository.dart';
+import '../../week/data/week_window.dart';
 import '../data/admin_repository.dart';
 
 typedef _Stats = ({List<AppUser> users, int players, int upcoming, int finished, GameMatch? next, int nextPicks});
@@ -30,7 +31,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
     final all = await matchesRepo.fetchAll();
     final upcoming = all.where((m) => !m.isFinished).toList();
     final next = upcoming.isEmpty ? null : upcoming.first;
-    final picks = next == null ? 0 : (await admin.pickedUserIds(next.id)).length;
+    final picks = (await admin.roundPickerIds(WeekWindow.open().cutoff)).length;
     return (
       users: users,
       players: players.length,
@@ -67,13 +68,11 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                   _stat('${s.finished}', 'خلص'),
                 ],
               ),
-              if (s.next != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  '${s.next!.teamA} ضد ${s.next!.teamB}: نزّل تشكيلته ${s.nextPicks} من ${s.users.length}',
-                  style: AppText.h(12, color: AppColors.accent400),
-                ),
-              ],
+              const SizedBox(height: 12),
+              Text(
+                'تشكيلات الجولة الجاية: ${s.nextPicks} من ${s.users.length}',
+                style: AppText.h(12, color: AppColors.accent400),
+              ),
               if (s.users.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text('أعلى ٥', style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),

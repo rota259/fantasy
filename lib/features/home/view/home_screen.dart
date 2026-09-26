@@ -6,19 +6,25 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
+import '../../../core/zone/zone_scope.dart';
 import '../../auth/cubit/auth_cubit.dart';
+import '../../integrity/data/integrity_repository.dart';
+import '../../integrity/view/match_review_screen.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../notifications/cubit/notifications_badge_cubit.dart';
-import '../../pick/view/match_pick_screen.dart';
+import '../../pick/data/picks_repository.dart';
 import '../../points/view/my_points_screen.dart';
 import '../../polls/data/polls_repository.dart';
 import '../../ratings/view/match_ratings_screen.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../../squad/data/profile_repository.dart';
 import '../../week/data/week_repository.dart';
+import '../../week/data/week_window.dart';
 import '../../week/view/team_of_week_screen.dart';
+import '../../zones/data/zone.dart';
+import '../../zones/data/zones_repository.dart';
 import '../cubit/home_cubit.dart';
 import '../widgets/home_alerts.dart';
 import '../widgets/home_bell.dart';
@@ -39,6 +45,8 @@ class HomeScreen extends StatelessWidget {
             c.read<MatchesRepository>(),
             c.read<WeekRepository>(),
             c.read<PollsRepository>(),
+            c.read<IntegrityRepository>(),
+            c.read<PicksRepository>(),
           )..load(userId),
         ),
         BlocProvider(create: (_) => NotificationsBadgeCubit(SoundService())),
@@ -70,10 +78,29 @@ class _HomeView extends StatelessWidget {
     ];
   }
 
+  Future<void> _review(BuildContext context, GameMatch m) async {
+    final cubit = context.read<HomeCubit>();
+    final done = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => MatchReviewScreen(match: m)));
+    if (done == true) cubit.refresh();
+  }
+
   List<HomeAlert> _alerts(BuildContext context, HomeState s) {
     final uid = userId;
     if (uid == null) return const [];
+    final open = s.openRound;
     return [
+      if (open != null && !s.roundSaved)
+        (
+          text: '⚠️ لسه معملتش تشكيلة الجولة — بتقفل ${arabicWeekday(open.deadline)} ${arabicTime(open.deadline)}',
+          color: AppColors.danger,
+          onTap: () => context.read<AppNavCubit>().setTab(AppTab.team),
+        ),
+      for (final r in s.toReview)
+        (
+          text: '📋 أكّد ورقة ماتش ${r.match.teamA} ضد ${r.match.teamB} — النتيجة والأهداف صح؟',
+          color: AppColors.black,
+          onTap: () => _review(context, r.match),
+        ),
       if (s.tieOpen)
         (
           text: '⚖️ تعادل في تشكيلة الجولة — صوّت مين يدخل',
@@ -94,11 +121,15 @@ class _HomeView extends StatelessWidget {
     return Column(
       children: [
         const StatusArea(),
-        const Masthead(
-          title: 'الخماسي',
-          subtitle: 'MATCHDAY · دوري القاهرة',
-          titleLeading: HomeLogo(),
-          trailing: HomeBell(),
+        // اسم منطقة اليوزر (كل اللي في الهوم على مستواها)
+        FutureBuilder<Zone?>(
+          future: context.read<ZonesRepository>().byId(ZoneScope.current),
+          builder: (context, snap) => Masthead(
+            title: 'الخماسي',
+            subtitle: 'MATCHDAY · ${snap.data?.name ?? 'الخماسي'}',
+            titleLeading: const HomeLogo(),
+            trailing: const HomeBell(),
+          ),
         ),
         Expanded(
           child: BlocBuilder<HomeCubit, HomeState>(
@@ -109,7 +140,7 @@ class _HomeView extends StatelessWidget {
                 children: [
                   _pointsHero(context, s.points),
                   HomeAlerts(alerts: _alerts(context, s)),
-                  _nextMatch(context, s.nextMatch),
+                  _nextMatch(context, s.nextMatch, s.openRound),
                   HomeShortcuts(items: _shortcuts(context)),
                   StarOfWeekCard(
                     star: s.star,
@@ -127,7 +158,7 @@ class _HomeView extends StatelessWidget {
     );
   }
 
-  /// الضغط على النقاط → تفاصيل نقاطك في كل ماتش.
+  /// الضغط على النقاط → تفاصيل نقاطك في كل جولة.
   Widget _pointsHero(BuildContext context, int points) {
     return GestureDetector(
       onTap: userId == null ? null : () => _push(context, MyPointsScreen(userId: userId!)),
@@ -155,17 +186,18 @@ class _HomeView extends StatelessWidget {
     );
   }
 
-  Widget _nextMatch(BuildContext context, GameMatch? m) {
+  /// الماتش الجاي في منطقتك — الضغط بيفتح تشكيلة الجولة.
+  Widget _nextMatch(BuildContext context, GameMatch? m, WeekWindow? open) {
     if (m == null) {
       return Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('مفيش ماتش قادم دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
+        child: Text('مفيش ماتش قادم في منطقتك دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
       );
     }
     return Padding(
       padding: const EdgeInsets.all(16),
       child: GestureDetector(
-        onTap: userId == null ? null : () => _push(context, MatchPickScreen(match: m, userId: userId!)),
+        onTap: () => context.read<AppNavCubit>().setTab(AppTab.team),
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
@@ -180,15 +212,13 @@ class _HomeView extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(17))),
-                  Text(
-                    m.isLocked ? 'اتقفلت' : 'اختر ›',
-                    style: AppText.h(13, color: m.isLocked ? AppColors.neutral500 : AppColors.accent),
-                  ),
+                  Text('تشكيلتك ›', style: AppText.h(13, color: AppColors.accent)),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
-                'يقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)}',
+                '${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)}'
+                '${open == null ? '' : ' · التشكيلات بتقفل ${arabicWeekday(open.deadline)} ${arabicTime(open.deadline)}'}',
                 style: AppText.body(11, color: AppColors.neutral700),
               ),
             ],

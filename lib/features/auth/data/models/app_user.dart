@@ -17,13 +17,14 @@ class AppUser extends Equatable {
     this.isActive = true,
     this.createdAt,
     this.refCode,
+    this.zoneId,
   });
 
   final String id;
   final String name;
   final String email;
   final String? phone;
-  final String role; // 'user' أو 'manager'
+  final String role; // 'user' · 'organizer' (منظّم ماتشات) · 'manager' (الأدمن)
   final List<String> team; // ids اللاعيبة في التشكيلة
   final String? leagueId;
   final String? photoUrl;
@@ -33,8 +34,13 @@ class AppUser extends Equatable {
   final bool isActive;
   final DateTime? createdAt;
   final String? refCode; // كود الدعوة بتاعه (بيظهر ليه بس)
+  final int? zoneId; // منطقته (الماتشات والنجوم والتشكيلات بتاعتها)
 
   bool get isManager => role == 'manager';
+  bool get isOrganizer => role == 'organizer';
+
+  /// يقدر يعمل ماتشات ويدخّل أحداثها (المنظّم في ماتشاته، والأدمن في الكل).
+  bool get canOrganize => isOrganizer || isManager;
 
   /// أول حرفين من الاسم (بديل الصورة).
   String get initials => name.trim().length >= 2 ? name.trim().substring(0, 2) : name;
@@ -54,10 +60,11 @@ class AppUser extends Equatable {
     isActive: (map['is_active'] ?? true) as bool,
     createdAt: map['created_at'] == null ? null : DateTime.parse(map['created_at'] as String),
     refCode: map['ref_code'] as String?,
+    zoneId: (map['zone_id'] as num?)?.toInt(),
   );
 
   /// الأعمدة اللي بتتكتب عند التسجيل (الدور والنقط بيحددهم السيرفر).
-  Map<String, dynamic> toInsert() => {'id': id, 'name': name, 'email': email, 'phone': phone};
+  Map<String, dynamic> toInsert() => {'id': id, 'name': name, 'email': email, 'phone': phone, 'zone_id': zoneId};
 
   AppUser copyWith({
     String? name,
@@ -85,6 +92,7 @@ class AppUser extends Equatable {
     isActive: isActive ?? this.isActive,
     createdAt: createdAt,
     refCode: refCode,
+    zoneId: zoneId,
   );
 
   @override
@@ -102,5 +110,6 @@ class AppUser extends Equatable {
     totalPoints,
     isActive,
     refCode,
+    zoneId,
   ];
 }

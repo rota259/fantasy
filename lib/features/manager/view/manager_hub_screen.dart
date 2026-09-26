@@ -6,9 +6,12 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../events/data/events_repository.dart';
+import '../../integrity/view/admin_organizers_screen.dart';
+import '../../integrity/view/admin_review_screen.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../pitch/view/venue_requests_screen.dart';
 import '../../players/data/players_repository.dart';
+import '../../teams/view/admin_teams_screen.dart';
 import '../data/lineup_repository.dart';
 import '../widgets/manager_dashboard.dart';
 import 'manager_availability_screen.dart';
@@ -41,6 +44,21 @@ class ManagerHubScreen extends StatelessWidget {
               padding: EdgeInsets.zero,
               children: [
                 const ManagerDashboard(),
+                _group('النزاهة'),
+                _tile(
+                  context,
+                  Icons.gavel_outlined,
+                  'مراجعة الماتشات',
+                  'اعتراضات اللاعيبة + الماتشات المعلّم عليها — احكم',
+                  const AdminReviewScreen(),
+                ),
+                _tile(
+                  context,
+                  Icons.how_to_reg_outlined,
+                  'طلبات المنظّمين',
+                  'مين عايز ينظّم ماتشات — وافق أو ارفض',
+                  const AdminOrganizersScreen(),
+                ),
                 _group('الماتشات واللاعيبة'),
                 _tile(
                   context,
@@ -53,6 +71,13 @@ class ManagerHubScreen extends StatelessWidget {
                     eventsRepo: context.read<EventsRepository>(),
                     lineupRepo: context.read<LineupRepository>(),
                   ),
+                ),
+                _tile(
+                  context,
+                  Icons.shield_outlined,
+                  'الفرق',
+                  'كل الفرق بمناطقها وأصحابها — حدّد منطقة الفرق القديمة',
+                  const AdminTeamsScreen(),
                 ),
                 _tile(
                   context,

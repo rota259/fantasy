@@ -46,7 +46,7 @@ class _PlayersViewState extends State<_PlayersView> {
     _loadStats();
     // حد حفظ/غيّر تشكيلته → الامتلاك يتحدّث
     // التشكيلات بتتغيّر كتير — نحدّث الامتلاك مرة كل ١٥ ثانية بالكتير
-    _sub = liveTable('picks', _loadStats, debounce: const Duration(seconds: 15));
+    _sub = liveTable('round_picks', _loadStats, debounce: const Duration(seconds: 15));
   }
 
   @override

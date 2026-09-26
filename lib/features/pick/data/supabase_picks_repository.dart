@@ -2,33 +2,35 @@ import '../../../core/supabase/supabase_service.dart';
 import 'models/pick.dart';
 import 'picks_repository.dart';
 
-/// تنفيذ PicksRepository فوق جدول picks.
+/// تنفيذ PicksRepository فوق جدول round_picks + دالة save_round_picks.
 class SupabasePicksRepository implements PicksRepository {
-  static const _table = 'picks';
+  static const _table = 'round_picks';
+
+  static String _db(DateTime t) => t.toUtc().toIso8601String();
 
   @override
-  Future<List<Pick>> fetchForUserMatch(String userId, String matchId) async {
-    final rows = await SupabaseService.table(_table).select().eq('user_id', userId).eq('match_id', matchId);
+  Future<List<Pick>> fetchRound(String userId, DateTime roundEnd) async {
+    final rows = await SupabaseService.table(_table).select().eq('user_id', userId).eq('round_end', _db(roundEnd));
     return rows.map(Pick.fromMap).toList();
   }
 
   @override
-  Future<Map<String, List<Pick>>> fetchAllForUser(String userId) async {
+  Future<Map<DateTime, List<Pick>>> fetchAllRounds(String userId) async {
     final rows = await SupabaseService.table(_table).select().eq('user_id', userId);
-    final byMatch = <String, List<Pick>>{};
+    final byRound = <DateTime, List<Pick>>{};
     for (final r in rows) {
-      byMatch.putIfAbsent(r['match_id'].toString(), () => []).add(Pick.fromMap(r));
+      final end = DateTime.parse(r['round_end'].toString()).toLocal();
+      byRound.putIfAbsent(end, () => []).add(Pick.fromMap(r));
     }
-    return byMatch;
+    return byRound;
   }
 
   @override
-  Future<void> savePicks(String userId, String matchId, List<Pick> picks) async {
-    // دالة واحدة في السيرفر: بتتحقق من القواعد والديدلاين وتستبدل التشكيلة في transaction واحدة.
+  Future<void> saveRound(DateTime roundEnd, List<Pick> picks) async {
     await SupabaseService.client.rpc(
-      'save_picks',
+      'save_round_picks',
       params: {
-        'p_match': matchId,
+        'p_round': _db(roundEnd),
         'p_picks': [
           for (final p in picks)
             {'player_id': p.playerId, 'status': p.status, 'is_captain': p.isCaptain, 'is_vice': p.isVice},

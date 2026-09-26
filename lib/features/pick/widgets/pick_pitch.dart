@@ -5,25 +5,15 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../../core/widgets/pentagon_pitch.dart';
 import '../../players/data/models/player.dart';
-import '../cubit/match_pick_cubit.dart';
+import '../cubit/round_pick_cubit.dart';
 
-/// ملعب خماسي: ٥ نقاط للأساسيين (حارس + ٢ لكل فريق) + ٢ احتياطي تحت.
+/// ملعب خماسي: ٥ نقاط للأساسيين (حارس + ٤ من أي فرق) + ٢ احتياطي تحت.
 /// النقطة الفاضية عليها علامة +، والمليانة عليها اللاعب وشارة C/V.
 class PickPitch extends StatelessWidget {
-  const PickPitch({
-    super.key,
-    required this.state,
-    required this.teamA,
-    required this.teamB,
-    required this.onSlotTap,
-    required this.onPlayerTap,
-    this.pointsFor,
-  });
+  const PickPitch({super.key, required this.state, required this.onSlotTap, required this.onPlayerTap, this.pointsFor});
 
-  final MatchPickState state;
-  final String teamA;
-  final String teamB;
-  final void Function(String kind) onSlotTap;
+  final RoundPickState state;
+  final void Function(String kind) onSlotTap; // gk · out · bench
   final void Function(Player p) onPlayerTap;
 
   /// لو متحدّد: بيظهر جنب كل لاعب نقطه (للعرض — شاشة تفاصيل النقط).
@@ -50,17 +40,16 @@ class PickPitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gk = _starting((p) => p.position == 'GK');
-    final a = _starting((p) => p.position != 'GK' && p.team == teamA);
-    final b = _starting((p) => p.position != 'GK' && p.team == teamB);
+    final out = _starting((p) => p.position != 'GK');
 
     Player? at(List<Player> l, int i) => i < l.length ? l[i] : null;
 
     final tokens = [
       _token(50, 86, at(gk, 0), 'gk'),
-      _token(16, 60, at(a, 0), 'teamA'),
-      _token(29, 20, at(a, 1), 'teamA'),
-      _token(71, 20, at(b, 0), 'teamB'),
-      _token(84, 60, at(b, 1), 'teamB'),
+      _token(29, 20, at(out, 0), 'out'),
+      _token(71, 20, at(out, 1), 'out'),
+      _token(16, 60, at(out, 2), 'out'),
+      _token(84, 60, at(out, 3), 'out'),
     ];
 
     final bench = _bench;

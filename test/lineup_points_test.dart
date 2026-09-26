@@ -2,7 +2,7 @@ import 'package:fantasy_5omasi/features/chips/data/chip_type.dart';
 import 'package:fantasy_5omasi/features/events/data/models/match_event.dart';
 import 'package:fantasy_5omasi/features/pick/data/models/pick.dart';
 import 'package:fantasy_5omasi/features/players/data/models/player.dart';
-import 'package:fantasy_5omasi/features/points/match_points.dart';
+import 'package:fantasy_5omasi/features/points/lineup_points.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Player _pl(String id, String pos) => Player(id: id, name: id, team: 'A', position: pos, price: 0);
@@ -13,7 +13,7 @@ void main() {
   final players = {'gk': _pl('gk', 'GK'), 'f1': _pl('f1', 'FWD'), 'm1': _pl('m1', 'MID'), 'b1': _pl('b1', 'FWD')};
 
   test('الكابتن اللي لعب بيتضاعف والاحتياطي مش بيتحسب', () {
-    final r = MatchPoints.compute(
+    final r = LineupPoints.compute(
       picks: const [
         Pick(playerId: 'f1', status: 'starting', isCaptain: true),
         Pick(playerId: 'm1', status: 'starting', isVice: true),
@@ -29,7 +29,7 @@ void main() {
   });
 
   test('الكابتن ملعبش → النائب ياخد ×2', () {
-    final r = MatchPoints.compute(
+    final r = LineupPoints.compute(
       picks: const [
         Pick(playerId: 'f1', status: 'starting', isCaptain: true),
         Pick(playerId: 'gk', status: 'starting', isVice: true),
@@ -51,25 +51,25 @@ void main() {
     final events = [_ev('f1', 'goal'), _ev('m1', 'assist'), _ev('b1', 'goal')];
 
     test('كابتن ×٣', () {
-      final r = MatchPoints.compute(picks: picks, events: events, players: players, chip: ChipType.triple);
+      final r = LineupPoints.compute(picks: picks, events: events, players: players, chip: ChipType.triple);
       expect(r.of('f1')!.total, 12); // 4 × 3
       expect(r.total, 15);
     });
 
     test('الاحتياطي يتحسب', () {
-      final r = MatchPoints.compute(picks: picks, events: events, players: players, chip: ChipType.benchBoost);
+      final r = LineupPoints.compute(picks: picks, events: events, players: players, chip: ChipType.benchBoost);
       expect(r.of('b1')!.total, 4);
       expect(r.total, 15); // 8 + 3 + 4
     });
 
     test('الدبل ×٢ على المجموع كله', () {
-      final r = MatchPoints.compute(picks: picks, events: events, players: players, chip: ChipType.doubleUp);
+      final r = LineupPoints.compute(picks: picks, events: events, players: players, chip: ChipType.doubleUp);
       expect(r.subtotal, 11);
       expect(r.total, 22);
     });
 
     test('الوايلد كارد مالوش تأثير على النقط', () {
-      final r = MatchPoints.compute(picks: picks, events: events, players: players, chip: ChipType.wildcard);
+      final r = LineupPoints.compute(picks: picks, events: events, players: players, chip: ChipType.wildcard);
       expect(r.total, 11);
     });
   });

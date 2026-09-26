@@ -7,7 +7,7 @@ class ChipsState extends Equatable {
   final List<ChipStatus> chips;
   final bool busy;
 
-  /// الكارت المفعّل في الماتش ده (لو فيه).
+  /// الكارت المفعّل في الجولة دي (لو فيه).
   ChipType? get active {
     for (final c in chips) {
       if (c.active) return c.type;

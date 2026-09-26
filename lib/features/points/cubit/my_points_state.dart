@@ -1,7 +1,13 @@
 part of 'my_points_cubit.dart';
 
-/// ماتش + تشكيلتي فيه + الكارت + نقطي.
-typedef MatchEntry = ({GameMatch match, List<Pick> picks, ChipType? chip, MatchPoints points});
+/// جولة + تشكيلتي فيها + الكارت + نقطي (المباشر والمعتمد).
+typedef RoundEntry = ({
+  WeekWindow window,
+  List<Pick> picks,
+  ChipType? chip,
+  LineupPoints points,
+  LineupPoints finalPoints,
+});
 
 enum MyPointsStatus { loading, ready, error }
 
@@ -17,12 +23,18 @@ class MyPointsState extends Equatable {
   static const predictionBonus = 5;
 
   final MyPointsStatus status;
-  final List<MatchEntry> entries;
+  final List<RoundEntry> entries;
   final Map<String, Player> players;
   final List<GameMatch> bonuses; // ماتشات التحدّي اللي توقّعتها صح
 
-  int get matchesTotal => entries.fold(0, (s, e) => s + e.points.total);
-  int get total => matchesTotal + bonuses.length * predictionBonus;
+  /// المعتمد بس = نفس الإجمالي في السيرفر والترتيب.
+  int get total =>
+      entries.fold(0, (s, e) => s + e.finalPoints.total) + bonuses.where((m) => m.isApproved).length * predictionBonus;
+
+  /// نقط لسه بتتأكد (ماتشات شغّالة أو مستنية اعتماد) — بتدخل الإجمالي لما تتعتمد.
+  int get provisional =>
+      entries.fold(0, (s, e) => s + e.points.total - e.finalPoints.total) +
+      bonuses.where((m) => !m.isApproved).length * predictionBonus;
 
   @override
   List<Object?> get props => [status, entries, players, bonuses];

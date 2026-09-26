@@ -27,17 +27,20 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
   }
 
   Future<void> _toggle(AppUser u) async {
-    final makeManager = !u.isManager;
+    // المنظّم: الزرار بيشيل التنظيم. غيره: مدير ↔ يوزر.
+    final newRole = (u.isOrganizer || u.isManager) ? 'user' : 'manager';
+    final (title, body) = switch (newRole) {
+      'manager' => ('خلّيه مدير؟', '«${u.name}» هيقدر يدير كل الماتشات واللاعيبة ويحكم في الاعتراضات.'),
+      _ when u.isOrganizer => ('شيل التنظيم؟', '«${u.name}» مش هيقدر يعمل أو يدير ماتشات تاني.'),
+      _ => ('شيل الإدارة؟', '«${u.name}» هيرجع يوزر عادي.'),
+    };
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
         shape: const RoundedRectangleBorder(),
-        title: Text(makeManager ? 'خلّيه مدير؟' : 'شيل الإدارة؟', style: AppText.h(16)),
-        content: Text(
-          makeManager ? '«${u.name}» هيقدر يضيف ويحذف لاعيبة وماتشات ويبعت إشعارات.' : '«${u.name}» هيرجع يوزر عادي.',
-          style: AppText.body(13),
-        ),
+        title: Text(title, style: AppText.h(16)),
+        content: Text(body, style: AppText.body(13)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('تأكيد')),
@@ -47,7 +50,7 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
     if (ok != true || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await _repo.setRole(u.id, makeManager ? 'manager' : 'user');
+      await _repo.setRole(u.id, newRole);
       setState(() {
         _future = _load();
       });
@@ -84,7 +87,8 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        '${users.length} مستخدم · ${users.where((u) => u.isManager).length} مدير',
+                        '${users.length} مستخدم · ${users.where((u) => u.isManager).length} مدير'
+                        ' · ${users.where((u) => u.isOrganizer).length} منظّم',
                         style: AppText.h(14),
                       ),
                     ),
@@ -116,12 +120,12 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
               ],
             ),
           ),
-          if (u.isManager)
+          if (u.isManager || u.isOrganizer)
             Container(
               margin: const EdgeInsets.only(left: 8),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              color: AppColors.accent,
-              child: Text('مدير', style: AppText.h(10, color: AppColors.white)),
+              color: u.isManager ? AppColors.accent : AppColors.info,
+              child: Text(u.isManager ? 'مدير' : 'منظّم', style: AppText.h(10, color: AppColors.white)),
             ),
           // المدير مايقدرش يشيل الإدارة من نفسه (عشان ميقفلش على نفسه).
           if (!isMe)
@@ -130,7 +134,10 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-                child: Text(u.isManager ? 'شيل الإدارة' : 'خلّيه مدير', style: AppText.h(11)),
+                child: Text(
+                  u.isOrganizer ? 'شيل التنظيم' : (u.isManager ? 'شيل الإدارة' : 'خلّيه مدير'),
+                  style: AppText.h(11),
+                ),
               ),
             ),
         ],

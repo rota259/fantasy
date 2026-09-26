@@ -29,7 +29,7 @@ class PlayersCubit extends Cubit<PlayersState> {
 
   Future<void> _fetch() async {
     try {
-      final players = await _repo.fetchAll();
+      final players = await _repo.fetchMyZone();
       if (!isClosed) emit(PlayersState(status: PlayersStatus.loaded, players: players));
     } catch (e) {
       if (!isClosed && state.players.isEmpty) {

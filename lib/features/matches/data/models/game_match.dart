@@ -16,6 +16,10 @@ class GameMatch extends Equatable {
     this.isChallenge = false,
     this.motmPlayerId,
     this.motmDone = false,
+    this.organizerId,
+    this.reviewStatus = 'open',
+    this.reviewDue,
+    this.flags = const [],
   });
 
   final String id;
@@ -30,11 +34,22 @@ class GameMatch extends Equatable {
   final bool isChallenge; // تحدّي الجولة (توقّع النتيجة)
   final String? motmPlayerId; // رجل المباراة (تصويت الجمهور)
   final bool motmDone;
+  final String? organizerId; // المنظّم (null = الأدمن)
+  final String reviewStatus; // open · pending (مستني تأكيد) · approved · disputed (اعتراض) · void (اتلغى)
+  final DateTime? reviewDue; // بيتعتمد لوحده بعدها لو مفيش علامات
+  final List<String> flags; // علامات الغرابة (MatchFlags)
 
   /// مدة تقييم الجمهور بعد نهاية الماتش.
   static const ratingWindow = Duration(hours: 24);
 
   bool get isFinished => status == 'finished';
+
+  /// نقطه اتحسبت في الإجمالي والترتيب.
+  bool get isApproved => reviewStatus == 'approved';
+
+  /// خلص ولسه مستني التأكيد أو الحكم — النقط "مبدئية".
+  bool get isProvisional => isFinished && (reviewStatus == 'pending' || reviewStatus == 'disputed');
+  bool get isVoid => reviewStatus == 'void';
 
   /// النتيجة كنص، مثلًا "3 - 2" (فاضية لو الماتش لسه).
   String get scoreText => (scoreA == null || scoreB == null) ? '' : '$scoreA - $scoreB';
@@ -65,6 +80,10 @@ class GameMatch extends Equatable {
     isChallenge: (map['is_challenge'] ?? false) as bool,
     motmPlayerId: map['motm_player_id']?.toString(),
     motmDone: (map['motm_done'] ?? false) as bool,
+    organizerId: map['organizer_id']?.toString(),
+    reviewStatus: (map['review_status'] ?? 'open') as String,
+    reviewDue: _date(map['review_due']),
+    flags: List<String>.from(map['flags'] ?? const []),
   );
 
   /// للكتابة: الوقت UTC عشان السيرفر يفهمه صح (من غير فرق التوقيت).
@@ -84,5 +103,9 @@ class GameMatch extends Equatable {
     isChallenge,
     motmPlayerId,
     motmDone,
+    organizerId,
+    reviewStatus,
+    reviewDue,
+    flags,
   ];
 }

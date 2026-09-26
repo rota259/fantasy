@@ -1,4 +1,5 @@
 import '../../../core/supabase/supabase_service.dart';
+import '../../../core/zone/zone_scope.dart';
 import 'models/poll.dart';
 import 'polls_repository.dart';
 
@@ -15,9 +16,12 @@ class SupabasePollsRepository implements PollsRepository {
 
   @override
   Future<PollView?> tieFor(DateTime windowEnd, String userId) async {
-    final polls = await SupabaseService.table(
+    // تعادل منطقتي (ولو مفيش، العام)
+    final zone = ZoneScope.orFilter;
+    final q = SupabaseService.table(
       'polls',
-    ).select().eq('kind', PollKind.totwTie).eq('window_end', windowEnd.toUtc().toIso8601String()).limit(1);
+    ).select().eq('kind', PollKind.totwTie).eq('window_end', windowEnd.toUtc().toIso8601String());
+    final polls = await (zone == null ? q : q.or(zone)).order('zone_id', nullsFirst: false).limit(1);
     if (polls.isEmpty) return null;
     return _view(Poll.fromMap(polls.first), userId);
   }

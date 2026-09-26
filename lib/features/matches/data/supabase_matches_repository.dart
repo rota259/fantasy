@@ -1,4 +1,7 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/supabase/supabase_service.dart';
+import '../../../core/zone/zone_scope.dart';
 import 'matches_repository.dart';
 import 'models/game_match.dart';
 
@@ -13,8 +16,23 @@ class SupabaseMatchesRepository implements MatchesRepository {
   }
 
   @override
+  Future<List<GameMatch>> fetchOrganizedBy(String userId) async {
+    final rows = await SupabaseService.table(
+      _table,
+    ).select().eq('organizer_id', userId).order('date_time', ascending: false).limit(50);
+    return rows.map(GameMatch.fromMap).toList();
+  }
+
+  /// ماتشات منطقتي + العامة.
+  static PostgrestFilterBuilder<List<Map<String, dynamic>>> _mine() {
+    final zone = ZoneScope.orFilter;
+    final q = SupabaseService.table(_table).select();
+    return zone == null ? q : q.or(zone);
+  }
+
+  @override
   Future<List<GameMatch>> fetchUpcoming() async {
-    final rows = await SupabaseService.table(_table).select().eq('status', 'upcoming').order('date_time');
+    final rows = await _mine().eq('status', 'upcoming').order('date_time');
     return rows.map(GameMatch.fromMap).toList();
   }
 
@@ -34,17 +52,23 @@ class SupabaseMatchesRepository implements MatchesRepository {
 
   @override
   Future<List<GameMatch>> fetchFinished() async {
-    final rows = await SupabaseService.table(
-      _table,
-    ).select().eq('status', 'finished').order('date_time', ascending: false).limit(20);
+    final rows = await _mine().eq('status', 'finished').order('date_time', ascending: false).limit(20);
     return rows.map(GameMatch.fromMap).toList();
   }
 
   @override
   Future<void> finishMatch(String id, int scoreA, int scoreB) async {
-    await SupabaseService.table(
+    final rows = await SupabaseService.table(
       _table,
-    ).update({'status': 'finished', 'score_a': scoreA, 'score_b': scoreB}).eq('id', id);
+    ).update({'status': 'finished', 'score_a': scoreA, 'score_b': scoreB}).eq('id', id).select('id');
+    _ensureWritten(rows);
+  }
+
+  /// الـ RLS بترجّع صفر صفوف من غير خطأ — نحوّلها لرسالة مفهومة.
+  static void _ensureWritten(List rows) {
+    if (rows.isEmpty) {
+      throw const PostgrestException(message: 'مينفعش تعدّل الماتش ده دلوقتي (اتعتمد أو عليه اعتراض)');
+    }
   }
 
   @override
@@ -54,9 +78,10 @@ class SupabaseMatchesRepository implements MatchesRepository {
     required DateTime dateTime,
     required int week,
   }) async {
-    await SupabaseService.table(
+    final rows = await SupabaseService.table(
       _table,
-    ).update({'teams': teams, 'date_time': GameMatch.dbTime(dateTime), 'week': week}).eq('id', id);
+    ).update({'teams': teams, 'date_time': GameMatch.dbTime(dateTime), 'week': week}).eq('id', id).select('id');
+    _ensureWritten(rows);
   }
 
   @override

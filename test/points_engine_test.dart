@@ -3,8 +3,7 @@ import 'package:fantasy_5omasi/features/points/points_engine.dart';
 import 'package:fantasy_5omasi/features/players/data/models/player.dart';
 import 'package:fantasy_5omasi/features/events/data/models/match_event.dart';
 
-Player _p(String id, String pos) =>
-    Player(id: id, name: 'لاعب $id', team: 'ت', position: pos, price: 5);
+Player _p(String id, String pos) => Player(id: id, name: 'لاعب $id', team: 'ت', position: pos, price: 5);
 
 MatchEvent _e(String playerId, String type) =>
     MatchEvent(id: 'e$playerId$type', matchId: 'm1', playerId: playerId, type: type);

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
+import '../../auth/cubit/auth_cubit.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
-import '../../notifications/data/notifications_repository.dart';
+import '../../teams/widgets/team_picker_sheet.dart';
 
 /// شاشة المدير: إنشاء ماتش جديد أو تعديل ماتش (فريقين + معاد). الديدلاين = المعاد − ساعة.
 class ManagerAddMatchScreen extends StatefulWidget {
@@ -59,11 +61,9 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final notifs = context.read<NotificationsRepository>();
     final teamA = _teamA.text.trim();
     final teamB = _teamB.text.trim();
     final week = int.tryParse(_week.text) ?? 1;
-    final when = '${arabicWeekday(_kickoff!)} ${arabicTime(_kickoff!)}';
     try {
       if (_isEdit) {
         await widget.matchesRepo.updateMatch(
@@ -72,22 +72,14 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
           dateTime: _kickoff!,
           week: week,
         );
-        // تعديل الماتش بيأثّر على الديدلاين — نبلّغ الناس
-        await notifs.add(
-          title: 'تعديل في ماتش 📝',
-          body: '$teamA ضد $teamB · GW$week · الميعاد الجديد $when',
-          kind: 'match',
-          matchId: widget.editing!.id,
-        );
       } else {
         await widget.matchesRepo.addMatch(teams: [teamA, teamB], dateTime: _kickoff!, week: week);
-        // إشعار بتفاصيل الماتش الجديد (يظهر لكل اليوزرز فورًا)
-        await notifs.add(title: 'ماتش جديد ⚽', body: '$teamA ضد $teamB · GW$week · $when', kind: 'match');
       }
       navigator.pop(true);
-    } catch (_) {
+    } catch (e) {
       setState(() => _saving = false);
-      messenger.showSnackBar(SnackBar(content: Text(_isEdit ? 'تعذّر تعديل الماتش' : 'تعذّر إنشاء الماتش')));
+      final fallback = _isEdit ? 'تعذّر تعديل الماتش' : 'تعذّر إنشاء الماتش';
+      messenger.showSnackBar(SnackBar(content: Text(dbMessage(e, fallback: fallback))));
     }
   }
 
@@ -108,9 +100,9 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _field(_teamA, 'الفريق الأول'),
+                _team(_teamA, 'الفريق الأول'),
                 const SizedBox(height: 10),
-                _field(_teamB, 'الفريق التاني'),
+                _team(_teamB, 'الفريق التاني'),
                 const SizedBox(height: 10),
                 _field(_week, 'رقم الجولة', number: true),
                 const SizedBox(height: 12),
@@ -152,6 +144,33 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// المنظّم بيختار من فرقه، والأدمن بيكتب أي اسم.
+  Widget _team(TextEditingController c, String hint) {
+    final user = context.read<AuthCubit>().state.user;
+    if (user == null || !user.isOrganizer) return _field(c, hint);
+    return GestureDetector(
+      onTap: () async {
+        final name = await showTeamPicker(context, user.id);
+        if (name != null) setState(() => c.text = name);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                c.text.isEmpty ? '$hint (من فرقك)' : c.text,
+                style: AppText.h(14, color: c.text.isEmpty ? AppColors.neutral600 : AppColors.ink),
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down),
+          ],
+        ),
       ),
     );
   }

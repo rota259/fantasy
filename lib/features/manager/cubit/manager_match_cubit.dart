@@ -1,22 +1,23 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/supabase/db_error.dart';
 import '../../events/data/events_repository.dart';
 import '../../events/data/models/match_event.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
-import '../data/admin_repository.dart';
+import '../../integrity/data/integrity_repository.dart';
 import '../data/lineup_repository.dart';
 
 part 'manager_match_state.dart';
 
 /// ViewModel لصفحة إدارة ماتش (المدير يدخّل التشكيلة والأحداث).
 class ManagerMatchCubit extends Cubit<ManagerMatchState> {
-  ManagerMatchCubit(this._players, this._events, this._lineups, this._admin, this.match)
+  ManagerMatchCubit(this._players, this._events, this._lineups, this._integrity, this.match)
     : super(const ManagerMatchState());
 
-  final AdminRepository _admin;
+  final IntegrityRepository _integrity;
   final PlayersRepository _players;
   final EventsRepository _events;
   final LineupRepository _lineups;
@@ -41,22 +42,17 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
     }
   }
 
-  /// (مدير) إبلاغ كل اليوزرز إن التشكيلة نزلت (جوه التطبيق + push من الداتابيز).
+  /// إبلاغ كل اليوزرز إن التشكيلة نزلت (السيرفر بيبعته — المنظّم مرة واحدة لكل ماتش).
   Future<String> notifyUsers() async {
     try {
-      await _admin.notify(
-        title: 'تشكيلة نزلت ⚽',
-        body: '${match.teamA} ضد ${match.teamB} — اختار تشكيلتك قبل الديدلاين',
-        kind: 'lineup',
-        matchId: match.id,
-      );
+      await _integrity.notifyLineup(match.id);
       return 'اتبعت إشعار لليوزرز ✓';
     } catch (e) {
-      return 'فشل الإرسال: $e';
+      return dbMessage(e, fallback: 'فشل الإرسال');
     }
   }
 
-  /// (مدير) إضافة لاعب لفريق في الماتش (بيظهر بره لحد ما المدير يحطّه أساسي/احتياطي).
+  /// إضافة لاعب لفريق في الماتش (بيظهر بره لحد ما المدير يحطّه أساسي/احتياطي).
   Future<void> addPlayerToTeam(String name, String team, String position) async {
     await _players.addPlayer(name: name, team: team, position: position);
     final players = await _players.fetchByTeams(match.teams);
@@ -115,7 +111,7 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
       await _lineups.replaceForMatch(match.id, state.lineup);
       return 'اتحفظت التشكيلة ✓';
     } catch (e) {
-      return 'فشل الحفظ: $e';
+      return dbMessage(e, fallback: 'فشل الحفظ');
     }
   }
 
@@ -149,10 +145,14 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
 
   /// بيرجّع null لو اتسجّل، أو رسالة الخطأ.
   Future<String?> addEvent(String playerId, String type, int? minute) async {
+    if (!state.lineup.containsKey(playerId)) return 'اللاعب لازم يكون في التشكيلة (واحفظها الأول)';
+    if (DateTime.now().isBefore(match.dateTime.subtract(const Duration(minutes: 15)))) {
+      return 'الأحداث بتتسجّل لما الماتش يبدأ';
+    }
     try {
       await _events.addEvent(matchId: match.id, playerId: playerId, type: type, minute: minute);
     } catch (e) {
-      return 'تعذّر تسجيل الحدث: $e';
+      return dbMessage(e, fallback: 'تعذّر تسجيل الحدث');
     }
     // إشعار الحدث لمتابعين الماتش بيتبعت من الداتابيز لوحده
     await _reloadEvents();
