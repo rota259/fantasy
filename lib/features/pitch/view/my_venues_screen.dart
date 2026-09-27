@@ -13,6 +13,7 @@ import '../data/venues_repository.dart';
 import 'venue_form_screen.dart';
 import 'venue_requests_screen.dart';
 import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/motion.dart';
 
 /// ملاعبي: أي يوزر يضيف ملعبه (لحد ٥)، يعدّله، ويوافق على طلبات الحجز.
 class MyVenuesScreen extends StatefulWidget {
@@ -50,7 +51,6 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('حذف الملعب', style: AppText.h(16)),
         content: Text('متأكد إنك عايز تحذف «${v.name}»؟ كل حجوزاته وتقييماته هتتمسح.', style: AppText.body(13)),
         actions: [
@@ -83,11 +83,11 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
             title: 'ملاعبي',
             subtitle: 'MY PITCHES',
             onBack: () => Navigator.pop(context),
-            trailing: GestureDetector(
+            trailing: Pressable(
               onTap: () => _open(),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(border: AppBorders.white(0.5)),
+                decoration: BoxDecoration(borderRadius: AppRadius.md, border: AppBorders.white(0.5)),
                 child: Text('+ ملعب', style: AppText.h(12, color: AppColors.white)),
               ),
             ),
@@ -101,7 +101,7 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final list = snap.data!;
                 return ListView(
                   padding: EdgeInsets.zero,
@@ -116,7 +116,7 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
                         ),
                       )
                     else ...[
-                      GestureDetector(
+                      Pressable(
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => VenueRequestsScreen(ownerId: widget.userId)),
@@ -124,7 +124,7 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
                         child: Container(
                           margin: const EdgeInsets.all(16),
                           padding: const EdgeInsets.all(13),
-                          color: AppColors.black,
+                          decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
                           alignment: Alignment.center,
                           child: Text('📅 طلبات الحجز على ملاعبي', style: AppText.h(13, color: AppColors.white)),
                         ),
@@ -141,12 +141,12 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
     );
   }
 
-  Widget _row(Venue v) => GestureDetector(
+  Widget _row(Venue v) => Pressable(
     behavior: HitTestBehavior.opaque,
     onTap: () => _open(v),
     child: Container(
       padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -171,9 +171,9 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
               ],
             ),
           ),
-          GestureDetector(
+          Pressable(
             onTap: () => _delete(v),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(6),
               child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
             ),

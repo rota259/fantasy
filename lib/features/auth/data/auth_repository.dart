@@ -12,6 +12,9 @@ abstract interface class AuthRepository {
     int? zoneId,
   });
 
+  /// الدخول بجوجل — null لو اليوزر لغى. الحساب الجديد بيتعمل لوحده (والمنطقة بيختارها بعدها).
+  Future<AppUser?> signInWithGoogle();
+
   /// تسجيل دخول بالإيميل.
   Future<AppUser> signIn({required String email, required String password});
 
@@ -20,6 +23,9 @@ abstract interface class AuthRepository {
 
   /// تسجيل خروج.
   Future<void> signOut();
+
+  /// حذف الحساب نهائيًا (الصور + كل البيانات) — Apple و Google بيطلبوه.
+  Future<void> deleteAccount();
 
   /// بث تغيّر حالة الدخول (مسجّل/خارج).
   Stream<bool> get authChanges;

@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# مفتاح توقيع المتجر — ممنوع يترفع
+/android/key.properties
+*.jks
+*.keystore
+# ملفات فك التشويش (بتتحفظ لوحدها برا git)
+/build/debug-info/
+node_modules/

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import 'motion.dart';
 
 /// صف عنصر عام (لاعب/دوري): قائد + عنوان + سطر فرعي + عنصر خلفي.
 class ProwRow extends StatelessWidget {
@@ -26,14 +27,14 @@ class ProwRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: background,
-          border: topBorder ? const Border(top: BorderSide(color: AppColors.divider)) : null,
+          border: topBorder ? Border(top: BorderSide(color: AppColors.divider)) : null,
         ),
         child: Row(
           children: [

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../players/data/availability.dart';
 import '../../players/data/models/player.dart';
 import '../../players/widgets/availability_badge.dart';
+import '../../../core/widgets/motion.dart';
 
 /// ترويسة اللاعب السوداء (أفاتار + اسم + مركز) — بيانات اللاعب الحقيقية.
 class PlayerHeader extends StatelessWidget {
@@ -22,13 +24,16 @@ class PlayerHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GestureDetector(
+          Pressable(
             onTap: onBack,
             child: Container(
               width: 30,
               height: 30,
               alignment: Alignment.center,
-              decoration: BoxDecoration(border: Border.all(color: AppColors.white.withValues(alpha: 0.4), width: 2)),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.white.withValues(alpha: 0.4), width: 2),
+              ),
               child: Text('‹', style: AppText.h(16, color: AppColors.white)),
             ),
           ),
@@ -104,7 +109,7 @@ class PlayerStatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.divider, width: 2)),
       ),
       child: GridView.count(
@@ -115,7 +120,7 @@ class PlayerStatGrid extends StatelessWidget {
         children: _stats.map((s) {
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 left: BorderSide(color: AppColors.divider),
                 bottom: BorderSide(color: AppColors.divider),

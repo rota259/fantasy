@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../widgets/player_edit_sheet.dart';
+import '../../../core/widgets/motion.dart';
 
 const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
 
@@ -58,7 +60,7 @@ class _ViewState extends State<_View> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'إدارة اللاعيبة', subtitle: 'MANAGER · PLAYERS', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'إدارة اللاعيبة', subtitle: 'ADMIN · PLAYERS', onBack: () => Navigator.pop(context)),
           Expanded(
             child: BlocBuilder<ManagerPlayersCubit, ManagerPlayersState>(
               builder: (context, s) {
@@ -72,10 +74,10 @@ class _ViewState extends State<_View> {
                     const SizedBox(height: 10),
                     _positionChips(),
                     const SizedBox(height: 12),
-                    GestureDetector(
+                    Pressable(
                       onTap: () => _add(cubit),
                       child: Container(
-                        color: AppColors.accent,
+                        decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                         padding: const EdgeInsets.all(13),
                         alignment: Alignment.center,
                         child: Text('أضِف اللاعب', style: AppText.h(14, color: AppColors.white)),
@@ -85,7 +87,7 @@ class _ViewState extends State<_View> {
                     Text('اللاعيبة (${s.players.length})', style: AppText.h(15)),
                     const SizedBox(height: 6),
                     if (s.isLoading)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(20),
                         child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
                       ),
@@ -119,7 +121,6 @@ class _ViewState extends State<_View> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('حذف اللاعب', style: AppText.h(16)),
         content: Text('متأكد إنك عايز تحذف «$name»؟', style: AppText.body(13)),
         actions: [
@@ -144,7 +145,10 @@ class _ViewState extends State<_View> {
 
   Widget _field(TextEditingController c, String hint, {bool number = false}) {
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
+        border: Border.all(color: AppColors.line, width: 1.2),
+      ),
       child: TextField(
         controller: c,
         keyboardType: number ? TextInputType.number : TextInputType.text,
@@ -165,11 +169,12 @@ class _ViewState extends State<_View> {
       runSpacing: 8,
       children: [
         for (final p in _positions)
-          GestureDetector(
+          Pressable(
             onTap: () => setState(() => _pos = p.$1),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
                 color: _pos == p.$1 ? AppColors.accent : null,
                 border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
               ),
@@ -183,7 +188,7 @@ class _ViewState extends State<_View> {
   Widget _playerRow(String name, String meta, {required VoidCallback onEdit, required VoidCallback onDelete}) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -197,16 +202,16 @@ class _ViewState extends State<_View> {
               ],
             ),
           ),
-          GestureDetector(
+          Pressable(
             onTap: onEdit,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Icon(Icons.edit_outlined, size: 18, color: AppColors.neutral700),
             ),
           ),
-          GestureDetector(
+          Pressable(
             onTap: onDelete,
-            child: const Icon(Icons.close, size: 18, color: AppColors.danger),
+            child: Icon(Icons.close, size: 18, color: AppColors.danger),
           ),
         ],
       ),

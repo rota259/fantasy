@@ -1,46 +1,62 @@
+import 'package:fantasy_5omasi/core/app_mode.dart';
 import 'package:fantasy_5omasi/features/week/data/week_window.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUp(() => kTestMode = false); // القوانين الحقيقية
   // 2026-09-26 = سبت ، 2026-10-03 = السبت اللي بعده
-  test('يوم الأربع: الجولة الشغّالة بتخلص السبت الجاي ٤ العصر', () {
+  test('يوم الأربع: الجولة الشغّالة بدأت السبت ٤ العصر وبتخلص السبت الجاي ٨ الصبح', () {
     final w = WeekWindow.current(DateTime(2026, 9, 23, 20));
-    expect(w.cutoff, DateTime(2026, 9, 26, 16));
+    expect(w.cutoff, DateTime(2026, 9, 26, 8));
     expect(w.start, DateTime(2026, 9, 19, 16));
-    expect(w.deadline, DateTime(2026, 9, 19, 12));
+    expect(w.deadline, DateTime(2026, 9, 19, 15));
     expect(w.isFinal(DateTime(2026, 9, 23, 20)), isFalse);
   });
 
-  test('السبت ٤ العصر بالظبط لسه في الجولة، وبعدها بدقيقة جولة جديدة', () {
-    expect(WeekWindow.current(DateTime(2026, 9, 26, 16)).cutoff, DateTime(2026, 9, 26, 16));
-    expect(WeekWindow.current(DateTime(2026, 9, 26, 16, 1)).cutoff, DateTime(2026, 10, 3, 16)); // آخر الشهر صح
+  test('السبت ٨ الصبح بالظبط لسه في الجولة، وبعدها الجولة الجاية', () {
+    expect(WeekWindow.current(DateTime(2026, 9, 26, 8)).cutoff, DateTime(2026, 9, 26, 8));
+    expect(WeekWindow.current(DateTime(2026, 9, 26, 8, 1)).cutoff, DateTime(2026, 10, 3, 8)); // آخر الشهر صح
   });
 
-  test('ماتش في الجولة لو بعد البداية ولحد النهاية', () {
-    final w = WeekWindow(DateTime(2026, 9, 26, 16));
-    expect(w.contains(DateTime(2026, 9, 19, 16)), isFalse); // بتاع اللي قبلها
-    expect(w.contains(DateTime(2026, 9, 19, 16, 1)), isTrue);
-    expect(w.contains(DateTime(2026, 9, 26, 16)), isTrue);
+  test('ماتش في الجولة من البداية لحد النهاية', () {
+    final w = WeekWindow(DateTime(2026, 9, 26, 8));
+    expect(w.contains(DateTime(2026, 9, 19, 15, 59)), isFalse); // فاصل السبت
+    expect(w.contains(DateTime(2026, 9, 19, 16)), isTrue);
+    expect(w.contains(DateTime(2026, 9, 26, 8)), isTrue); // آخر ماتشات ليلة الجمعة
+    expect(w.contains(DateTime(2026, 9, 26, 8, 1)), isFalse);
   });
 
-  test('الجولة المفتوحة للتشكيلات: قبل السبت ١٢ الجاية، بعده اللي بعدها', () {
-    // الأربع: الجولة الجاية (تبدأ السبت ٤) لسه مفتوحة
-    expect(WeekWindow.open(DateTime(2026, 9, 23, 20)).cutoff, DateTime(2026, 10, 3, 16));
-    // السبت ١١:٥٩ الضهر: لسه مفتوحة
-    expect(WeekWindow.open(DateTime(2026, 9, 26, 11, 59)).cutoff, DateTime(2026, 10, 3, 16));
-    // السبت ١٢ الضهر: اتقفلت → اللي بعدها
-    final noon = DateTime(2026, 9, 26, 12);
-    expect(WeekWindow.open(noon).cutoff, DateTime(2026, 10, 10, 16));
-    expect(WeekWindow(DateTime(2026, 10, 3, 16)).isLocked(noon), isTrue);
-    expect(WeekWindow(DateTime(2026, 10, 3, 16)).hasStarted(noon), isFalse);
+  test('فاصل السبت من ٨ الصبح لـ ٤ العصر', () {
+    expect(WeekWindow.inGap(DateTime(2026, 9, 26, 10)), isTrue);
+    expect(WeekWindow.inGap(DateTime(2026, 9, 26, 8)), isFalse);
+    expect(WeekWindow.inGap(DateTime(2026, 9, 26, 16)), isFalse);
+    expect(WeekWindow.inGap(DateTime(2026, 9, 25, 10)), isFalse); // الجمعة
+  });
+
+  test('الجولة المفتوحة للتشكيلات: لحد السبت ٣ العصر (قبل بدايتها بساعة)', () {
+    // الأربع: الجولة الشغّالة اتقفلت → الجاية (تبدأ السبت ٤) مفتوحة
+    expect(WeekWindow.open(DateTime(2026, 9, 23, 20)).cutoff, DateTime(2026, 10, 3, 8));
+    // السبت ٢:٥٩ العصر: لسه مفتوحة
+    expect(WeekWindow.open(DateTime(2026, 9, 26, 14, 59)).cutoff, DateTime(2026, 10, 3, 8));
+    // السبت ٣ العصر: اتقفلت → اللي بعدها
+    final noon = DateTime(2026, 9, 26, 15);
+    expect(WeekWindow.open(noon).cutoff, DateTime(2026, 10, 10, 8));
+    expect(WeekWindow(DateTime(2026, 10, 3, 8)).isLocked(noon), isTrue);
+    expect(WeekWindow(DateTime(2026, 10, 3, 8)).hasStarted(noon), isFalse);
   });
 
   test('اللي قبلها واللي بعدها + العنوان', () {
-    final w = WeekWindow(DateTime(2026, 9, 26, 16));
-    expect(w.previous.cutoff, DateTime(2026, 9, 19, 16));
-    expect(w.next.cutoff, DateTime(2026, 10, 3, 16));
+    final w = WeekWindow(DateTime(2026, 9, 26, 8));
+    expect(w.previous.cutoff, DateTime(2026, 9, 19, 8));
+    expect(w.next.cutoff, DateTime(2026, 10, 3, 8));
     expect(w.label, 'من السبت 19/9 لحد السبت 26/9');
-    expect(w.isFinal(DateTime(2026, 9, 26, 16, 1)), isTrue);
+    expect(w.isFinal(DateTime(2026, 9, 26, 8, 1)), isTrue);
+  });
+
+  test('الجولة اللي بتتلعب: في فاصل السبت هي اللي لسه خالصة', () {
+    expect(WeekWindow.live(DateTime(2026, 9, 23, 20)).cutoff, DateTime(2026, 9, 26, 8));
+    expect(WeekWindow.live(DateTime(2026, 9, 26, 10)).cutoff, DateTime(2026, 9, 26, 8)); // الفاصل
+    expect(WeekWindow.live(DateTime(2026, 9, 26, 16)).cutoff, DateTime(2026, 10, 3, 8)); // الجديدة بدأت
   });
 
   test('النهارده من نص الليل لنص الليل', () {

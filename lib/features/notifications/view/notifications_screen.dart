@@ -9,6 +9,7 @@ import '../../matches/widgets/match_format.dart';
 import '../cubit/notifications_cubit.dart';
 import '../data/models/app_notification.dart';
 import '../data/notifications_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// صندوق الإشعارات لكل اليوزرز (اللي المدير بيبعتها).
 class NotificationsScreen extends StatelessWidget {
@@ -30,7 +31,7 @@ class NotificationsScreen extends StatelessWidget {
               child: BlocBuilder<NotificationsCubit, NotificationsState>(
                 builder: (context, s) {
                   if (s.isLoading) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                    return Center(child: CircularProgressIndicator(color: AppColors.accent));
                   }
                   if (s.items.isEmpty) {
                     return Center(
@@ -40,7 +41,10 @@ class NotificationsScreen extends StatelessWidget {
                   return RefreshIndicator(
                     color: AppColors.accent,
                     onRefresh: () => context.read<NotificationsCubit>().load(),
-                    child: ListView(padding: EdgeInsets.zero, children: [for (final n in s.items) _row(n)]),
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [for (final (i, n) in s.items.indexed) FadeSlideIn(index: i, child: _row(n))],
+                    ),
                   );
                 },
               ),
@@ -54,7 +58,7 @@ class NotificationsScreen extends StatelessWidget {
   Widget _row(AppNotification n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -65,7 +69,7 @@ class NotificationsScreen extends StatelessWidget {
             height: 34,
             alignment: Alignment.center,
             color: AppColors.accent,
-            child: const Icon(Icons.notifications, size: 18, color: AppColors.white),
+            child: Icon(Icons.notifications, size: 18, color: AppColors.white),
           ),
           const SizedBox(width: 12),
           Expanded(

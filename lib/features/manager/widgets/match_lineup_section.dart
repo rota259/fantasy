@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/manager_match_cubit.dart';
 import 'add_team_player_sheet.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) تاب التشكيلة: كل فريق ٤ + حارس أساسيين و٢ احتياطي، + حفظ + إبلاغ اليوزرز.
 class MatchLineupSection extends StatelessWidget {
@@ -63,14 +65,17 @@ class MatchLineupSection extends StatelessWidget {
             style: AppText.body(10, color: AppColors.neutral700),
           ),
           const SizedBox(width: 8),
-          GestureDetector(
+          Pressable(
             onTap: () async {
               final r = await showAddTeamPlayerSheet(context, team);
               if (r != null) await cubit.addPlayerToTeam(r.name, team, r.position);
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.line, width: 1.2),
+              ),
               child: Text('+ ضيف لاعب', style: AppText.h(11)),
             ),
           ),
@@ -87,7 +92,7 @@ class MatchLineupSection extends StatelessWidget {
 
   Widget _row(BuildContext context, Player p) {
     final status = state.lineup[p.id] ?? 'out';
-    Widget opt(String label, String value) => GestureDetector(
+    Widget opt(String label, String value) => Pressable(
       onTap: () {
         final err = cubit.setLineup(p.id, value);
         if (err != null) _snack(context, err);
@@ -95,6 +100,7 @@ class MatchLineupSection extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: status == value ? AppColors.accent : null,
           border: Border.all(color: status == value ? AppColors.accent : AppColors.divider, width: 2),
         ),
@@ -103,7 +109,7 @@ class MatchLineupSection extends StatelessWidget {
     );
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -127,14 +133,15 @@ class MatchLineupSection extends StatelessWidget {
     );
   }
 
-  Widget _button(String text, {bool filled = false, required VoidCallback onTap}) => GestureDetector(
+  Widget _button(String text, {bool filled = false, required VoidCallback onTap}) => Pressable(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.all(13),
       alignment: Alignment.center,
       decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
         color: filled ? AppColors.accent : null,
-        border: filled ? null : Border.all(color: AppColors.black, width: 2),
+        border: filled ? null : Border.all(color: AppColors.line, width: 1.2),
       ),
       child: Text(text, style: AppText.h(filled ? 14 : 13, color: filled ? AppColors.white : AppColors.ink)),
     ),

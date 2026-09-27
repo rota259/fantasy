@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/models/venue_review.dart';
+import '../../../core/widgets/motion.dart';
 
 /// نتيجة شيت التقييم: نجوم + تعليق.
 typedef ReviewInput = ({int stars, String comment});
@@ -52,7 +54,7 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   for (var i = 1; i <= 5; i++)
-                    GestureDetector(
+                    Pressable(
                       onTap: () => setState(() => _stars = i),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
@@ -63,7 +65,10 @@ class _ReviewSheetState extends State<_ReviewSheet> {
               ),
               const SizedBox(height: 10),
               Container(
-                decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.md,
+                  border: Border.all(color: AppColors.line, width: 1.2),
+                ),
                 child: TextField(
                   controller: _comment,
                   maxLines: 3,
@@ -77,10 +82,13 @@ class _ReviewSheetState extends State<_ReviewSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              GestureDetector(
+              Pressable(
                 onTap: _stars == 0 ? null : () => Navigator.pop(context, (stars: _stars, comment: _comment.text)),
                 child: Container(
-                  color: _stars == 0 ? AppColors.neutral500 : AppColors.accent,
+                  decoration: BoxDecoration(
+                    color: _stars == 0 ? AppColors.neutral500 : AppColors.accent,
+                    borderRadius: AppRadius.md,
+                  ),
                   padding: const EdgeInsets.all(13),
                   alignment: Alignment.center,
                   child: Text(

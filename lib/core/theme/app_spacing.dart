@@ -18,19 +18,31 @@ abstract final class AppSpacing {
   static const double screenH = 16;
 }
 
-/// حدود الديزاين: صفر انحناء + خطوط 2px صلبة.
+/// الزوايا: ناعمة ومتسقة في التطبيق كله.
+abstract final class AppRadius {
+  AppRadius._();
+
+  static const double s = 8; // شارات صغيرة
+  static const double m = 14; // كروت وزراير وحقول
+  static const double l = 22; // شيتات وكروت كبيرة
+
+  static const BorderRadius sm = BorderRadius.all(Radius.circular(s));
+  static const BorderRadius md = BorderRadius.all(Radius.circular(m));
+  static const BorderRadius lg = BorderRadius.all(Radius.circular(l));
+}
+
+/// الحدود: خطوط رفيعة هادية (بدل الأسود التقيل).
 abstract final class AppBorders {
   AppBorders._();
 
-  /// الديزاين hard-edge — مفيش أي انحناء.
   static const BorderRadius none = BorderRadius.zero;
 
-  /// حد أسود صلب 2px (العنصر البنائي الأساسي).
-  static Border get solid => Border.all(color: AppColors.black, width: 2);
+  /// حد الكروت والحقول.
+  static Border get solid => Border.all(color: AppColors.line, width: 1.2);
 
-  /// حد فاصل خفيف 2px.
-  static Border get divider => Border.all(color: AppColors.divider, width: 2);
+  /// حد فاصل خفيف.
+  static Border get divider => Border.all(color: AppColors.divider, width: 1.2);
 
   /// حد أبيض شفّاف (على الأسطح الغامقة).
-  static Border white(double opacity) => Border.all(color: AppColors.white.withValues(alpha: opacity), width: 2);
+  static Border white(double opacity) => Border.all(color: AppColors.white.withValues(alpha: opacity), width: 1.2);
 }

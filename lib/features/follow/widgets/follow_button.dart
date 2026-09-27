@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/follows_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// زرار "تابع لايف 🔔" لماتش — بيقلب بين متابع/مش متابع.
 /// الحالة الابتدائية جاية من الشاشة (مجموعة المتابعات)، والتغيير بيتبعت للسيرفر.
@@ -53,11 +55,12 @@ class _FollowButtonState extends State<FollowButton> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: _busy ? null : _toggle,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: _on ? AppColors.accent : null,
           border: Border.all(color: _on ? AppColors.accent : AppColors.black, width: 2),
         ),

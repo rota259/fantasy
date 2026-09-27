@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -14,6 +15,7 @@ import '../../players/data/players_repository.dart';
 import '../data/integrity_repository.dart';
 import '../widgets/match_sheet_view.dart';
 import '../widgets/note_dialog.dart';
+import '../../../core/widgets/motion.dart';
 
 typedef MatchSheet = ({List<MatchEvent> events, Map<String, Player> players});
 
@@ -85,7 +87,7 @@ class _MatchReviewScreenState extends State<MatchReviewScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
@@ -119,10 +121,10 @@ class _MatchReviewScreenState extends State<MatchReviewScreen> {
   }
 
   Widget _button(String label, Color color, VoidCallback onTap) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: _busy ? null : onTap,
       child: Container(
-        color: _busy ? AppColors.neutral500 : color,
+        decoration: BoxDecoration(color: _busy ? AppColors.neutral500 : color, borderRadius: AppRadius.md),
         padding: const EdgeInsets.all(14),
         alignment: Alignment.center,
         child: Text(label, style: AppText.h(14, color: AppColors.white)),

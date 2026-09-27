@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../week/data/models/week_player.dart';
 
-/// نجم الجولة: أعلى لاعب نقط في الجولة بصورته — مباشر لحد الجمعة ٤ الفجر ثم نهائي.
+/// نجم الجولة: أعلى لاعب نقط في منطقتي في آخر تشكيلة جولة اعتمدتها الإدارة (بيفضل لحد اللي بعدها).
 class StarOfWeekCard extends StatelessWidget {
   const StarOfWeekCard({
     super.key,
@@ -27,12 +28,12 @@ class StarOfWeekCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 18, 16, 8),
       child: Container(
-        color: AppColors.black,
+        decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
         padding: const EdgeInsets.all(16),
         child: p == null
             ? Row(
                 children: [
-                  const PentagonIcon(
+                  PentagonIcon(
                     size: 64,
                     fill: AppColors.night,
                     stroke: AppColors.neutral600,
@@ -41,7 +42,7 @@ class StarOfWeekCard extends StatelessWidget {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'نجم الجولة\nلسه محدش جاب نقط في الجولة دي',
+                      'نجم الجولة\nبيظهر أول ما الإدارة تعتمد تشكيلة الجولة',
                       style: AppText.h(14, color: AppColors.white),
                     ),
                   ),
@@ -61,7 +62,10 @@ class StarOfWeekCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                              color: isFinal || fromPrevious ? AppColors.accent : AppColors.danger,
+                              decoration: BoxDecoration(
+                                color: isFinal || fromPrevious ? AppColors.accent : AppColors.danger,
+                                borderRadius: AppRadius.sm,
+                              ),
                               child: Text(badge, style: AppText.h(9, color: AppColors.white)),
                             ),
                           ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
 
 /// توكن لاعب على أرض الملعب: تيشيرت برقم + اسم + شارة نقاط/مركز.
@@ -31,7 +32,7 @@ class PlayerToken extends StatelessWidget {
           Text(
             name!,
             style: AppText.h(9.5, color: AppColors.white).copyWith(
-              shadows: const [Shadow(offset: Offset(0, 1), blurRadius: 3, color: AppColors.black)],
+              shadows: [Shadow(offset: Offset(0, 1), blurRadius: 3, color: AppColors.black)],
             ),
           ),
         ],
@@ -49,8 +50,9 @@ class PlayerToken extends StatelessWidget {
           height: 42,
           alignment: Alignment.center,
           decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
             color: isCaptain ? AppColors.accent : AppColors.white,
-            border: Border.all(color: AppColors.black, width: 2),
+            border: Border.all(color: AppColors.line, width: 1.2),
           ),
           child: Text(number, style: AppText.h(15, color: isCaptain ? AppColors.white : AppColors.black)),
         ),
@@ -63,8 +65,9 @@ class PlayerToken extends StatelessWidget {
               height: 17,
               alignment: Alignment.center,
               decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
                 color: AppColors.white,
-                border: Border.all(color: AppColors.black, width: 2),
+                border: Border.all(color: AppColors.line, width: 1.2),
               ),
               child: Text('C', style: AppText.h(9, color: AppColors.accent)),
             ),
@@ -76,7 +79,7 @@ class PlayerToken extends StatelessWidget {
   Widget _chipBox() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6),
-      color: chipAccent ? AppColors.accent : AppColors.white,
+      decoration: BoxDecoration(color: chipAccent ? AppColors.accent : AppColors.white, borderRadius: AppRadius.md),
       child: Text(chip!, style: AppText.h(9, color: chipAccent ? AppColors.white : AppColors.black)),
     );
   }

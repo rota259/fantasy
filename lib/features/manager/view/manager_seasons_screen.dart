@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../seasons/data/season.dart';
 import '../../seasons/data/seasons_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 String _fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
@@ -87,7 +89,7 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'الموسم', subtitle: 'MANAGER · SEASON', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'الموسم', subtitle: 'ADMIN · SEASON', onBack: () => Navigator.pop(context)),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
@@ -98,7 +100,10 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                  decoration: BoxDecoration(
+                    borderRadius: AppRadius.md,
+                    border: Border.all(color: AppColors.line, width: 1.2),
+                  ),
                   child: TextField(
                     controller: _name,
                     style: AppText.h(14),
@@ -121,10 +126,10 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                GestureDetector(
+                Pressable(
                   onTap: _save,
                   child: Container(
-                    color: AppColors.accent,
+                    decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                     padding: const EdgeInsets.all(13),
                     alignment: Alignment.center,
                     child: Text(
@@ -137,7 +142,7 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
                 FutureBuilder<List<Season>>(
                   future: _future,
                   builder: (context, snap) {
-                    if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                    if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                     if (snap.data!.isEmpty) {
                       return Text('لسه مفيش مواسم', style: AppText.body(12, color: AppColors.neutral600));
                     }
@@ -153,11 +158,14 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
   }
 
   Widget _date(String label, DateTime? v, ValueChanged<DateTime> set) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: () => _pick(v, set),
       child: Container(
         padding: const EdgeInsets.all(9),
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.line, width: 1.2),
+        ),
         child: Column(
           children: [
             Text(label, style: AppText.kicker()),
@@ -171,12 +179,12 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
     ),
   );
 
-  Widget _row(Season s) => GestureDetector(
+  Widget _row(Season s) => Pressable(
     behavior: HitTestBehavior.opaque,
     onTap: () => _edit(s),
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(

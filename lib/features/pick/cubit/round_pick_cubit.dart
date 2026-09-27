@@ -14,7 +14,7 @@ import '../data/picks_repository.dart';
 part 'round_pick_state.dart';
 
 /// ViewModel تشكيلة الجولة: ٧ لاعيبة من أي فرق في منطقتك — ٥ أساسي (حارس واحد) + ٢ احتياطي
-/// + كابتن وكابتن بديل (الاتنين لازم عشان تتحفظ). المنظّم ميقدرش يختار من فرقه.
+/// + كابتن وكابتن بديل (الاتنين لازم عشان تتحفظ). المدير ميقدرش يختار من فرقه.
 class RoundPickCubit extends Cubit<RoundPickState> {
   RoundPickCubit(this._players, this._picks, this._teams, this.window, this.userId, {this.isOrganizer = false})
     : super(const RoundPickState());
@@ -120,7 +120,7 @@ class RoundPickCubit extends Cubit<RoundPickState> {
   /// بيحفظ بعد التحقّق؛ بيرجّع رسالة خطأ أو null لو نجح.
   /// [wildcard]: الوايلد كارد مفعّل → التعديل مسموح بعد الديدلاين لحد ما الجولة تبدأ.
   Future<String?> save({bool wildcard = false}) async {
-    if (window.hasStarted() || (window.isLocked() && !wildcard)) return 'اتقفلت التشكيلة — عدّى الديدلاين';
+    if (window.isLocked() && !(wildcard && !window.hasStarted())) return 'اتقفلت التشكيلة — عدّى الديدلاين';
     final err = validate();
     if (err != null) return err;
     final picks = [

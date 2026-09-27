@@ -3,8 +3,6 @@ import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/supabase_service.dart';
-import '../../players/data/availability.dart';
 import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
 
@@ -53,29 +51,10 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
     }
   }
 
-  /// (مدير) تحديث حالة اللاعب (جاهز/مصاب/…) وسببها + إشعار لكل اليوزرز.
+  /// (مدير) تحديث حالة اللاعب (جاهز/مصاب/…) وسببها — السيرفر بيبعت إشعار لأهل منطقته بس.
   Future<void> setAvailability(String id, String availability, String? news) async {
     await _repo.setAvailability(id, availability, news);
-    await _notifyStatus(id, availability, news);
     await load();
-  }
-
-  /// إشعار داخل التطبيق بحالة اللاعب الجديدة (يظهر فورًا للكل عبر realtime).
-  Future<void> _notifyStatus(String id, String availability, String? news) async {
-    final name = _playerName(id);
-    final body = (news != null && news.isNotEmpty) ? news : 'تحديث حالة اللاعب';
-    try {
-      await SupabaseService.table(
-        'notifications',
-      ).insert({'title': '${Availability.label(availability)} — $name 🩺', 'body': body, 'kind': 'status'});
-    } catch (_) {}
-  }
-
-  String _playerName(String id) {
-    for (final p in state.players) {
-      if (p.id == id) return p.name;
-    }
-    return '';
   }
 
   /// بيرجّع null لو نجح، أو رسالة الخطأ لو فشل.
@@ -83,7 +62,7 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
     try {
       final n = await _repo.deletePlayer(id);
       if (n == 0) {
-        return 'الحذف محتاج صلاحية مدير — تأكد إن حسابك Role = manager';
+        return 'الحذف للأدمن بس';
       }
       await load();
       return null;

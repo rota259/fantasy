@@ -13,10 +13,10 @@ void main() {
     expect(z.label, 'بدر · القاهرة');
   });
 
-  test('الفلتر: منطقتي + العام، ومن غير منطقة مفيش فلتر', () {
+  test('الفلتر: منطقتي بس، ومن غير منطقة مفيش فلتر', () {
     expect(ZoneScope.orFilter, isNull);
     ZoneScope.current = 7;
-    expect(ZoneScope.orFilter, 'zone_id.eq.7,zone_id.is.null');
+    expect(ZoneScope.orFilter, 'zone_id.eq.7');
   });
 
   test('منطقة اليوزر بتتقري وبتتبعت مع التسجيل', () {

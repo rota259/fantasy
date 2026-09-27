@@ -11,7 +11,7 @@ abstract final class AppText {
   /// عنوان/رقم (heading). الافتراضي وزن 800.
   static TextStyle h(
     double size, {
-    Color color = AppColors.ink,
+    Color? color,
     FontWeight weight = FontWeight.w800,
     double spacingEm = 0,
     double height = 1.1,
@@ -19,24 +19,24 @@ abstract final class AppText {
     return GoogleFonts.archivo(
       fontSize: size,
       fontWeight: weight,
-      color: color,
+      color: color ?? AppColors.ink,
       letterSpacing: size * spacingEm,
       height: height,
     );
   }
 
   /// كيكر: تسمية صغيرة بأحرف متباعدة (uppercase-ish).
-  static TextStyle kicker({Color color = AppColors.neutral600, double size = 9}) {
-    return GoogleFonts.archivo(fontSize: size, fontWeight: FontWeight.w600, color: color, letterSpacing: size * 0.14);
+  static TextStyle kicker({Color? color, double size = 9}) {
+    return GoogleFonts.archivo(
+      fontSize: size,
+      fontWeight: FontWeight.w600,
+      color: color ?? AppColors.neutral600,
+      letterSpacing: size * 0.14,
+    );
   }
 
   /// نص عادي (body).
-  static TextStyle body(
-    double size, {
-    Color color = AppColors.ink,
-    FontWeight weight = FontWeight.w400,
-    double height = 1.45,
-  }) {
-    return GoogleFonts.archivo(fontSize: size, fontWeight: weight, color: color, height: height);
+  static TextStyle body(double size, {Color? color, FontWeight weight = FontWeight.w400, double height = 1.45}) {
+    return GoogleFonts.archivo(fontSize: size, fontWeight: weight, color: color ?? AppColors.ink, height: height);
   }
 }

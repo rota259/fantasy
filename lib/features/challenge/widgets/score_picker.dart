@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/motion.dart';
 
 /// اختيار أهداف فريق: − رقم +
 class ScorePicker extends StatelessWidget {
@@ -38,13 +40,14 @@ class ScorePicker extends StatelessWidget {
     );
   }
 
-  Widget _btn(String t, VoidCallback? onTap) => GestureDetector(
+  Widget _btn(String t, VoidCallback? onTap) => Pressable(
     onTap: onTap,
     child: Container(
       width: 36,
       height: 36,
       alignment: Alignment.center,
       decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
         border: Border.all(color: onTap == null ? AppColors.divider : AppColors.black, width: 2),
       ),
       child: Text(t, style: AppText.h(18, color: onTap == null ? AppColors.neutral400 : AppColors.ink)),

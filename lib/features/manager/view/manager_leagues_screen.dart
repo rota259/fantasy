@@ -4,11 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../leagues/data/leagues_repository.dart';
 import '../../leagues/data/models/league.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) كل دوريات اليوزرز: مين عمله وكام عضو — واحذف أي دوري مخالف (مراهنات مثلًا).
 class ManagerLeaguesScreen extends StatefulWidget {
@@ -44,7 +46,6 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('حذف الدوري', style: AppText.h(16)),
         content: Text(
           '«${l.name}» بتاع ${l.ownerName ?? '—'} — ${l.memberCount} عضو هيخرجوا منه.',
@@ -76,11 +77,14 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'الدوريات', subtitle: 'MANAGER · LEAGUES', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'الدوريات', subtitle: 'ADMIN · LEAGUES', onBack: () => Navigator.pop(context)),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Container(
-              decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.line, width: 1.2),
+              ),
               child: TextField(
                 onChanged: (v) => setState(() => _q = v.trim()),
                 style: AppText.h(14),
@@ -103,7 +107,7 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final list = snap.data!
                     .where((l) => _q.isEmpty || l.name.contains(_q) || (l.ownerName ?? '').contains(_q))
                     .toList();
@@ -112,12 +116,12 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
                     if (!hasGlobal)
-                      GestureDetector(
+                      Pressable(
                         onTap: _createGlobal,
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(13),
-                          color: AppColors.accent,
+                          decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                           alignment: Alignment.center,
                           child: Text(
                             '🏆 اعمل الدوري العام (كل اليوزرز)',
@@ -139,7 +143,7 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
 
   Widget _row(League l) => Container(
     padding: const EdgeInsets.symmetric(vertical: 11),
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       border: Border(top: BorderSide(color: AppColors.divider)),
     ),
     child: Row(
@@ -159,21 +163,21 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
           ),
         ),
         if (!l.isGlobal)
-          GestureDetector(
+          Pressable(
             onTap: () {
               Clipboard.setData(ClipboardData(text: l.inviteCode));
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اتنسخ الكود ✓')));
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              color: AppColors.black,
+              decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
               child: Text(l.inviteCode, style: AppText.h(12, color: AppColors.white, spacingEm: 0.1)),
             ),
           ),
         const SizedBox(width: 10),
-        GestureDetector(
+        Pressable(
           onTap: () => _delete(l),
-          child: const Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
+          child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
         ),
       ],
     ),

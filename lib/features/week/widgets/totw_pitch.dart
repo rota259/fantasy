@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../../core/widgets/pentagon_pitch.dart';
@@ -37,7 +38,7 @@ class TotwPitch extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (p == null)
-          const PentagonIcon(
+          PentagonIcon(
             size: 48,
             fill: AppColors.navyStripe,
             stroke: AppColors.info,
@@ -62,7 +63,7 @@ class TotwPitch extends StatelessWidget {
           Container(
             margin: const EdgeInsets.only(top: 2),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-            color: AppColors.white,
+            decoration: BoxDecoration(color: AppColors.white, borderRadius: AppRadius.sm),
             child: Text('${p.points}', style: AppText.h(11, color: AppColors.navy)),
           ),
       ],

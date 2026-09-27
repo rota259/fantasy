@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/maps_link.dart';
 import '../view/venue_map_picker.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) موقع الملعب: لينك جوجل مابس (الأدق) — أو تحديده على الخريطة.
 class VenueLocationField extends StatefulWidget {
@@ -69,7 +71,10 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.line, width: 1.2),
+          ),
           child: Row(
             children: [
               Expanded(
@@ -107,10 +112,10 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
               ),
             ),
             const SizedBox(width: 8),
-            GestureDetector(
+            Pressable(
               onTap: _checking ? null : _check,
               child: Container(
-                color: AppColors.black,
+                decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 child: Text('تحقق', style: AppText.h(12, color: AppColors.white)),
               ),
@@ -118,11 +123,12 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
           ],
         ),
         const SizedBox(height: 10),
-        GestureDetector(
+        Pressable(
           onTap: _pickOnMap,
           child: Container(
             padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
+              borderRadius: AppRadius.md,
               border: Border.all(color: widget.location == null ? AppColors.divider : AppColors.accent, width: 2),
             ),
             child: Row(
@@ -154,7 +160,6 @@ Future<bool> confirmNoPin(BuildContext context) async {
     context: context,
     builder: (_) => AlertDialog(
       backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(),
       title: Text('مقدرتش أحدد المكان من اللينك', style: AppText.h(15)),
       content: Text(
         'زرار "الموقع" هيفتح اللينك عادي، بس الملعب مش هيظهر في تاب الخريطة. '

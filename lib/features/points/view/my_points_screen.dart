@@ -7,14 +7,18 @@ import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../challenge/data/challenge_repository.dart';
 import '../../chips/data/chips_repository.dart';
-import '../../events/data/events_repository.dart';
-import '../../matches/data/matches_repository.dart';
 import '../../pick/data/picks_repository.dart';
 import '../../players/data/players_repository.dart';
+import '../../seasons/data/season.dart';
+import '../../seasons/data/seasons_repository.dart';
 import '../cubit/my_points_cubit.dart';
-import 'round_points_screen.dart';
+import '../data/points_repository.dart';
+import '../widgets/round_pager.dart';
+import '../widgets/round_points_body.dart';
+import '../widgets/season_chips.dart';
 
-/// نقطك: كل جولة عملت فيها تشكيلة وجبت فيها كام + بونص التوقعات — تدوس تشوف الخماسي بالتفصيل.
+/// نقطي (من البروفايل): اختار الموسم، واتنقّل بين الجولات — كل جولة لوحدها بتفصيلها.
+/// كل جولة نقطها بتبدأ من صفر، والإجمالي = مجموع جولات الموسم (المعتمد) + بونص التوقعات.
 class MyPointsScreen extends StatelessWidget {
   const MyPointsScreen({super.key, required this.userId});
   final String userId;
@@ -25,114 +29,113 @@ class MyPointsScreen extends StatelessWidget {
       create: (c) => MyPointsCubit(
         userId: userId,
         picks: c.read<PicksRepository>(),
-        matches: c.read<MatchesRepository>(),
-        events: c.read<EventsRepository>(),
         players: c.read<PlayersRepository>(),
         chips: c.read<ChipsRepository>(),
         challenge: c.read<ChallengeRepository>(),
+        points: c.read<PointsRepository>(),
+        seasons: c.read<SeasonsRepository>(),
       )..load(),
       child: Scaffold(
         backgroundColor: AppColors.bg,
         body: Column(
           children: [
             const StatusArea(),
-            Masthead(title: 'نقطك', subtitle: 'MY POINTS', onBack: () => Navigator.pop(context)),
-            Expanded(child: BlocBuilder<MyPointsCubit, MyPointsState>(builder: _body)),
+            Masthead(title: 'نقطي', subtitle: 'MY POINTS', onBack: () => Navigator.pop(context)),
+            Expanded(
+              child: BlocBuilder<MyPointsCubit, MyPointsState>(
+                builder: (context, s) => switch (s.status) {
+                  MyPointsStatus.loading => Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                  MyPointsStatus.error => Center(
+                    child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
+                  ),
+                  MyPointsStatus.ready => _SeasonRounds(state: s),
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _body(BuildContext context, MyPointsState s) {
-    if (s.status == MyPointsStatus.loading) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.accent));
-    }
-    if (s.status == MyPointsStatus.error) {
-      return Center(
-        child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
-      );
-    }
-    if (s.entries.isEmpty && s.bonuses.isEmpty) {
-      return Center(
-        child: Text('لسه معملتش تشكيلة لأي جولة', style: AppText.body(13, color: AppColors.neutral600)),
-      );
-    }
+class _SeasonRounds extends StatefulWidget {
+  const _SeasonRounds({required this.state});
+  final MyPointsState state;
+
+  @override
+  State<_SeasonRounds> createState() => _SeasonRoundsState();
+}
+
+class _SeasonRoundsState extends State<_SeasonRounds> {
+  // الموسم الحالي أول ما تفتح (ولو مفيش: كل المواسم)
+  late Season? _season = widget.state.seasons.where((x) => x.isCurrent()).firstOrNull;
+  int? _index; // null = آخر جولة
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.state;
+    final rounds = s.roundsIn(_season);
+    final bonuses = s.bonusesIn(_season);
+    final i = rounds.isEmpty ? -1 : (_index ?? rounds.length - 1).clamp(0, rounds.length - 1);
     return ListView(
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.only(top: 12),
       children: [
-        Container(
-          color: AppColors.black,
-          padding: const EdgeInsets.all(18),
+        if (s.seasons.isNotEmpty)
+          SeasonChips(
+            seasons: s.seasons,
+            selected: _season,
+            onSelect: (x) => setState(() {
+              _season = x;
+              _index = null;
+            }),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'نقطك المعتمدة من ${s.entries.length} جولة${s.bonuses.isEmpty ? '' : ' + بونص التوقعات'}',
-                      style: AppText.h(13, color: AppColors.white.withValues(alpha: 0.7)),
-                    ),
-                    if (s.provisional != 0)
-                      Text(
-                        'و ${s.provisional} مبدئية ⏳ — بتدخل لما الماتش يتأكد',
-                        style: AppText.body(11, color: AppColors.accent400),
-                      ),
-                  ],
+                child: Text(
+                  '${_season?.name ?? 'كل المواسم'} · ${rounds.length} جولة${bonuses.isEmpty ? '' : ' + بونص التوقعات'}',
+                  style: AppText.body(12, color: AppColors.neutral700),
                 ),
               ),
-              Text('${s.total}', style: AppText.h(40, color: AppColors.white)),
+              Text('${s.totalIn(_season)}', style: AppText.h(22, color: AppColors.accent)),
+              Text(' معتمد', style: AppText.body(11, color: AppColors.neutral700)),
             ],
           ),
         ),
-        for (final e in s.entries) _round(context, e, s),
-        for (final m in s.bonuses)
-          _line(
-            '🎯 توقّعت ${m.teamA} ${m.scoreText} ${m.teamB} صح',
-            'تحدّي الجولة',
-            '+${MyPointsState.predictionBonus}',
+        if (i < 0)
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Center(
+              child: Text('معملتش تشكيلة في الموسم ده', style: AppText.body(13, color: AppColors.neutral600)),
+            ),
+          )
+        else ...[
+          RoundPager(
+            entry: rounds[i],
+            number: i + 1,
+            onPrev: i > 0 ? () => setState(() => _index = i - 1) : null,
+            onNext: i < rounds.length - 1 ? () => setState(() => _index = i + 1) : null,
           ),
+          RoundPointsBody(key: ValueKey(rounds[i].window.cutoff), entry: rounds[i], players: s.players),
+        ],
+        for (final m in bonuses)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: AppColors.divider)),
+            ),
+            child: Row(
+              children: [
+                Expanded(child: Text('🎯 فرق أهداف ${m.teamA} ${m.scoreText} ${m.teamB} صح', style: AppText.h(13))),
+                Text('+${MyPointsState.predictionBonus}', style: AppText.h(18, color: AppColors.accent)),
+              ],
+            ),
+          ),
+        const SizedBox(height: 20),
       ],
     );
   }
-
-  Widget _round(BuildContext context, RoundEntry e, MyPointsState s) {
-    final w = e.window;
-    final status = w.isFinal() ? 'خلصت' : (w.hasStarted() ? 'شغّالة' : 'لسه');
-    final pending = e.points.total != e.finalPoints.total ? ' · مبدئي ⏳' : '';
-    final chip = e.chip == null ? '' : ' · 🃏 ${e.chip!.label}';
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RoundPointsScreen(entry: e, players: s.players),
-        ),
-      ),
-      child: _line('الجولة · ${w.label}', '$status$pending$chip', '${e.points.total}', arrow: true),
-    );
-  }
-
-  Widget _line(String title, String sub, String pts, {bool arrow = false}) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: const BoxDecoration(
-      border: Border(top: BorderSide(color: AppColors.divider)),
-    ),
-    child: Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppText.h(15)),
-              Text(sub, style: AppText.body(11, color: AppColors.neutral700)),
-            ],
-          ),
-        ),
-        Text(pts, style: AppText.h(24, color: AppColors.accent)),
-        if (arrow) ...[const SizedBox(width: 6), Text('›', style: AppText.body(18, color: AppColors.neutral600))],
-      ],
-    ),
-  );
 }

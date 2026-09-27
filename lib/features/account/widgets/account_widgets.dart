@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/data/models/app_user.dart';
@@ -54,7 +56,7 @@ class _AccountHeaderState extends State<AccountHeader> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Row(
         children: [
-          GestureDetector(
+          Pressable(
             onTap: (u == null || _uploading) ? null : () => _changePhoto(u),
             child: Stack(
               clipBehavior: Clip.none,
@@ -65,14 +67,14 @@ class _AccountHeaderState extends State<AccountHeader> {
                   left: -2,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    color: AppColors.white,
+                    decoration: BoxDecoration(color: AppColors.white, borderRadius: AppRadius.md),
                     child: _uploading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 12,
                             height: 12,
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accent),
                           )
-                        : const Icon(Icons.photo_camera_outlined, size: 13, color: AppColors.ink),
+                        : Icon(Icons.photo_camera_outlined, size: 13, color: AppColors.ink),
                   ),
                 ),
               ],
@@ -105,42 +107,53 @@ class _AccountHeaderState extends State<AccountHeader> {
   }
 }
 
-/// أرقامي: إجمالي النقاط + الترتيب العام + أحسن ماتش.
+/// أرقامي: إجمالي النقاط (الضغط → تفاصيل كل جولة وموسم) + الترتيب العام + أحسن جولة.
 class AccountStats extends StatelessWidget {
-  const AccountStats({super.key, this.user, this.rank = 0, this.bestMatch = 0});
+  const AccountStats({super.key, this.user, this.rank = 0, this.bestMatch = 0, this.onPointsTap});
   final AppUser? user;
   final int rank;
   final int bestMatch;
+  final VoidCallback? onPointsTap;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.divider, width: 2)),
       ),
       child: Row(
         children: [
-          _stat(user != null ? '${user!.totalPoints}' : '—', 'إجمالي النقاط', border: true),
+          _stat(
+            user != null ? '${user!.totalPoints}' : '—',
+            onPointsTap == null ? 'إجمالي النقاط' : 'إجمالي النقاط · التفاصيل ›',
+            border: true,
+            color: onPointsTap == null ? null : AppColors.accent,
+            onTap: onPointsTap,
+          ),
           _stat(rank > 0 ? '$rank' : '—', 'الترتيب العام', border: true),
-          _stat(bestMatch > 0 ? '$bestMatch' : '—', 'أحسن ماتش', color: AppColors.accent),
+          _stat(bestMatch > 0 ? '$bestMatch' : '—', 'أحسن جولة', color: AppColors.accent),
         ],
       ),
     );
   }
 
-  Widget _stat(String v, String k, {bool border = false, Color? color}) {
+  Widget _stat(String v, String k, {bool border = false, Color? color, VoidCallback? onTap}) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: border ? const Border(left: BorderSide(color: AppColors.divider)) : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(v, style: AppText.h(22, color: color ?? AppColors.ink)),
-            Text(k, style: AppText.body(9, color: AppColors.neutral700)),
-          ],
+      child: Pressable(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: border ? Border(left: BorderSide(color: AppColors.divider)) : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(v, style: AppText.h(22, color: color ?? AppColors.ink)),
+              Text(k, style: AppText.body(9, color: AppColors.neutral700)),
+            ],
+          ),
         ),
       ),
     );

@@ -3,9 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/venues_repository.dart';
 import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/motion.dart';
 
 /// صور الملعب: إضافة من المعرض (بترتفع على Storage في فولدر صاحبها) + حذف.
 class VenuePhotosEditor extends StatefulWidget {
@@ -55,14 +57,17 @@ class _VenuePhotosEditorState extends State<VenuePhotosEditor> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          GestureDetector(
+          Pressable(
             onTap: _uploading ? null : _add,
             child: Container(
               width: 96,
               alignment: Alignment.center,
-              decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.line, width: 1.2),
+              ),
               child: _uploading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.accent),
@@ -70,7 +75,7 @@ class _VenuePhotosEditorState extends State<VenuePhotosEditor> {
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
+                        Icon(Icons.add_a_photo_outlined, color: AppColors.accent),
                         const SizedBox(height: 4),
                         Text('ضيف صور', style: AppText.h(11)),
                       ],
@@ -96,12 +101,12 @@ class _VenuePhotosEditorState extends State<VenuePhotosEditor> {
                   Positioned(
                     top: 2,
                     left: 2,
-                    child: GestureDetector(
+                    child: Pressable(
                       onTap: () => _remove(url),
                       child: Container(
-                        color: AppColors.black,
+                        decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
                         padding: const EdgeInsets.all(2),
-                        child: const Icon(Icons.close, size: 16, color: AppColors.white),
+                        child: Icon(Icons.close, size: 16, color: AppColors.white),
                       ),
                     ),
                   ),

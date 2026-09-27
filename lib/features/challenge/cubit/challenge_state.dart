@@ -1,18 +1,27 @@
 part of 'challenge_cubit.dart';
 
-class ChallengeState extends Equatable {
-  const ChallengeState({this.loading = true, this.match, this.mine, this.summary});
+/// تحدّي واحد: الماتش + توقّعي + ملخص التوقعات بعد الماتش.
+class ChallengeItem extends Equatable {
+  const ChallengeItem({required this.match, this.mine, this.summary});
 
-  final bool loading;
-  final GameMatch? match;
+  final GameMatch match;
   final Prediction? mine;
   final ({int total, int correct})? summary;
 
-  bool get won => match != null && mine != null && match!.isFinished && mine!.matches(match!.scoreA, match!.scoreB);
+  bool get won => mine != null && match.isFinished && mine!.matches(match.scoreA, match.scoreB);
 
-  ChallengeState copyWith({Prediction? mine}) =>
-      ChallengeState(loading: loading, match: match, mine: mine ?? this.mine, summary: summary);
+  ChallengeItem withMine(Prediction p) => ChallengeItem(match: match, mine: p, summary: summary);
 
   @override
-  List<Object?> get props => [loading, match, mine, summary];
+  List<Object?> get props => [match, mine, summary];
+}
+
+class ChallengeState extends Equatable {
+  const ChallengeState({this.loading = true, this.items = const []});
+
+  final bool loading;
+  final List<ChallengeItem> items; // تحدّيات منطقتي (كل مدير ليه واحد في الجولة)
+
+  @override
+  List<Object?> get props => [loading, items];
 }

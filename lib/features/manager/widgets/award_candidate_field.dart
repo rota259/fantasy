@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../players/data/models/player.dart';
+import '../../../core/widgets/motion.dart';
 
 /// مرشّح واحد (هدف/تصدّي): اللاعب + لينك الفيديو.
 class AwardCandidate {
@@ -34,7 +36,10 @@ class AwardCandidateField extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
+        border: Border.all(color: AppColors.line, width: 1.2),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -42,9 +47,9 @@ class AwardCandidateField extends StatelessWidget {
             children: [
               Text('مرشّح ${index + 1}', style: AppText.kicker(color: AppColors.accent)),
               const Spacer(),
-              GestureDetector(
+              Pressable(
                 onTap: onRemove,
-                child: const Icon(Icons.close, size: 18, color: AppColors.danger),
+                child: Icon(Icons.close, size: 18, color: AppColors.danger),
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -10,6 +11,7 @@ import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
 import '../../players/widgets/availability_badge.dart';
 import '../cubit/manager_players_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
 /// شاشة المدير: حالة اللاعيبة (جاهز/مصاب/…) وسببها.
 class ManagerAvailabilityScreen extends StatelessWidget {
@@ -26,12 +28,12 @@ class ManagerAvailabilityScreen extends StatelessWidget {
         body: Column(
           children: [
             const StatusArea(),
-            Masthead(title: 'حالة اللاعيبة', subtitle: 'MANAGER · STATUS', onBack: () => Navigator.pop(context)),
+            Masthead(title: 'حالة اللاعيبة', subtitle: 'ADMIN · STATUS', onBack: () => Navigator.pop(context)),
             Expanded(
               child: BlocBuilder<ManagerPlayersCubit, ManagerPlayersState>(
                 builder: (context, s) {
                   if (s.isLoading) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                    return Center(child: CircularProgressIndicator(color: AppColors.accent));
                   }
                   if (s.players.isEmpty) {
                     return Center(
@@ -53,12 +55,12 @@ class ManagerAvailabilityScreen extends StatelessWidget {
   }
 
   Widget _row(BuildContext context, ManagerPlayersCubit cubit, Player p) {
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: () => _editSheet(context, cubit, p),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
         child: Row(
@@ -134,11 +136,12 @@ class _StatusSheetState extends State<_StatusSheet> {
                 runSpacing: 8,
                 children: [
                   for (final a in Availability.all)
-                    GestureDetector(
+                    Pressable(
                       onTap: () => setState(() => _status = a),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
+                          borderRadius: AppRadius.md,
                           color: _status == a ? AppColors.accent : null,
                           border: Border.all(color: _status == a ? AppColors.accent : AppColors.black, width: 2),
                         ),
@@ -170,11 +173,14 @@ class _StatusSheetState extends State<_StatusSheet> {
                   runSpacing: 8,
                   children: [
                     for (final r in reasons)
-                      GestureDetector(
+                      Pressable(
                         onTap: () => setState(() => _reason.text = r),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(border: Border.all(color: AppColors.divider, width: 2)),
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadius.md,
+                            border: Border.all(color: AppColors.divider, width: 2),
+                          ),
                           child: Text(r, style: AppText.body(11)),
                         ),
                       ),
@@ -183,7 +189,10 @@ class _StatusSheetState extends State<_StatusSheet> {
               ],
               const SizedBox(height: 12),
               Container(
-                decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.md,
+                  border: Border.all(color: AppColors.line, width: 1.2),
+                ),
                 child: TextField(
                   controller: _reason,
                   style: AppText.h(13),
@@ -196,14 +205,14 @@ class _StatusSheetState extends State<_StatusSheet> {
                 ),
               ),
               const SizedBox(height: 14),
-              GestureDetector(
+              Pressable(
                 onTap: () {
                   final news = _status == Availability.ready ? null : _reason.text.trim();
                   widget.cubit.setAvailability(widget.player.id, _status, news);
                   Navigator.pop(context);
                 },
                 child: Container(
-                  color: AppColors.accent,
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                   padding: const EdgeInsets.all(13),
                   alignment: Alignment.center,
                   child: Text('احفظ الحالة', style: AppText.h(14, color: AppColors.white)),

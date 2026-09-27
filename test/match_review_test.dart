@@ -2,9 +2,8 @@ import 'package:fantasy_5omasi/features/integrity/data/models/match_flags.dart';
 import 'package:fantasy_5omasi/features/integrity/data/models/review_case.dart';
 import 'package:fantasy_5omasi/features/matches/data/models/game_match.dart';
 import 'package:fantasy_5omasi/features/pick/data/models/pick.dart';
-import 'package:fantasy_5omasi/features/players/data/models/player.dart';
-import 'package:fantasy_5omasi/features/events/data/models/match_event.dart';
 import 'package:fantasy_5omasi/features/points/cubit/my_points_cubit.dart';
+import 'package:fantasy_5omasi/features/points/data/player_round_points.dart';
 import 'package:fantasy_5omasi/features/points/lineup_points.dart';
 import 'package:fantasy_5omasi/features/week/data/week_window.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,20 +18,24 @@ GameMatch _m(String id, String review, {String status = 'finished'}) => GameMatc
   'flags': ['late_edit'],
 });
 
-/// جولة فيها [live] أهداف مباشر، منهم [approved] في ماتشات معتمدة.
+/// جولة فيها [live] أهداف مباشر، منهم [approved] في ماتشات معتمدة (الجول = ٥).
 RoundEntry _entry(int live, int approved) {
-  final players = {'f': const Player(id: 'f', name: 'f', team: 'A', position: 'FWD', price: 0)};
-  LineupPoints pts(int goals) => LineupPoints.compute(
-    picks: const [Pick(playerId: 'f', status: 'starting')],
-    events: [for (var i = 0; i < goals; i++) MatchEvent(id: '$i', matchId: 'm', playerId: 'f', type: 'goal')],
-    players: players,
-  );
+  const picks = [Pick(playerId: 'f', status: 'starting')];
+  final pts = {
+    'f': PlayerRoundPoints(
+      playerId: 'f',
+      points: live * 5,
+      finalPoints: approved * 5,
+      played: live > 0,
+      playedFinal: approved > 0,
+    ),
+  };
   return (
-    window: WeekWindow(DateTime(2026, 9, 26, 16)),
-    picks: const [Pick(playerId: 'f', status: 'starting')],
+    window: WeekWindow(DateTime(2026, 9, 26, 8)),
+    picks: picks,
     chip: null,
-    points: pts(live),
-    finalPoints: pts(approved),
+    points: LineupPoints.compute(picks: picks, points: pts),
+    finalPoints: LineupPoints.compute(picks: picks, points: pts, approvedOnly: true),
   );
 }
 
@@ -50,11 +53,11 @@ void main() {
 
   test('الإجمالي = المعتمد بس، والباقي مبدئي', () {
     final s = MyPointsState(
-      entries: [_entry(1, 1), _entry(3, 1)], // 4 معتمد · 12 مباشر منهم 4 معتمد
+      entries: [_entry(1, 1), _entry(3, 1)], // ١٠ معتمد · ٢٠ مباشر
       bonuses: [_m('a', 'approved'), _m('p', 'pending')],
     );
-    expect(s.total, 4 + 4 + MyPointsState.predictionBonus);
-    expect(s.provisional, 8 + MyPointsState.predictionBonus);
+    expect(s.total, 5 + 5 + MyPointsState.predictionBonus);
+    expect(s.provisional, 10 + MyPointsState.predictionBonus);
   });
 
   test('طابور المراجعة بيقرا آراء اللاعيبة', () {

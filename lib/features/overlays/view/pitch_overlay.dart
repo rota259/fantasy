@@ -15,20 +15,27 @@ import '../../pitch/view/venue_screen.dart';
 import '../../pitch/widgets/venue_tile.dart';
 import '../../pitch/widgets/venues_map_view.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
 /// احجز ملعبك: الملاعب بتابين (قايمة / خريطة) → صفحة الملعب والحجز.
 /// (من غير OverlayShell عشان الخريطة تاخد المساحة كلها من غير scroll فوقها.)
+/// [onClose]: لو اتفتحت كصفحة لوحدها (زي عند مدير المنطقة) بدل الـ overlay.
 class PitchOverlay extends StatelessWidget {
-  const PitchOverlay({super.key});
+  const PitchOverlay({super.key, this.onClose});
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(create: (c) => VenuesCubit(c.read<VenuesRepository>())..load(), child: const _PitchView());
+    return BlocProvider(
+      create: (c) => VenuesCubit(c.read<VenuesRepository>())..load(),
+      child: _PitchView(onClose: onClose),
+    );
   }
 }
 
 class _PitchView extends StatefulWidget {
-  const _PitchView();
+  const _PitchView({this.onClose});
+  final VoidCallback? onClose;
 
   @override
   State<_PitchView> createState() => _PitchViewState();
@@ -68,12 +75,12 @@ class _PitchViewState extends State<_PitchView> {
           Masthead(
             title: 'احجز ملعبك',
             subtitle: 'BOOK A PITCH',
-            onBack: nav.back,
-            trailing: GestureDetector(
+            onBack: widget.onClose ?? nav.back,
+            trailing: Pressable(
               onTap: _myBookings,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(border: AppBorders.white(0.5)),
+                decoration: BoxDecoration(borderRadius: AppRadius.md, border: AppBorders.white(0.5)),
                 child: Text('حجوزاتي', style: AppText.h(12, color: AppColors.white)),
               ),
             ),
@@ -82,7 +89,7 @@ class _PitchViewState extends State<_PitchView> {
           Expanded(
             child: BlocBuilder<VenuesCubit, VenuesState>(
               builder: (context, s) {
-                if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 if (s.venues.isEmpty) {
                   return Center(
                     child: Text('لسه مفيش ملاعب متاحة', style: AppText.body(13, color: AppColors.neutral600)),
@@ -106,7 +113,7 @@ class _PitchViewState extends State<_PitchView> {
   Widget _tab(String label, bool map) {
     final active = _map == map;
     return Expanded(
-      child: GestureDetector(
+      child: Pressable(
         onTap: () => setState(() => _map = map),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),

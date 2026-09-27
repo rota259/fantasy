@@ -11,6 +11,7 @@ import '../../zones/data/zones_repository.dart';
 import '../../zones/widgets/zone_picker_sheet.dart';
 import '../data/team.dart';
 import '../data/teams_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (أدمن) كل الفرق: المنطقة والصاحب — الفرق القديمة من غير منطقة حدّدلها منطقتها من هنا.
 class AdminTeamsScreen extends StatefulWidget {
@@ -58,7 +59,7 @@ class _AdminTeamsScreenState extends State<AdminTeamsScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final (teams, zones) = snap.data!;
                 final byId = {for (final z in zones) z.id: z};
                 // اللي من غير منطقة الأول
@@ -73,12 +74,12 @@ class _AdminTeamsScreenState extends State<AdminTeamsScreen> {
     );
   }
 
-  Widget _row(Team t, Zone? zone) => GestureDetector(
+  Widget _row(Team t, Zone? zone) => Pressable(
     behavior: HitTestBehavior.opaque,
     onTap: () => _setZone(t),
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(

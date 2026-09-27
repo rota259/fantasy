@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/notifications/sound_service.dart';
+import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../../core/supabase/supabase_service.dart';
 import '../data/models/app_notification.dart';
@@ -18,7 +19,7 @@ class NotificationsBadgeCubit extends Cubit<int> {
   final SoundService _sound;
   static const _key = 'notif_last_seen';
 
-  StreamSubscription? _sub;
+  StreamSubscription<void>? _sub;
   DateTime _lastSeen = DateTime.fromMillisecondsSinceEpoch(0);
   final Set<String> _known = {};
   bool _primed = false;
@@ -34,13 +35,24 @@ class NotificationsBadgeCubit extends Cubit<int> {
     } else {
       _lastSeen = DateTime.tryParse(saved) ?? _lastSeen;
     }
-    // آخر ٥٠ بس (الجدول بيكبر مع الوقت) — السيرفر بيفلتر اللي يخصّني (RLS)
-    _sub = SupabaseService.client
-        .from('notifications')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .limit(50)
-        .listen(_onData, onError: (_) {});
+    // أول تحميل، وبعدين مع كل إشارة "إشعار جديد" لجمهوري (من غير ما نسمع لجدول الإشعارات كله)
+    await _fetch();
+    _sub = LiveHub.on(
+      'notify',
+      _fetch,
+      debounce: const Duration(milliseconds: 300),
+      jitter: const Duration(seconds: 2),
+    );
+  }
+
+  /// آخر ٥٠ بس (الجدول بيكبر مع الوقت) — السيرفر بيفلتر اللي يخصّني (RLS).
+  Future<void> _fetch() async {
+    try {
+      final rows = await SupabaseService.table(
+        'notifications',
+      ).select('id, title, body, kind, created_at').order('created_at', ascending: false).limit(50);
+      if (!isClosed) _onData(rows);
+    } catch (_) {}
   }
 
   void _onData(List<Map<String, dynamic>> rows) {

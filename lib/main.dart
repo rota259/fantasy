@@ -6,7 +6,9 @@ import 'core/notifications/notification_service.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/supabase/supabase_service.dart';
 import 'core/theme/app_colors.dart';
+import 'core/theme/app_palette.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_mode_cubit.dart';
 import 'features/auth/cubit/auth_cubit.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/shell/cubit/app_nav_cubit.dart';
@@ -15,11 +17,6 @@ import 'features/shell/view/app_root.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // شريط حالة شفّاف بأيقونات فاتحة (خلفياتنا غامقة فوق).
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.light),
-  );
 
   // تهيئة Supabase فقط لو المفاتيح ممرّرة بـ --dart-define.
   if (SupabaseConfig.isConfigured) {
@@ -43,16 +40,41 @@ class FantasyApp extends StatelessWidget {
         providers: [
           BlocProvider(create: (_) => AppNavCubit()),
           BlocProvider(create: (c) => AuthCubit(c.read<AuthRepository>())..checkSession()),
+          BlocProvider(create: (_) => ThemeModeCubit()),
         ],
-        child: MaterialApp(
-          title: 'الخماسي',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.theme,
-          builder: (context, child) => _responsiveShell(context, child!),
-          home: const AppRoot(),
+        child: BlocBuilder<ThemeModeCubit, ThemeMode>(
+          builder: (context, mode) => MaterialApp(
+            title: 'الخماسي',
+            debugShowCheckedModeBanner: false,
+            themeMode: mode,
+            theme: AppTheme.of(AppPalette.light),
+            darkTheme: AppTheme.of(AppPalette.dark),
+            themeAnimationDuration: const Duration(milliseconds: 250),
+            builder: (context, child) => _themed(context, child!),
+            home: const AppRoot(),
+          ),
         ),
       ),
     );
+  }
+
+  /// الوضع (فاتح/داكن) بيتطبّق على ألوان الشاشات قبل ما تتبني — وتغييره بيبنيها من جديد.
+  /// + شريط "STAGING" عشان محدش يخلط بين مشروع التجربة والأصلي.
+  Widget _themed(BuildContext context, Widget child) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    AppColors.use(dark ? AppPalette.dark : AppPalette.light);
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light, // فوق الترويسة الغامقة في الوضعين
+        systemNavigationBarColor: AppColors.bg,
+        systemNavigationBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+      ),
+    );
+    final shell = KeyedSubtree(key: ValueKey(dark), child: _responsiveShell(context, child));
+    return SupabaseConfig.isStaging
+        ? Banner(message: 'STAGING', location: BannerLocation.topStart, child: shell)
+        : shell;
   }
 
   /// يجعل التطبيق responsive:

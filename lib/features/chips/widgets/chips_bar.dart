@@ -6,6 +6,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../cubit/chips_cubit.dart';
 import '../data/models/chip_status.dart';
+import '../../../core/widgets/motion.dart';
 
 /// الكروت الأربعة في شاشة التشكيلة: الباقي من كل كارت + التفعيل (مبيتلغيش).
 class ChipsBar extends StatelessWidget {
@@ -51,7 +52,7 @@ class _ChipCard extends StatelessWidget {
     final on = chip.active;
     final available = chip.canActivate && !busy;
     final sub = on ? 'مفعّل ✓' : (chip.blocked ?? (chip.left == 0 ? 'خلص' : 'باقي ${chip.left}'));
-    return GestureDetector(
+    return Pressable(
       onTap: () => _open(context),
       child: Opacity(
         opacity: on || available ? 1 : 0.5,
@@ -84,7 +85,6 @@ class _ChipCard extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text(chip.type.label, style: AppText.h(16)),
         content: Text(
           '${chip.type.description}\n\n'

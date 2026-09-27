@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/initials_tile.dart';
 import '../../coach/coach_engine.dart';
@@ -12,6 +13,7 @@ import '../../players/data/stats_repository.dart';
 import '../../players/widgets/availability_badge.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
+import '../../../core/widgets/motion.dart';
 
 /// المدرّب — نصايح بالقواعد من داتا التطبيق (فورمة/امتلاك/دخول وخروج/حالة).
 class CoachOverlay extends StatelessWidget {
@@ -42,7 +44,7 @@ class _CoachView extends StatelessWidget {
           onBack: nav.back,
           children: s.isLoading
               ? [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(40),
                     child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
                   ),
@@ -72,12 +74,12 @@ class _CoachView extends StatelessWidget {
 
   Widget _captain(AppNavCubit nav, CoachReport r) {
     final p = r.captain!;
-    return GestureDetector(
+    return Pressable(
       onTap: () => nav.openPlayer(p),
       child: Container(
         margin: const EdgeInsets.fromLTRB(18, 16, 18, 4),
         padding: const EdgeInsets.all(14),
-        color: AppColors.black,
+        decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
         child: Row(
           children: [
             Container(
@@ -114,13 +116,13 @@ class _CoachView extends StatelessWidget {
       child: Text(sec.hint, style: AppText.body(10, color: AppColors.neutral600)),
     ),
     for (final it in sec.items)
-      GestureDetector(
+      Pressable(
         behavior: HitTestBehavior.opaque,
         onTap: () => nav.openPlayer(it.player),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 18),
           padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(top: BorderSide(color: AppColors.divider)),
           ),
           child: Row(

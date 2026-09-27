@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// فريق: اسم مميّز + منطقة + صاحب (المنظّم) — جدول teams.
+/// فريق: اسم مميّز + منطقة + صاحب (المدير) — جدول teams.
 class Team extends Equatable {
   const Team({required this.id, required this.name, this.zoneId, this.ownerId, this.ownerName});
 

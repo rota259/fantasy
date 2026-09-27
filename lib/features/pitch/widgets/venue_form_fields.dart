@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../auth/data/models/app_user.dart';
-import '../../manager/data/admin_repository.dart';
 import '../data/models/booking.dart';
 
 /// مواعيد التشغيل: من ساعة لساعة (القفل ممكن بعد نص الليل).
@@ -68,58 +66,12 @@ class HoursPicker extends StatelessWidget {
       const SizedBox(height: 4),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.line, width: 1.2),
+        ),
         child: child,
       ),
     ],
   );
-}
-
-/// اختيار صاحب الملعب من المستخدمين (هو اللي بيوافق على الحجوزات).
-class OwnerPicker extends StatefulWidget {
-  const OwnerPicker({super.key, required this.ownerId, required this.onChanged});
-
-  final String? ownerId;
-  final ValueChanged<String?> onChanged;
-
-  @override
-  State<OwnerPicker> createState() => _OwnerPickerState();
-}
-
-class _OwnerPickerState extends State<OwnerPicker> {
-  late final Future<List<AppUser>> _users = context.read<AdminRepository>().fetchUsers();
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<AppUser>>(
-      future: _users,
-      builder: (context, snap) {
-        final users = snap.data ?? const <AppUser>[];
-        // لو صاحب الملعب المحفوظ مش في القايمة (اتمسح مثلًا) نخلّيها فاضية.
-        final value = users.any((u) => u.id == widget.ownerId) ? widget.ownerId : null;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-          child: DropdownButton<String?>(
-            value: value,
-            isExpanded: true,
-            underline: const SizedBox.shrink(),
-            hint: Text(snap.hasData ? 'مفيش (المدير يأكّد الحجوزات)' : 'بيحمّل…', style: AppText.body(13)),
-            items: [
-              const DropdownMenuItem<String?>(value: null, child: Text('مفيش (المدير يأكّد الحجوزات)')),
-              for (final u in users)
-                DropdownMenuItem<String?>(
-                  value: u.id,
-                  child: Text(
-                    '${u.name.isEmpty ? u.email : u.name}${u.phone != null ? ' · ${u.phone}' : ''}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-            onChanged: widget.onChanged,
-          ),
-        );
-      },
-    );
-  }
 }

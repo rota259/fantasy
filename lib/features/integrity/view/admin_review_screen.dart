@@ -12,6 +12,7 @@ import '../data/models/match_flags.dart';
 import '../data/models/review_case.dart';
 import '../widgets/review_status_chip.dart';
 import 'admin_case_screen.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (أدمن) طابور المراجعة: الاعتراضات الأول، وبعدها الماتشات المعلّم عليها.
 class AdminReviewScreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('مفيش ماتشات محتاجة مراجعة ✓', style: AppText.body(13, color: AppColors.neutral600)),
@@ -72,12 +73,12 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
   Widget _row(ReviewCase c) {
     final m = c.match;
     final objections = c.votes.where((v) => !v.ok).length;
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: () => _open(c),
       child: Container(
         padding: const EdgeInsets.all(14),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
         child: Column(
@@ -90,7 +91,7 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
               ],
             ),
             Text(
-              'منظّم: ${c.organizerName} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)}'
+              'مدير: ${c.organizerName} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)}'
               '${objections > 0 ? ' · $objections اعتراض' : ''}',
               style: AppText.body(11, color: AppColors.neutral700),
             ),

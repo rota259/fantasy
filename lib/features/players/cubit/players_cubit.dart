@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/live.dart';
+import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../data/models/player.dart';
 import '../data/players_repository.dart';
@@ -24,7 +24,8 @@ class PlayersCubit extends Cubit<PlayersState> {
     }
     emit(const PlayersState(status: PlayersStatus.loading));
     await _fetch();
-    _sub ??= liveTable('players', _fetch);
+    // نقط اللاعيبة بتتغيّر مع الأحداث — نحدّث بعد ما تهدى (مش مع كل حدث)
+    _sub ??= LiveHub.on('events', _fetch, debounce: const Duration(seconds: 20), jitter: const Duration(seconds: 10));
   }
 
   Future<void> _fetch() async {

@@ -10,6 +10,7 @@ import '../data/badges_repository.dart';
 import '../data/models/user_badge.dart';
 import '../view/badges_screen.dart';
 import 'badge_tile.dart';
+import '../../../core/widgets/motion.dart';
 
 /// في البروفايل: آخر الشارات اللي اتاخدت + "كل الإنجازات ›". بتتحدّث لما شارة جديدة تتاخد.
 class BadgesPreview extends StatefulWidget {
@@ -58,7 +59,7 @@ class _BadgesPreviewState extends State<BadgesPreview> {
       builder: (context, snap) {
         final earned = (snap.data ?? const <UserBadge>[]).where((b) => b.earned && b.def != null).toList()
           ..sort((a, b) => (b.earnedAt ?? DateTime(0)).compareTo(a.earnedAt ?? DateTime(0)));
-        return GestureDetector(
+        return Pressable(
           behavior: HitTestBehavior.opaque,
           onTap: () => Navigator.push(
             context,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/share/share_card.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
@@ -11,6 +12,7 @@ import '../../players/data/models/player.dart';
 import '../../week/data/week_window.dart';
 import '../data/claims_repository.dart';
 import '../data/models/fan_stats.dart';
+import '../../../core/widgets/motion.dart';
 
 /// "أنا كلاعب": اللاعب الحقيقي يشوف مين اختاره وخلّاه كابتن + يشيّر.
 class PlayerFanScreen extends StatefulWidget {
@@ -45,7 +47,7 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final s = snap.data!;
                 return ListView(
                   padding: EdgeInsets.zero,
@@ -53,13 +55,13 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
                     RepaintBoundary(key: _cardKey, child: _card(s)),
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: GestureDetector(
+                      child: Pressable(
                         onTap: () => ShareCard.share(
                           _cardKey,
                           'أنا ${p.name} في الخماسي — ${s.owners} اختاروني و${s.captains} خلّوني كابتن الجولة دي 🔥 نزّل الأبلكيشن واختارني!',
                         ),
                         child: Container(
-                          color: AppColors.accent,
+                          decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                           padding: const EdgeInsets.all(13),
                           alignment: Alignment.center,
                           child: Text('شيّر على واتساب / ستوري', style: AppText.h(14, color: AppColors.white)),
@@ -84,7 +86,7 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
   }
 
   Widget _card(FanStats s) => Container(
-    color: AppColors.black,
+    decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
     padding: const EdgeInsets.all(18),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

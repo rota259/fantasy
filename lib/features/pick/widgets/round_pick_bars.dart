@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../week/data/week_window.dart';
 import '../cubit/round_pick_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
 /// شريط الديدلاين فوق التشكيلة.
 class DeadlineBar extends StatelessWidget {
@@ -17,16 +19,16 @@ class DeadlineBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final String text;
     var color = AppColors.accent400;
-    if (window.hasStarted()) {
+    if (!window.isLocked()) {
+      text = 'بتقفل ${arabicWeekday(window.deadline)} ${arabicTime(window.deadline)} · ${window.label}';
+    } else if (window.hasStarted()) {
       text = 'الجولة بدأت — التشكيلة اتقفلت';
       color = AppColors.neutral400;
-    } else if (window.isLocked() && wildcard) {
+    } else if (wildcard) {
       text = '🃏 الوايلد كارد شغّال — عدّل لحد ${arabicTime(window.start)}';
-    } else if (window.isLocked()) {
+    } else {
       text = 'التشكيلة اتقفلت — الجولة بتبدأ ${arabicTime(window.start)}';
       color = AppColors.neutral400;
-    } else {
-      text = 'بتقفل ${arabicWeekday(window.deadline)} ${arabicTime(window.deadline)} · ${window.label}';
     }
     return Container(
       width: double.infinity,
@@ -71,7 +73,7 @@ class PickBanner extends StatelessWidget {
     width: double.infinity,
     margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
     padding: const EdgeInsets.all(10),
-    color: color,
+    decoration: BoxDecoration(color: color, borderRadius: AppRadius.md),
     child: Text(text, style: AppText.h(12, color: AppColors.white)),
   );
 }
@@ -88,10 +90,10 @@ class SaveBar extends StatelessWidget {
     padding: const EdgeInsets.all(12),
     child: SafeArea(
       top: false,
-      child: GestureDetector(
+      child: Pressable(
         onTap: onSave,
         child: Container(
-          color: AppColors.accent,
+          decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
           padding: const EdgeInsets.all(12),
           alignment: Alignment.center,
           child: Text('احفظ تشكيلة الجولة', style: AppText.h(14, color: AppColors.white)),

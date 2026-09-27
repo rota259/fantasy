@@ -10,6 +10,7 @@ class LeaguesState extends Equatable {
     this.standings = const [],
     this.selectedLeagueId,
     this.badges = const {},
+    this.hasMore = false,
   });
 
   final LeaguesStatus status;
@@ -18,6 +19,7 @@ class LeaguesState extends Equatable {
   final List<LeagueStanding> standings;
   final String? selectedLeagueId;
   final Map<String, List<UserBadge>> badges; // userId → شاراته (الأعلى أولًا)
+  final bool hasMore; // فيه صفحات تانية من الترتيب
 
   bool get isLoading => status == LeaguesStatus.loading;
   bool get hasData => myLeagues.isNotEmpty;
@@ -33,6 +35,7 @@ class LeaguesState extends Equatable {
     List<LeagueStanding>? standings,
     String? selectedLeagueId,
     Map<String, List<UserBadge>>? badges,
+    bool? hasMore,
   }) {
     return LeaguesState(
       status: status,
@@ -41,9 +44,10 @@ class LeaguesState extends Equatable {
       standings: standings ?? this.standings,
       selectedLeagueId: selectedLeagueId ?? this.selectedLeagueId,
       badges: badges ?? this.badges,
+      hasMore: hasMore ?? this.hasMore,
     );
   }
 
   @override
-  List<Object?> get props => [status, globalRank, myLeagues, standings, selectedLeagueId, badges];
+  List<Object?> get props => [status, globalRank, myLeagues, standings, selectedLeagueId, badges, hasMore];
 }

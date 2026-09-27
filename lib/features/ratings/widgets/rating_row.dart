@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../players/data/models/player.dart';
 import '../data/models/player_rating.dart';
+import '../../../core/widgets/motion.dart';
 
 /// صف لاعب في التقييم: الصورة + المتوسط + أرقام ١..١٠ للتقييم.
 class RatingRow extends StatelessWidget {
@@ -22,7 +24,7 @@ class RatingRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: leader ? AppColors.accent100 : null,
-        border: const Border(top: BorderSide(color: AppColors.divider)),
+        border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -55,15 +57,16 @@ class RatingRow extends StatelessWidget {
               children: [
                 for (var v = 1; v <= 10; v++)
                   Expanded(
-                    child: GestureDetector(
+                    child: Pressable(
                       onTap: () => onRate!(v),
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 1.5),
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
+                          borderRadius: AppRadius.md,
                           color: r?.mine == v ? AppColors.black : null,
-                          border: Border.all(color: AppColors.black, width: 1.5),
+                          border: Border.all(color: AppColors.line, width: 1.2),
                         ),
                         child: Text('$v', style: AppText.h(11, color: r?.mine == v ? AppColors.white : AppColors.ink)),
                       ),

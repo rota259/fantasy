@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../../zones/data/zone.dart';
 import '../../zones/widgets/zone_field.dart';
 import '../cubit/auth_cubit.dart';
+import '../widgets/google_button.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_header.dart';
+import '../../../core/widgets/motion.dart';
 
 /// شاشة إنشاء حساب جديد — موصولة بـ AuthCubit.signUp.
 class RegisterScreen extends StatefulWidget {
@@ -79,6 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 18),
                   _errorText(),
                   _button(),
+                  const GoogleButton(),
                 ],
               ),
             ),
@@ -105,14 +109,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _button() {
     return BlocBuilder<AuthCubit, AuthState>(
       buildWhen: (p, c) => p.isBusy != c.isBusy,
-      builder: (context, s) => GestureDetector(
+      builder: (context, s) => Pressable(
         onTap: s.isBusy ? null : _register,
         child: Container(
-          color: AppColors.accent,
+          decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
           padding: const EdgeInsets.all(14),
           alignment: Alignment.center,
           child: s.isBusy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white),
@@ -135,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text('عندك حساب بالفعل؟ ', style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.7))),
-            GestureDetector(
+            Pressable(
               onTap: context.read<AppNavCubit>().goLogin,
               child: Text('سجّل دخول', style: AppText.h(13, color: AppColors.accent400)),
             ),

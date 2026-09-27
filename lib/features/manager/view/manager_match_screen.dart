@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -16,8 +17,9 @@ import '../widgets/match_events_section.dart';
 import '../widgets/match_lineup_section.dart';
 import '../widgets/match_picks_section.dart';
 import '../widgets/match_result_section.dart';
+import '../../../core/widgets/motion.dart';
 
-/// (مدير/منظّم) إدارة ماتش: التشكيلة · الأحداث · النتيجة · مين نزّل تشكيلته (للأدمن بس).
+/// (مدير/مدير) إدارة ماتش: التشكيلة · الأحداث · النتيجة · مين نزّل تشكيلته (للأدمن بس).
 class ManagerMatchScreen extends StatelessWidget {
   const ManagerMatchScreen({
     super.key,
@@ -85,7 +87,7 @@ class _ViewState extends State<_View> {
           Expanded(
             child: BlocBuilder<ManagerMatchCubit, ManagerMatchState>(
               builder: (context, s) {
-                if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final cubit = context.read<ManagerMatchCubit>();
                 return ListView(
                   padding: const EdgeInsets.all(16),
@@ -116,12 +118,13 @@ class _ViewState extends State<_View> {
   }
 
   Widget _tab(String label, String value) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: () => setState(() => _mode = value),
       child: Container(
         padding: const EdgeInsets.all(11),
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: _mode == value ? AppColors.accent : null,
           border: Border.all(color: _mode == value ? AppColors.accent : AppColors.black, width: 2),
         ),

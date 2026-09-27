@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -11,6 +12,7 @@ import '../../week/data/week_repository.dart';
 import '../../week/widgets/totw_pitch.dart';
 import '../data/season.dart';
 import '../data/seasons_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// أبطال الموسم على مستوى كل المناطق: لاعب وتشكيلة النص الأول (بعد نص الموسم) والموسم كامل (بعد نهايته).
 class SeasonStarsScreen extends StatefulWidget {
@@ -44,7 +46,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
               future: _season,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                  return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 }
                 final s = snap.data;
                 if (s == null) return _note('لسه مفيش موسم');
@@ -74,7 +76,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
       key: ValueKey(until),
       future: context.read<WeekRepository>().pointsBetween(s.startsAt, until, allZones: true),
       builder: (context, snap) {
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+        if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
         final ranked = snap.data!.where((p) => p.points > 0).toList();
         if (ranked.isEmpty) return _note('مفيش نقط في الفترة دي');
         final star = ranked.first;
@@ -82,7 +84,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              color: AppColors.black,
+              decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -119,12 +121,13 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
   }
 
   Widget _tab(String label, bool full) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: () => setState(() => _full = full),
       child: Container(
         padding: const EdgeInsets.all(11),
         alignment: Alignment.center,
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: _full == full ? AppColors.accent : null,
           border: Border.all(color: _full == full ? AppColors.accent : AppColors.black, width: 2),
         ),

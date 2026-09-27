@@ -2,28 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_links.dart';
 import '../../../core/share/share_card.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/theme/theme_mode_cubit.dart';
+import '../../../core/utils/launchers.dart';
 import '../../auth/cubit/auth_cubit.dart';
+import '../view/delete_account_screen.dart';
 import '../../auth/data/models/app_user.dart';
 import '../../claims/view/player_fan_screen.dart';
-import '../../events/data/events_repository.dart';
 import '../../integrity/view/organizer_request_screen.dart';
-import '../../manager/data/lineup_repository.dart';
-import '../../manager/view/manager_matches_screen.dart';
-import '../../matches/data/matches_repository.dart';
 import '../../manager/view/manager_hub_screen.dart';
 import '../../pitch/view/my_bookings_screen.dart';
 import '../../pitch/view/my_venues_screen.dart';
 import '../../players/data/models/player.dart';
-import '../../players/data/players_repository.dart';
 import '../../seasons/view/season_stars_screen.dart';
-import '../../teams/view/my_teams_screen.dart';
 import '../../zones/widgets/my_zone_row.dart';
 import '../../week/view/team_of_week_screen.dart';
+import '../../../core/widgets/motion.dart';
 
-/// قايمة الحساب: تشكيلة الجولة · أنا كلاعب · ملاعبي · حجوزاتي · ادعُ صحابك · التنظيم · لوحة المدير · خروج.
+/// قايمة الحساب: تشكيلة الجولة · أنا كلاعب · ملاعبي · حجوزاتي · ادعُ صحابك · التنظيم · لوحة الأدمن · خروج.
 class AccountMenu extends StatelessWidget {
   const AccountMenu({super.key, required this.user, this.linkedPlayer});
 
@@ -48,30 +47,38 @@ class AccountMenu extends StatelessWidget {
             color: AppColors.info,
           ),
         if (u != null) ...[
-          MyZoneRow(zoneId: u.zoneId),
+          MyZoneRow(zoneId: u.zoneId, editable: !u.isOrganizer), // المدير بتنقله الإدارة
           _row(Icons.stadium_outlined, 'ملاعبي (ضيف ملعبك)', () => _push(context, MyVenuesScreen(userId: u.id))),
           _row(Icons.event_available_outlined, 'حجوزاتي', () => _push(context, MyBookingsScreen(userId: u.id))),
-          if (u.refCode != null) _invite(context, u.refCode!),
+          if (u.refCode != null && !u.isOrganizer) _invite(context, u.refCode!),
+          if (u.role == 'user')
+            _row(
+              Icons.sports_outlined,
+              'عايز تبقى مدير منطقة؟',
+              () => _push(context, OrganizerRequestScreen(userId: u.id)),
+            ),
         ],
-        if (u != null && u.isOrganizer) ...[
-          _row(Icons.sports_outlined, 'ماتشاتي كمنظّم', () => _push(context, _organizerMatches(context, u.id))),
-          _row(Icons.shield_outlined, 'فرقي', () => _push(context, MyTeamsScreen(userId: u.id))),
-        ] else if (u != null && !u.isManager)
-          _row(Icons.sports_outlined, 'نظّم ماتشات', () => _push(context, OrganizerRequestScreen(userId: u.id))),
         if (u?.isManager == true)
-          _row(Icons.admin_panel_settings_outlined, 'لوحة المدير', () => _push(context, const ManagerHubScreen())),
+          _row(Icons.admin_panel_settings_outlined, 'لوحة الأدمن', () => _push(context, const ManagerHubScreen())),
+        BlocBuilder<ThemeModeCubit, ThemeMode>(
+          builder: (context, mode) => _row(
+            Icons.dark_mode_outlined,
+            'المظهر: ${ThemeModeCubit.label(mode)}',
+            context.read<ThemeModeCubit>().cycle,
+          ),
+        ),
+        _row(Icons.privacy_tip_outlined, 'سياسة الخصوصية', () => Launchers.url(AppLinks.privacy)),
+        if (u != null)
+          _row(
+            Icons.delete_forever_outlined,
+            'امسح حسابي',
+            () => _push(context, const DeleteAccountScreen()),
+            color: AppColors.danger,
+          ),
         _row(Icons.logout, 'تسجيل الخروج', context.read<AuthCubit>().signOut, color: AppColors.accent, arrow: false),
       ],
     );
   }
-
-  Widget _organizerMatches(BuildContext context, String userId) => ManagerMatchesScreen(
-    matchesRepo: context.read<MatchesRepository>(),
-    playersRepo: context.read<PlayersRepository>(),
-    eventsRepo: context.read<EventsRepository>(),
-    lineupRepo: context.read<LineupRepository>(),
-    organizerId: userId,
-  );
 
   /// كود الدعوة: اللي يسجّل بيه يتحسب في شارة "المؤثر".
   Widget _invite(BuildContext context, String code) =>
@@ -80,21 +87,22 @@ class AccountMenu extends StatelessWidget {
         ShareCard.text('العب معايا الخماسي — فانتازي ماتشات الخماسي ⚽\nاكتب كود الدعوة بتاعي وانت بتسجّل: $code');
       });
 
-  Widget _row(IconData icon, String label, VoidCallback? onTap, {Color color = AppColors.ink, bool arrow = true}) {
-    return GestureDetector(
+  Widget _row(IconData icon, String label, VoidCallback? onTap, {Color? color, bool arrow = true}) {
+    final c = color ?? AppColors.ink;
+    return Pressable(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: AppColors.divider)),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: color),
+            Icon(icon, size: 18, color: c),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(label, style: AppText.h(13, color: color)),
+              child: Text(label, style: AppText.h(13, color: c)),
             ),
             if (arrow) Text('›', style: AppText.body(16, color: AppColors.neutral700)),
           ],

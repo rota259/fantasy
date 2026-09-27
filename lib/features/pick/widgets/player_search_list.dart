@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/initials_tile.dart';
 import '../../players/data/models/player.dart';
+import '../../../core/widgets/motion.dart';
 
 /// قايمة لاعيبة ببحث (بالاسم أو الفريق) — لاعيبة المنطقة ممكن يبقوا كتير.
 class PlayerSearchList extends StatefulWidget {
@@ -52,12 +53,12 @@ class _PlayerSearchListState extends State<PlayerSearchList> {
     );
   }
 
-  Widget _row(Player p) => GestureDetector(
+  Widget _row(Player p) => Pressable(
     behavior: HitTestBehavior.opaque,
     onTap: () => widget.onPick(p),
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(

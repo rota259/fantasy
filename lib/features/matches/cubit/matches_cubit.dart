@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/live.dart';
+import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../follow/data/follows_repository.dart';
 import '../data/matches_repository.dart';
@@ -28,7 +28,7 @@ class MatchesCubit extends Cubit<MatchesState> {
     }
     emit(const MatchesState(status: MatchesStatus.loading));
     await _fetch();
-    _sub ??= liveTable('matches', _fetch);
+    _sub ??= LiveHub.on('matches', _fetch);
   }
 
   Future<void> _fetch() async {

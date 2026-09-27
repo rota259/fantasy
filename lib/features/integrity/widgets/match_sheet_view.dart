@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../events/data/models/match_event.dart';
 import '../../matches/data/models/game_match.dart';
@@ -23,7 +24,7 @@ class MatchSheetView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          color: AppColors.black,
+          decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
           child: Row(
             children: [
@@ -37,7 +38,7 @@ class MatchSheetView extends StatelessWidget {
           Container(
             margin: const EdgeInsets.only(top: 6),
             padding: const EdgeInsets.all(10),
-            color: AppColors.bronze,
+            decoration: BoxDecoration(color: AppColors.bronze, borderRadius: AppRadius.md),
             child: Text('⚠️ ${MatchFlags.label(f)}', style: AppText.h(12, color: AppColors.white)),
           ),
         for (final t in m.teams) ...[
@@ -75,7 +76,7 @@ class MatchSheetView extends StatelessWidget {
       for (final e in list)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.divider)),
           ),
           child: Row(

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/box_field.dart';
 import '../../../core/widgets/masthead.dart';
@@ -11,9 +12,11 @@ import '../../../core/supabase/db_error.dart';
 import '../data/maps_link.dart';
 import '../data/models/venue.dart';
 import '../data/venues_repository.dart';
+import '../widgets/owner_picker.dart';
 import '../widgets/venue_form_fields.dart';
 import '../widgets/venue_location_field.dart';
 import '../widgets/venue_photos_editor.dart';
+import '../../../core/widgets/motion.dart';
 
 /// إضافة/تعديل ملعب: البيانات + الموقع + الصور + المواعيد.
 /// أي يوزر يضيف ملعبه ويبقى صاحبه (بيوافق على الحجوزات). المدير بس يقدر يغيّر صاحب الملعب.
@@ -156,10 +159,13 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
                   OwnerPicker(ownerId: _ownerId, onChanged: (id) => setState(() => _ownerId = id)),
                 ],
                 const SizedBox(height: 20),
-                GestureDetector(
+                Pressable(
                   onTap: _saving ? null : _save,
                   child: Container(
-                    color: _saving ? AppColors.neutral500 : AppColors.accent,
+                    decoration: BoxDecoration(
+                      color: _saving ? AppColors.neutral500 : AppColors.accent,
+                      borderRadius: AppRadius.md,
+                    ),
                     padding: const EdgeInsets.all(14),
                     alignment: Alignment.center,
                     child: Text(_saving ? 'بيتحفظ…' : 'احفظ الملعب', style: AppText.h(14, color: AppColors.white)),

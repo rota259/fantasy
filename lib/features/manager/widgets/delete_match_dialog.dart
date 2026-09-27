@@ -10,7 +10,6 @@ Future<bool> confirmDeleteMatch(BuildContext context, GameMatch m) async {
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(),
       title: Text('حذف الماتش', style: AppText.h(16)),
       content: Text(
         'متأكد إنك عايز تحذف «${m.teamA} ضد ${m.teamB}»؟\nهيتمسح معاه التشكيلة والأحداث.',

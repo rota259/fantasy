@@ -3,8 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_mode.dart';
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -12,10 +14,15 @@ import '../../challenge/data/challenge_repository.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
+import '../../../core/widgets/motion.dart';
 
-/// (مدير) تحدّي الجولة: اختار ماتش (أو عشوائي) واليوزرز يتوقّعوا نتيجته — الصح ياخد +٥.
+/// تحدّي الجولة: مدير المنطقة بيختار ماتش من ماتشاته (واحد في الجولة)، والأدمن من أي ماتش.
+/// يوزرز منطقة الماتش بس بيتوقّعوا — اللي يجيب فرق الأهداف صح ياخد +٥.
 class ManagerChallengeScreen extends StatefulWidget {
-  const ManagerChallengeScreen({super.key});
+  const ManagerChallengeScreen({super.key, this.organizerId});
+
+  /// مدير المنطقة (ماتشاته بس) — null = الأدمن.
+  final String? organizerId;
 
   @override
   State<ManagerChallengeScreen> createState() => _ManagerChallengeScreenState();
@@ -26,17 +33,22 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
   late Future<List<GameMatch>> _future = _load();
   bool _busy = false;
 
-  /// الماتشات اللي لسه التوقّع فيها ممكن (قبل الديدلاين).
-  Future<List<GameMatch>> _load() async => (await _matches.fetchUpcoming()).where((m) => !m.isLocked).toList();
+  /// الماتشات اللي فاضل عليها أكتر من ساعتين (الناس تلحق تتوقّع).
+  Future<List<GameMatch>> _load() async {
+    final id = widget.organizerId;
+    final all = id == null ? await _matches.fetchAll() : await _matches.fetchOrganizedBy(id);
+    final from = DateTime.now().add(Duration(hours: kTestMode ? 0 : 2));
+    return all.where((m) => !m.isFinished && m.dateTime.isAfter(from)).toList()
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+  }
 
   Future<void> _choose(GameMatch m) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('تحدّي الجولة', style: AppText.h(16)),
-        content: Text('${m.teamA} ضد ${m.teamB} — هيتبعت إشعار لكل اليوزرز يتوقّعوا النتيجة.', style: AppText.body(13)),
+        content: Text('${m.teamA} ضد ${m.teamB} — هيتبعت إشعار ليوزرز المنطقة يتوقّعوا.', style: AppText.body(13)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('أعلن')),
@@ -67,26 +79,34 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'تحدّي الجولة', subtitle: 'MANAGER · CHALLENGE', onBack: () => Navigator.pop(context)),
+          Masthead(
+            title: 'تحدّي الجولة',
+            subtitle: widget.organizerId == null ? 'ADMIN · CHALLENGE' : 'CHALLENGE',
+            onBack: () => Navigator.pop(context),
+          ),
           Expanded(
             child: FutureBuilder<List<GameMatch>>(
               future: _future,
               builder: (context, snap) {
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final list = snap.data!;
                 final open = list.where((m) => !m.isChallenge).toList();
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
                     Text(
-                      'اختار ماتش — اليوزرز يتوقّعوا النتيجة بالظبط، واللي يجيبها صح ياخد +٥ لما تكتب النتيجة.',
+                      'اختار ماتش من ماتشاتك (تحدّي واحد في الجولة) — يوزرز منطقتك يتوقّعوا، '
+                      'واللي يجيب فرق الأهداف صح (مثلًا ٣-١ والنتيجة ٢-٠) ياخد +٥ بعد اعتماد الماتش.',
                       style: AppText.body(12, color: AppColors.neutral700),
                     ),
                     const SizedBox(height: 12),
-                    GestureDetector(
+                    Pressable(
                       onTap: _busy || open.isEmpty ? null : () => _choose(open[Random().nextInt(open.length)]),
                       child: Container(
-                        color: _busy || open.isEmpty ? AppColors.neutral500 : AppColors.black,
+                        decoration: BoxDecoration(
+                          color: _busy || open.isEmpty ? AppColors.neutral500 : AppColors.black,
+                          borderRadius: AppRadius.md,
+                        ),
                         padding: const EdgeInsets.all(13),
                         alignment: Alignment.center,
                         child: Text('🎲 اختار ماتش عشوائي', style: AppText.h(14, color: AppColors.white)),
@@ -94,7 +114,10 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
                     ),
                     const SizedBox(height: 16),
                     if (list.isEmpty)
-                      Text('مفيش ماتشات جاية قبل الديدلاين', style: AppText.body(12, color: AppColors.neutral600)),
+                      Text(
+                        'مفيش ماتشات فاضل عليها أكتر من ساعتين',
+                        style: AppText.body(12, color: AppColors.neutral600),
+                      ),
                     for (final m in list) _row(m),
                   ],
                 );
@@ -108,7 +131,7 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
 
   Widget _row(GameMatch m) => Container(
     padding: const EdgeInsets.symmetric(vertical: 11),
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       border: Border(top: BorderSide(color: AppColors.divider)),
     ),
     child: Row(
@@ -128,11 +151,14 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
         if (m.isChallenge)
           Text('🎯 تحدّي', style: AppText.h(12, color: AppColors.accent))
         else
-          GestureDetector(
+          Pressable(
             onTap: _busy ? null : () => _choose(m),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.md,
+                border: Border.all(color: AppColors.line, width: 1.2),
+              ),
               child: Text('اختار', style: AppText.h(11)),
             ),
           ),

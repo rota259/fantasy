@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../data/admin_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// رسايل جاهزة (عنوان، نص) يختار منها المدير ويعدّل عليها.
 const _templates = [
@@ -63,7 +65,7 @@ class _ManagerBroadcastScreenState extends State<ManagerBroadcastScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'إشعار للكل', subtitle: 'MANAGER · BROADCAST', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'إشعار للكل', subtitle: 'ADMIN · BROADCAST', onBack: () => Navigator.pop(context)),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16),
@@ -75,14 +77,17 @@ class _ManagerBroadcastScreenState extends State<ManagerBroadcastScreen> {
                   runSpacing: 8,
                   children: [
                     for (final t in _templates)
-                      GestureDetector(
+                      Pressable(
                         onTap: () => setState(() {
                           _title.text = t.$1;
                           _body.text = t.$2;
                         }),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                          decoration: BoxDecoration(border: Border.all(color: AppColors.divider, width: 2)),
+                          decoration: BoxDecoration(
+                            borderRadius: AppRadius.md,
+                            border: Border.all(color: AppColors.divider, width: 2),
+                          ),
                           child: Text(t.$1, style: AppText.body(12)),
                         ),
                       ),
@@ -93,10 +98,13 @@ class _ManagerBroadcastScreenState extends State<ManagerBroadcastScreen> {
                 const SizedBox(height: 10),
                 _field(_body, 'الرسالة (اختياري)', lines: 4),
                 const SizedBox(height: 16),
-                GestureDetector(
+                Pressable(
                   onTap: _sending ? null : _send,
                   child: Container(
-                    color: _sending ? AppColors.neutral500 : AppColors.accent,
+                    decoration: BoxDecoration(
+                      color: _sending ? AppColors.neutral500 : AppColors.accent,
+                      borderRadius: AppRadius.md,
+                    ),
                     padding: const EdgeInsets.all(13),
                     alignment: Alignment.center,
                     child: Text('🔔 ابعت لكل اليوزرز', style: AppText.h(14, color: AppColors.white)),
@@ -111,7 +119,10 @@ class _ManagerBroadcastScreenState extends State<ManagerBroadcastScreen> {
   }
 
   Widget _field(TextEditingController c, String hint, {int lines = 1}) => Container(
-    decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+    decoration: BoxDecoration(
+      borderRadius: AppRadius.md,
+      border: Border.all(color: AppColors.line, width: 1.2),
+    ),
     child: TextField(
       controller: c,
       maxLines: lines,

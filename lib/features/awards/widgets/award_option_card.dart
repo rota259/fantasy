@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/launchers.dart';
 import '../../polls/data/models/poll.dart';
 import '../data/video_link.dart';
 import 'pitch_backdrop.dart';
 import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/motion.dart';
 
 /// مرشّح هدف/تصدّي: الفيديو (دوس في أي حتة في المربع يفتح) + الاسم + الأصوات
 /// + زرار تصويت تحته بيقلب أخضر لما تصوّت.
@@ -43,12 +45,13 @@ class AwardOptionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
         border: Border.all(color: voted || winner ? AppColors.accent : AppColors.black, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GestureDetector(
+          Pressable(
             behavior: HitTestBehavior.opaque,
             onTap: () => _play(context),
             child: AspectRatio(
@@ -58,14 +61,14 @@ class AwardOptionCard extends StatelessWidget {
                 children: [
                   if (thumb != null) NetImage(thumb, fallback: const PitchBackdrop()) else const PitchBackdrop(),
                   Container(color: AppColors.black.withValues(alpha: 0.15)),
-                  const Center(child: Icon(Icons.play_circle_fill, size: 58, color: AppColors.white)),
+                  Center(child: Icon(Icons.play_circle_fill, size: 58, color: AppColors.white)),
                   if (winner)
                     Positioned(
                       top: 8,
                       right: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        color: AppColors.gold,
+                        decoration: BoxDecoration(color: AppColors.gold, borderRadius: AppRadius.sm),
                         child: Text('🏆 الفايز', style: AppText.h(11, color: AppColors.black)),
                       ),
                     ),
@@ -93,7 +96,7 @@ class AwardOptionCard extends StatelessWidget {
               ),
             ),
           if (onVote != null)
-            GestureDetector(
+            Pressable(
               onTap: voted ? null : onVote,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),

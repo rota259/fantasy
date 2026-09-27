@@ -17,8 +17,8 @@ class PentagonPitch extends StatelessWidget {
     required this.height,
     required this.tokens,
     this.border,
-    this.background = AppColors.night,
-    this.stripe = AppColors.nightStripe,
+    this.background,
+    this.stripe,
     this.line = const Color(0x8C4FCA85), // rgba(79,202,133,.55)
   });
 
@@ -27,8 +27,8 @@ class PentagonPitch extends StatelessWidget {
   final Border? border;
 
   /// ألوان الأرضية (تشكيلة الجولة بتبقى زرقا).
-  final Color background;
-  final Color stripe;
+  final Color? background; // الافتراضي night
+  final Color? stripe; // الافتراضي nightStripe
   final Color line;
 
   /// رؤوس المضلّع (نِسَب 0..1) — مطابقة للـ handoff.
@@ -44,11 +44,11 @@ class PentagonPitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      decoration: BoxDecoration(color: background, border: border),
+      decoration: BoxDecoration(color: background ?? AppColors.night, border: border),
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          Positioned.fill(child: CustomPaint(painter: _PitchPainter(stripe, line))),
+          Positioned.fill(child: CustomPaint(painter: _PitchPainter(stripe ?? AppColors.nightStripe, line))),
           for (final t in tokens) Align(alignment: Alignment(t.leftPct / 50 - 1, t.topPct / 50 - 1), child: t.child),
         ],
       ),

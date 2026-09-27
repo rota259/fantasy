@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/blink_dot.dart';
 import '../../../core/widgets/fdr_chip.dart';
@@ -15,6 +16,7 @@ import '../../matches/widgets/match_format.dart';
 import '../../ratings/view/match_ratings_screen.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
+import '../../../core/widgets/motion.dart';
 
 /// الماتشات: القادمة (+ تابع لايف) وآخر النتايج (+ قيّم اللاعيبة).
 class FixturesOverlay extends StatelessWidget {
@@ -47,7 +49,7 @@ class _FixturesView extends StatelessWidget {
           children: [
             if (next != null) _deadline(next),
             if (s.isLoading)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(30),
                 child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
               )
@@ -68,11 +70,11 @@ class _FixturesView extends StatelessWidget {
 
   Widget _deadline(GameMatch m) {
     return Container(
-      color: AppColors.black,
+      decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
       child: Row(
         children: [
-          const BlinkDot(color: AppColors.accent),
+          BlinkDot(color: AppColors.accent),
           const SizedBox(width: 8),
           Text(
             'يقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)} · اختر قبلها',
@@ -91,7 +93,8 @@ class _FixturesView extends StatelessWidget {
     return [
       for (final entry in groups.entries) ...[
         _dayHeader(entry.key),
-        for (final m in entry.value) _row(context, m, s.follows.contains(m.id)),
+        for (final (i, m) in entry.value.indexed)
+          FadeSlideIn(index: i, child: _row(context, m, s.follows.contains(m.id))),
       ],
       _legend(),
     ];
@@ -113,7 +116,7 @@ class _FixturesView extends StatelessWidget {
     final uid = userId;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -161,7 +164,7 @@ class _FixturesView extends StatelessWidget {
     final canRate = m.ratingOpen;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -172,12 +175,12 @@ class _FixturesView extends StatelessWidget {
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            color: AppColors.black,
+            decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
             child: Text(m.scoreText.isEmpty ? '—' : m.scoreText, style: AppText.h(14, color: AppColors.white)),
           ),
           Expanded(child: Text(m.teamB, style: AppText.h(13))),
           if (uid != null && (canRate || m.motmDone))
-            GestureDetector(
+            Pressable(
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -187,7 +190,12 @@ class _FixturesView extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 color: canRate ? AppColors.accent : null,
-                decoration: canRate ? null : BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                decoration: canRate
+                    ? null
+                    : BoxDecoration(
+                        borderRadius: AppRadius.md,
+                        border: Border.all(color: AppColors.line, width: 1.2),
+                      ),
                 child: Text(
                   canRate ? 'قيّم ⭐' : 'رجل الماتش',
                   style: AppText.h(10, color: canRate ? AppColors.white : AppColors.ink),

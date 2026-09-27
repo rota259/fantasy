@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/manager_players_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
 const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
 
@@ -86,7 +88,7 @@ class _EditSheetState extends State<_EditSheet> {
             children: [
               Row(
                 children: [
-                  GestureDetector(
+                  Pressable(
                     onTap: _uploading ? null : _pickPhoto,
                     child: PentagonAvatar(initials: widget.player.initials, photoUrl: _photo, size: 56),
                   ),
@@ -109,11 +111,12 @@ class _EditSheetState extends State<_EditSheet> {
                 runSpacing: 8,
                 children: [
                   for (final p in _positions)
-                    GestureDetector(
+                    Pressable(
                       onTap: () => setState(() => _pos = p.$1),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
+                          borderRadius: AppRadius.md,
                           color: _pos == p.$1 ? AppColors.accent : null,
                           border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
                         ),
@@ -123,10 +126,10 @@ class _EditSheetState extends State<_EditSheet> {
                 ],
               ),
               const SizedBox(height: 14),
-              GestureDetector(
+              Pressable(
                 onTap: _save,
                 child: Container(
-                  color: AppColors.accent,
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                   padding: const EdgeInsets.all(13),
                   alignment: Alignment.center,
                   child: Text('احفظ التعديل', style: AppText.h(14, color: AppColors.white)),
@@ -140,7 +143,10 @@ class _EditSheetState extends State<_EditSheet> {
   }
 
   Widget _field(TextEditingController c, String hint) => Container(
-    decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+    decoration: BoxDecoration(
+      borderRadius: AppRadius.md,
+      border: Border.all(color: AppColors.line, width: 1.2),
+    ),
     child: TextField(
       controller: c,
       style: AppText.h(14),

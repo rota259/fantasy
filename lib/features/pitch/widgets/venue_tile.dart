@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/models/booking.dart';
 import '../data/models/venue.dart';
 import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/motion.dart';
 
 /// كارت ملعب في القايمة: صورة + اسم + تقييم + سعر + مواعيد + عنوان.
 class VenueTile extends StatelessWidget {
@@ -17,12 +19,15 @@ class VenueTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final v = venue;
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.line, width: 1.2),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -31,7 +36,7 @@ class VenueTile extends StatelessWidget {
               child: v.photos.isEmpty
                   ? Container(
                       color: AppColors.night2,
-                      child: const Icon(Icons.stadium_outlined, size: 48, color: AppColors.white),
+                      child: Icon(Icons.stadium_outlined, size: 48, color: AppColors.white),
                     )
                   : NetImage(v.photos.first, fallback: Container(color: AppColors.night2)),
             ),
@@ -68,7 +73,7 @@ class VenueTile extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    color: AppColors.accent,
+                    decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                     child: Text('${v.price}ج/س', style: AppText.h(13, color: AppColors.white)),
                   ),
                 ],

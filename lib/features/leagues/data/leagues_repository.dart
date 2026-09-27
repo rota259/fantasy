@@ -9,8 +9,8 @@ abstract interface class LeaguesRepository {
   /// دوريات المستخدم مع ترتيبه في كل واحد.
   Future<List<MyLeague>> myLeagues(String userId);
 
-  /// جدول ترتيب دوري معيّن (النقط، والتعادل: اللاعيبة قليلة الامتلاك). العام = كل اليوزرز.
-  Future<List<LeagueStanding>> standings(String leagueId);
+  /// ترتيب دوري — صفحة ٥٠ واحد من [offset].
+  Future<List<LeagueStanding>> standings(String leagueId, {int offset = 0});
 
   /// الانضمام لدوري بكود الدعوة (بيرمي رسالة السيرفر لو الكود غلط).
   Future<void> joinByCode(String inviteCode);

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/notifications/sound_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -15,7 +16,7 @@ import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../notifications/cubit/notifications_badge_cubit.dart';
 import '../../pick/data/picks_repository.dart';
-import '../../points/view/my_points_screen.dart';
+import '../../points/view/live_round_screen.dart';
 import '../../polls/data/polls_repository.dart';
 import '../../ratings/view/match_ratings_screen.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
@@ -30,6 +31,7 @@ import '../widgets/home_alerts.dart';
 import '../widgets/home_bell.dart';
 import '../widgets/home_shortcuts.dart';
 import '../widgets/star_of_week_card.dart';
+import '../../../core/widgets/motion.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -134,22 +136,24 @@ class _HomeView extends StatelessWidget {
         Expanded(
           child: BlocBuilder<HomeCubit, HomeState>(
             builder: (context, s) {
-              if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+              if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+              // الأقسام بتدخل واحدة ورا التانية (ظهور + طلوع خفيف)
+              final sections = [
+                _pointsHero(context, s.points),
+                HomeAlerts(alerts: _alerts(context, s)),
+                _nextMatch(context, s.nextMatch, s.openRound),
+                HomeShortcuts(items: _shortcuts(context)),
+                StarOfWeekCard(
+                  star: s.star,
+                  isFinal: s.weekFinal,
+                  fromPrevious: s.starFromPrevious,
+                  label: s.weekLabel,
+                ),
+                const SizedBox(height: 16),
+              ];
               return ListView(
                 padding: EdgeInsets.zero,
-                children: [
-                  _pointsHero(context, s.points),
-                  HomeAlerts(alerts: _alerts(context, s)),
-                  _nextMatch(context, s.nextMatch, s.openRound),
-                  HomeShortcuts(items: _shortcuts(context)),
-                  StarOfWeekCard(
-                    star: s.star,
-                    isFinal: s.weekFinal,
-                    fromPrevious: s.starFromPrevious,
-                    label: s.weekLabel,
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                children: [for (final (i, w) in sections.indexed) FadeSlideIn(index: i, child: w)],
               );
             },
           ),
@@ -158,14 +162,22 @@ class _HomeView extends StatelessWidget {
     );
   }
 
-  /// الضغط على النقاط → تفاصيل نقاطك في كل جولة.
+  /// نقط الجولة اللي بتتلعب — الضغط بيفتح تفصيلها (مين لعب ومين لسه) + تشكيلة الجولة الجاية.
   Widget _pointsHero(BuildContext context, int points) {
-    return GestureDetector(
-      onTap: userId == null ? null : () => _push(context, MyPointsScreen(userId: userId!)),
+    return Pressable(
+      onTap: userId == null ? null : () => _push(context, LiveRoundScreen(userId: userId!)),
       child: Container(
-        width: double.infinity,
-        color: AppColors.black,
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+        margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+            colors: [AppColors.black, AppColors.night],
+          ),
+          borderRadius: AppRadius.lg,
+          boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 16, offset: const Offset(0, 6))],
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -173,9 +185,15 @@ class _HomeView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('نقاطك · TOTAL POINTS', style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),
+                  Text(
+                    'نقط الجولة · ${WeekWindow.live().label}',
+                    style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6)),
+                  ),
                   const SizedBox(height: 2),
-                  Text('$points', style: AppText.h(72, color: AppColors.white, spacingEm: -0.04, height: 0.9)),
+                  CountUp(
+                    value: points,
+                    style: AppText.h(72, color: AppColors.white, spacingEm: -0.04, height: 0.9),
+                  ),
                 ],
               ),
             ),
@@ -196,11 +214,14 @@ class _HomeView extends StatelessWidget {
     }
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: GestureDetector(
+      child: Pressable(
         onTap: () => context.read<AppNavCubit>().setTab(AppTab.team),
         child: Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.line, width: 1.2),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

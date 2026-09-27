@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/widgets/login_header.dart';
 import '../data/zone.dart';
 import '../data/zones_repository.dart';
 import '../widgets/zone_field.dart';
+import '../../../core/widgets/motion.dart';
 
 /// الحسابات القديمة (من غير منطقة) لازم تختار منطقتها قبل ما تدخل.
 class ZoneRequiredScreen extends StatefulWidget {
@@ -57,10 +59,13 @@ class _ZoneRequiredScreenState extends State<ZoneRequiredScreen> {
                 const SizedBox(height: 20),
                 ZoneField(value: _zone, onChanged: (z) => setState(() => _zone = z)),
                 const SizedBox(height: 20),
-                GestureDetector(
+                Pressable(
                   onTap: (_zone == null || _busy) ? null : _save,
                   child: Container(
-                    color: (_zone == null || _busy) ? AppColors.neutral500 : AppColors.accent,
+                    decoration: BoxDecoration(
+                      color: (_zone == null || _busy) ? AppColors.neutral500 : AppColors.accent,
+                      borderRadius: AppRadius.md,
+                    ),
                     padding: const EdgeInsets.all(14),
                     alignment: Alignment.center,
                     child: Text('يلا', style: AppText.h(15, color: AppColors.white)),

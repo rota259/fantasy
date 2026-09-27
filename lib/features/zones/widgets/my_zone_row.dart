@@ -8,11 +8,13 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../data/zone.dart';
 import '../data/zones_repository.dart';
 import 'zone_picker_sheet.dart';
+import '../../../core/widgets/motion.dart';
 
 /// "منطقتي: بدر · القاهرة" في الحساب — دوس تغيّرها (مرة كل ٣٠ يوم).
 class MyZoneRow extends StatelessWidget {
-  const MyZoneRow({super.key, required this.zoneId});
+  const MyZoneRow({super.key, required this.zoneId, this.editable = true});
   final int? zoneId;
+  final bool editable; // المدير: للعرض بس
 
   Future<void> _change(BuildContext context, Zone? current) async {
     final z = await showZonePicker(context);
@@ -21,7 +23,6 @@ class MyZoneRow extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('تنقل لـ ${z.name}؟', style: AppText.h(16)),
         content: Text(
           'هتشوف ماتشات ونجوم ${z.name} بس، وتعمل تشكيلاتك منها. مش هتقدر تغيّر تاني قبل ٣٠ يوم.',
@@ -49,20 +50,20 @@ class MyZoneRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return FutureBuilder<Zone?>(
       future: context.read<ZonesRepository>().byId(zoneId),
-      builder: (context, snap) => GestureDetector(
+      builder: (context, snap) => Pressable(
         behavior: HitTestBehavior.opaque,
-        onTap: () => _change(context, snap.data),
+        onTap: editable ? () => _change(context, snap.data) : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: AppColors.divider)),
           ),
           child: Row(
             children: [
-              const Icon(Icons.location_on_outlined, size: 18, color: AppColors.ink),
+              Icon(Icons.location_on_outlined, size: 18, color: AppColors.ink),
               const SizedBox(width: 12),
               Expanded(child: Text('منطقتي: ${snap.data?.label ?? '…'}', style: AppText.h(13))),
-              Text('غيّر ›', style: AppText.body(12, color: AppColors.neutral700)),
+              if (editable) Text('غيّر ›', style: AppText.body(12, color: AppColors.neutral700)),
             ],
           ),
         ),

@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../players/data/models/player.dart';
 import '../data/claims_repository.dart';
 import '../data/models/player_claim.dart';
 import '../view/player_fan_screen.dart';
+import '../../../core/widgets/motion.dart';
 
 /// في صفحة اللاعب: "ده أنا 🙋" (طلب توثيق) · طلبك مستني · موثّق ✓ · أنا كلاعب ›
 class ClaimButton extends StatefulWidget {
@@ -32,7 +34,7 @@ class _ClaimButtonState extends State<ClaimButton> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _repo.request(widget.player.id, widget.userId, note);
-      messenger.showSnackBar(const SnackBar(content: Text('اتبعت الطلب للمدير — هيوصلك إشعار لما يتأكد ✓')));
+      messenger.showSnackBar(const SnackBar(content: Text('اتبعت الطلب للإدارة — هيوصلك إشعار لما يتأكد ✓')));
       setState(() {
         _future = _load();
       });
@@ -47,19 +49,18 @@ class _ClaimButtonState extends State<ClaimButton> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('انت ${widget.player.name}؟', style: AppText.h(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'المدير هيتأكد منك (ممكن يكلّمك). بعدها البروفايل ياخد ✓ وتشوف مين اختارك.',
+              'الإدارة هيتأكد منك (ممكن يكلّمك). بعدها البروفايل ياخد ✓ وتشوف مين اختارك.',
               style: AppText.body(12, color: AppColors.neutral700),
             ),
             TextField(
               controller: ctrl,
               maxLength: 300,
-              decoration: const InputDecoration(hintText: 'ملاحظة للمدير (اختياري)'),
+              decoration: const InputDecoration(hintText: 'ملاحظة للإدارة (اختياري)'),
             ),
           ],
         ),
@@ -88,7 +89,7 @@ class _ClaimButtonState extends State<ClaimButton> {
         if (linked != null) return const SizedBox.shrink(); // موثّق على لاعب تاني
         if (claim != null && claim.isPending) {
           return _bar(
-            claim.playerId == p.id ? '⏳ طلبك مستني موافقة المدير' : 'عندك طلب توثيق تاني مستني',
+            claim.playerId == p.id ? '⏳ طلبك مستني موافقة الإدارة' : 'عندك طلب توثيق تاني مستني',
             AppColors.neutral600,
             null,
           );
@@ -98,13 +99,13 @@ class _ClaimButtonState extends State<ClaimButton> {
     );
   }
 
-  Widget _bar(String t, Color c, VoidCallback? onTap) => GestureDetector(
+  Widget _bar(String t, Color c, VoidCallback? onTap) => Pressable(
     onTap: onTap,
     child: Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.all(12),
-      color: c,
+      decoration: BoxDecoration(color: c, borderRadius: AppRadius.md),
       alignment: Alignment.center,
       child: Text(t, style: AppText.h(13, color: AppColors.white)),
     ),

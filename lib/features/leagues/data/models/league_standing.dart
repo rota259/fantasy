@@ -4,6 +4,9 @@ import 'league.dart';
 
 /// صف في ترتيب الدوري.
 class LeagueStanding extends Equatable {
+  /// الترتيب بيتحمّل صفحات (مش كل الدوري مرة واحدة).
+  static const pageSize = 50;
+
   const LeagueStanding({
     required this.rank,
     required this.userId,

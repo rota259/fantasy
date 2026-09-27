@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/onboard_illustrations.dart';
+import '../../../core/widgets/motion.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key, required this.index});
@@ -74,7 +75,7 @@ class OnboardingScreen extends StatelessWidget {
           child: Row(
             children: [
               const Spacer(),
-              GestureDetector(
+              Pressable(
                 onTap: nav.onboardSkip,
                 child: Text('تخطّي ✕', style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
               ),
@@ -102,7 +103,7 @@ class OnboardingScreen extends StatelessWidget {
             }),
           ),
           const SizedBox(height: 18),
-          GestureDetector(
+          Pressable(
             onTap: nav.onboardNext,
             child: Container(
               width: double.infinity,

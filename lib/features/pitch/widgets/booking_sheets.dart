@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/launchers.dart';
 import '../data/models/booking.dart';
 import '../data/models/venue.dart';
+import '../../../core/widgets/motion.dart';
 
 String slotText(DateTime day, int hour) => '${day.day}/${day.month} الساعة ${formatHour(hour)}';
 
@@ -56,7 +58,10 @@ class _ConfirmSheetState extends State<_ConfirmSheet> {
               Text('السعر: ${v.price} جنيه للساعة', style: AppText.body(12, color: AppColors.neutral700)),
               const SizedBox(height: 12),
               Container(
-                decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.md,
+                  border: Border.all(color: AppColors.line, width: 1.2),
+                ),
                 child: TextField(
                   controller: _note,
                   style: AppText.h(13),
@@ -125,10 +130,10 @@ Future<void> showBookingSentSheet(BuildContext context, Venue v, DateTime day, i
   );
 }
 
-Widget _btn(String label, Color color, VoidCallback onTap) => GestureDetector(
+Widget _btn(String label, Color color, VoidCallback onTap) => Pressable(
   onTap: onTap,
   child: Container(
-    color: color,
+    decoration: BoxDecoration(color: color, borderRadius: AppRadius.md),
     padding: const EdgeInsets.all(12),
     alignment: Alignment.center,
     child: Text(label, style: AppText.h(13, color: AppColors.white)),

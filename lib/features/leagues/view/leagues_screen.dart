@@ -15,9 +15,9 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../badges/data/badges_repository.dart';
 import '../cubit/leagues_cubit.dart';
 import '../data/leagues_repository.dart';
-import '../data/models/league_standing.dart';
 import '../widgets/league_dialogs.dart';
 import '../widgets/leagues_widgets.dart';
+import '../../../core/widgets/motion.dart';
 
 /// تبويب الدوريات: اعمل دوري أو انضم بكود، وشوف الترتيب بالصور والشارات.
 class LeaguesScreen extends StatelessWidget {
@@ -57,7 +57,7 @@ class _LeaguesView extends StatelessWidget {
         Expanded(
           child: BlocBuilder<LeaguesCubit, LeaguesState>(
             builder: (context, s) {
-              if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+              if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
@@ -72,11 +72,11 @@ class _LeaguesView extends StatelessWidget {
     );
   }
 
-  Widget _headerBtn(String t, VoidCallback onTap) => GestureDetector(
+  Widget _headerBtn(String t, VoidCallback onTap) => Pressable(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(border: AppBorders.white(0.5)),
+      decoration: BoxDecoration(borderRadius: AppRadius.md, border: AppBorders.white(0.5)),
       child: Text(t, style: AppText.h(12, color: AppColors.white)),
     ),
   );
@@ -126,8 +126,16 @@ class _LeaguesView extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
         child: Column(
           children: [
-            for (final LeagueStanding st in s.standings)
-              StandingRow(standing: st, me: st.userId == userId, badges: s.badges[st.userId] ?? const []),
+            for (final (i, st) in s.standings.indexed)
+              FadeSlideIn(
+                index: i,
+                child: StandingRow(standing: st, me: st.userId == userId, badges: s.badges[st.userId] ?? const []),
+              ),
+            if (s.hasMore)
+              TextButton(
+                onPressed: cubit.loadMore,
+                child: Text('اعرض أكتر ↓', style: AppText.h(13, color: AppColors.accent)),
+              ),
           ],
         ),
       ),
@@ -168,7 +176,6 @@ class _LeaguesView extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text(owner ? 'حذف الدوري' : 'الخروج من الدوري', style: AppText.h(16)),
         content: Text(owner ? 'الدوري «$name» هيتمسح لكل الأعضاء.' : 'هتخرج من «$name».', style: AppText.body(13)),
         actions: [

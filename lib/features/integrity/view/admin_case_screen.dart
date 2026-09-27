@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -11,6 +12,7 @@ import '../data/integrity_repository.dart';
 import '../data/models/review_case.dart';
 import '../widgets/match_sheet_view.dart';
 import 'match_review_screen.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (أدمن) الحكم في ماتش: الورقة + آراء اللاعيبة + اعتماد / إلغاء / مراجعة من الأول / تعديل الأحداث.
 class AdminCaseScreen extends StatefulWidget {
@@ -37,7 +39,6 @@ class _AdminCaseScreenState extends State<AdminCaseScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text(title, style: AppText.h(16)),
         content: Text(body, style: AppText.body(13)),
         actions: [
@@ -80,12 +81,12 @@ class _AdminCaseScreenState extends State<AdminCaseScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'الحكم', subtitle: 'منظّم: ${c.organizerName}', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'الحكم', subtitle: 'مدير: ${c.organizerName}', onBack: () => Navigator.pop(context)),
           Expanded(
             child: FutureBuilder<MatchSheet>(
               future: _sheet,
               builder: (context, snap) {
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
@@ -118,11 +119,11 @@ class _AdminCaseScreenState extends State<AdminCaseScreen> {
     );
   }
 
-  Widget _button(String label, Color color, VoidCallback onTap) => GestureDetector(
+  Widget _button(String label, Color color, VoidCallback onTap) => Pressable(
     onTap: _busy ? null : onTap,
     child: Container(
       margin: const EdgeInsets.only(bottom: 8),
-      color: _busy ? AppColors.neutral500 : color,
+      decoration: BoxDecoration(color: _busy ? AppColors.neutral500 : color, borderRadius: AppRadius.md),
       padding: const EdgeInsets.all(13),
       alignment: Alignment.center,
       child: Text(label, style: AppText.h(14, color: AppColors.white)),

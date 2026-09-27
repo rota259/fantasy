@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../auth/data/models/app_user.dart';
-import '../../matches/data/matches_repository.dart';
-import '../../matches/data/models/game_match.dart';
-import '../../players/data/players_repository.dart';
 import '../../week/data/week_window.dart';
 import '../data/admin_repository.dart';
 
-typedef _Stats = ({List<AppUser> users, int players, int upcoming, int finished, GameMatch? next, int nextPicks});
+typedef _Stats = ({AdminCounts counts, List<AppUser> top, int nextPicks, int managersActive});
 
-/// (مدير) أرقام سريعة: المستخدمين، اللاعيبة، الماتشات، تشكيلات الماتش الجاي، وأعلى ٥.
+/// (أدمن) أرقام سريعة من السيرفر (من غير ما نحمّل كل اليوزرز واللاعيبة): المستخدمين، اللاعيبة، الماتشات،
+/// تشكيلات الجولة الجاية، وأعلى ٥.
 class ManagerDashboard extends StatefulWidget {
   const ManagerDashboard({super.key});
 
@@ -25,21 +24,12 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
 
   Future<_Stats> _load() async {
     final admin = context.read<AdminRepository>();
-    final matchesRepo = context.read<MatchesRepository>();
-    final players = await context.read<PlayersRepository>().fetchAll();
-    final users = (await admin.fetchUsers()).where((u) => !u.isManager).toList();
-    final all = await matchesRepo.fetchAll();
-    final upcoming = all.where((m) => !m.isFinished).toList();
-    final next = upcoming.isEmpty ? null : upcoming.first;
-    final picks = (await admin.roundPickerIds(WeekWindow.open().cutoff)).length;
-    return (
-      users: users,
-      players: players.length,
-      upcoming: upcoming.length,
-      finished: all.length - upcoming.length,
-      next: next,
-      nextPicks: picks,
-    );
+    final (counts, top, picks) = await (
+      admin.counts(),
+      admin.fetchUsers(role: 'user', limit: 5),
+      admin.roundPickerCount(WeekWindow.open().cutoff),
+    ).wait;
+    return (counts: counts, top: top, nextPicks: picks, managersActive: counts.managers);
   }
 
   @override
@@ -48,36 +38,36 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.all(20),
             child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
           );
         }
         final s = snap.data!;
         return Container(
-          color: AppColors.black,
+          decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  _stat('${s.users.length}', 'يوزر'),
-                  _stat('${s.players}', 'لاعب'),
-                  _stat('${s.upcoming}', 'ماتش جاي'),
-                  _stat('${s.finished}', 'خلص'),
+                  _stat('${s.counts.users}', 'يوزر'),
+                  _stat('${s.counts.players}', 'لاعب'),
+                  _stat('${s.counts.upcoming}', 'ماتش جاي'),
+                  _stat('${s.counts.finished}', 'خلص'),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
-                'تشكيلات الجولة الجاية: ${s.nextPicks} من ${s.users.length}',
+                'تشكيلات الجولة الجاية: ${s.nextPicks} من ${s.counts.users} · ${s.managersActive} مدير منطقة',
                 style: AppText.h(12, color: AppColors.accent400),
               ),
-              if (s.users.isNotEmpty) ...[
+              if (s.top.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text('أعلى ٥', style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6))),
                 const SizedBox(height: 4),
-                for (var i = 0; i < s.users.length && i < 5; i++)
+                for (var i = 0; i < s.top.length; i++)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Row(
@@ -87,9 +77,9 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
                           child: Text('${i + 1}', style: AppText.h(12, color: AppColors.accent400)),
                         ),
                         Expanded(
-                          child: Text(s.users[i].name, style: AppText.body(12, color: AppColors.white)),
+                          child: Text(s.top[i].name, style: AppText.body(12, color: AppColors.white)),
                         ),
-                        Text('${s.users[i].totalPoints}', style: AppText.h(12, color: AppColors.white)),
+                        Text('${s.top[i].totalPoints}', style: AppText.h(12, color: AppColors.white)),
                       ],
                     ),
                   ),

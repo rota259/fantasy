@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/auth/google_auth.dart';
 import '../../../core/supabase/supabase_service.dart';
 import 'auth_repository.dart';
 import 'models/app_user.dart';
@@ -19,22 +20,26 @@ class SupabaseAuthRepository implements AuthRepository {
     String? referralCode,
     int? zoneId,
   }) async {
-    final res = await _auth.signUp(email: email, password: password);
-    final id = res.user?.id;
-    if (id == null) throw Exception('فشل إنشاء الحساب');
-
-    // لو تأكيد الإيميل مفعّل، مفيش session نكتب بيها الـ profile.
-    if (res.session == null) {
-      throw Exception('افتح إيميلك وأكّد الحساب، وبعدين سجّل دخول');
+    // رقم موبايل واحد لحساب واحد (قبل ما نعمل الحساب عشان مايفضلش حساب ناقص)
+    final p = phone?.trim() ?? '';
+    if (p.isNotEmpty && await SupabaseService.client.rpc('phone_taken', params: {'p': p}) == true) {
+      throw const AuthException('الرقم ده متسجّل بحساب تاني');
     }
-
-    final user = AppUser(id: id, name: name, email: email, phone: phone, zoneId: zoneId);
-    await SupabaseService.table(_table).insert(user.toInsert());
-    final code = referralCode?.trim() ?? '';
-    if (code.isNotEmpty) {
-      try {
-        await SupabaseService.client.rpc('apply_referral', params: {'p_code': code});
-      } catch (_) {} // كود غلط مش هيوقّف التسجيل
+    // البروفايل بيتعمل في السيرفر من البيانات دي (handle_new_user) — حتى لو تأكيد الإيميل مفعّل
+    final res = await _auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        'name': name,
+        'phone': p,
+        'zone_id': zoneId,
+        if (referralCode != null && referralCode.trim().isNotEmpty) 'ref_code': referralCode.trim(),
+      },
+    );
+    final id = res.user?.id;
+    if (id == null) throw const AuthException('فشل إنشاء الحساب');
+    if (res.session == null) {
+      throw const AuthException('اتبعتلك رسالة على الإيميل — أكّد الحساب وبعدين سجّل دخول');
     }
     return _fetchProfile(id);
   }
@@ -57,6 +62,16 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AppUser?> signInWithGoogle() async {
+    final g = await GoogleAuth.signIn();
+    if (g == null) return null;
+    final res = await _auth.signInWithIdToken(provider: OAuthProvider.google, idToken: g.idToken, nonce: g.nonce);
+    final id = res.user?.id;
+    if (id == null) throw const AuthException('فشل الدخول بجوجل');
+    return _fetchProfile(id);
+  }
+
+  @override
   Future<AppUser?> currentUser() async {
     final id = _auth.currentUser?.id;
     if (id == null) return null;
@@ -72,7 +87,24 @@ class SupabaseAuthRepository implements AuthRepository {
         await SupabaseService.table(_table).update({'fcm_token': null}).eq('id', id);
       } catch (_) {}
     }
+    await GoogleAuth.signOut();
     await _auth.signOut();
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    final id = _auth.currentUser?.id;
+    if (id == null) return;
+    // الصور الأول (الـ SQL مينفعش يمسح ملفات)، وبعدين الحساب وكل بياناته في السيرفر
+    try {
+      final storage = SupabaseService.client.storage.from('avatars');
+      final files = await storage.list(path: id);
+      if (files.isNotEmpty) await storage.remove([for (final f in files) '$id/${f.name}']);
+    } catch (_) {} // الصور مش هتوقّف الحذف
+    await SupabaseService.client.rpc('delete_my_account');
+    try {
+      await _auth.signOut();
+    } catch (_) {} // الحساب اتمسح أصلًا
   }
 
   @override

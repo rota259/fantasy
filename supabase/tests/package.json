@@ -1,0 +1,11 @@
+{
+  "name": "khomasi-sql-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node run.mjs ../migrate_all.sql smoke.sql && node run.mjs ../migrate_all.sql test_mode.sql --test-mode"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8"
+  }
+}

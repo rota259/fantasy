@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/launchers.dart';
 import '../../../core/widgets/masthead.dart';
@@ -12,6 +13,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../data/bookings_repository.dart';
 import '../data/models/booking.dart';
 import '../widgets/booking_sheets.dart';
+import '../../../core/widgets/motion.dart';
 
 /// طلبات الحجز لصاحب الملعب (ownerId) أو كل الحجوزات للمدير (ownerId = null).
 /// بتتحدّث لوحدها أول ما حد يطلب حجز.
@@ -88,7 +90,7 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final all = snap.data!;
                 final pending = all.where((b) => b.isPending && !b.isPast).toList();
                 final upcoming = all.where((b) => b.isConfirmed && !b.isPast).toList();
@@ -127,7 +129,7 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
     final phone = b.userPhone;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Column(
@@ -163,11 +165,11 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
   }
 
   Widget _btn(String label, Color color, VoidCallback? onTap) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 3),
-        color: onTap == null ? AppColors.neutral500 : color,
+        decoration: BoxDecoration(color: onTap == null ? AppColors.neutral500 : color, borderRadius: AppRadius.md),
         padding: const EdgeInsets.all(10),
         alignment: Alignment.center,
         child: Text(label, style: AppText.h(12, color: AppColors.white)),

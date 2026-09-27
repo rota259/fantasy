@@ -3,11 +3,13 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../data/geo_search.dart';
 import '../widgets/osm_layers.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) اختيار مكان الملعب: ابحث بالاسم أو دوس على الخريطة يتحط الدبوس.
 /// بيرجّع LatLng بـ Navigator.pop.
@@ -76,7 +78,10 @@ class _VenueMapPickerState extends State<VenueMapPicker> {
               children: [
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.md,
+                      border: Border.all(color: AppColors.line, width: 1.2),
+                    ),
                     child: TextField(
                       controller: _query,
                       textInputAction: TextInputAction.search,
@@ -92,18 +97,18 @@ class _VenueMapPickerState extends State<VenueMapPicker> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
+                Pressable(
                   onTap: _searching ? null : _search,
                   child: Container(
                     width: 44,
                     height: 44,
                     color: AppColors.accent,
                     child: _searching
-                        ? const Padding(
+                        ? Padding(
                             padding: EdgeInsets.all(12),
                             child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.white),
                           )
-                        : const Icon(Icons.search, color: AppColors.white),
+                        : Icon(Icons.search, color: AppColors.white),
                   ),
                 ),
               ],
@@ -112,7 +117,7 @@ class _VenueMapPickerState extends State<VenueMapPicker> {
           for (final p in _results)
             ListTile(
               dense: true,
-              leading: const Icon(Icons.place_outlined, color: AppColors.accent),
+              leading: Icon(Icons.place_outlined, color: AppColors.accent),
               title: Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppText.body(12)),
               onTap: () => _goTo(p),
             ),
@@ -137,10 +142,13 @@ class _VenueMapPickerState extends State<VenueMapPicker> {
             padding: const EdgeInsets.all(12),
             child: SafeArea(
               top: false,
-              child: GestureDetector(
+              child: Pressable(
                 onTap: _picked == null ? null : () => Navigator.pop(context, _picked),
                 child: Container(
-                  color: _picked == null ? AppColors.neutral600 : AppColors.accent,
+                  decoration: BoxDecoration(
+                    color: _picked == null ? AppColors.neutral600 : AppColors.accent,
+                    borderRadius: AppRadius.md,
+                  ),
                   padding: const EdgeInsets.all(12),
                   alignment: Alignment.center,
                   child: Text(

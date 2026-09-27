@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../matches/widgets/match_format.dart';
@@ -11,6 +12,7 @@ import '../../polls/data/polls_repository.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../cubit/awards_cubit.dart';
 import '../widgets/award_option_card.dart';
+import '../../../core/widgets/motion.dart';
 
 /// هدف وتصدّي الجولة (والموسم): اتفرّج على الفيديوهات وصوّت.
 class AwardsOverlay extends StatelessWidget {
@@ -50,12 +52,12 @@ class _ViewState extends State<_View> {
               child: Row(children: [for (final t in tabs) _tab(t.$1, t.$2)]),
             ),
             if (s.loading)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(40),
                 child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
               )
             else if (s.polls[_kind] == null)
-              _note('المدير لسه منزّلش المرشّحين')
+              _note('الإدارة لسه منزّلش المرشّحين')
             else
               ..._poll(context, s.polls[_kind]!),
             const SizedBox(height: 20),
@@ -67,14 +69,15 @@ class _ViewState extends State<_View> {
 
   Widget _tab(String kind, String label) {
     final on = kind == _kind;
-    return GestureDetector(
+    return Pressable(
       onTap: () => setState(() => _kind = kind),
       child: Container(
         margin: const EdgeInsets.only(left: 6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: on ? AppColors.black : null,
-          border: Border.all(color: AppColors.black, width: 2),
+          border: Border.all(color: AppColors.line, width: 1.2),
         ),
         child: Text(label, style: AppText.h(12, color: on ? AppColors.white : AppColors.ink)),
       ),

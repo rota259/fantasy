@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/app_mode.dart';
+
 /// ماتش/جولة (جدول matches). اسمها GameMatch عشان Match محجوزة في Dart.
 /// الأوقات بتتخزّن UTC في السيرفر وبتتعرض بتوقيت الجهاز.
 class GameMatch extends Equatable {
@@ -34,13 +36,13 @@ class GameMatch extends Equatable {
   final bool isChallenge; // تحدّي الجولة (توقّع النتيجة)
   final String? motmPlayerId; // رجل المباراة (تصويت الجمهور)
   final bool motmDone;
-  final String? organizerId; // المنظّم (null = الأدمن)
+  final String? organizerId; // المدير (null = الأدمن)
   final String reviewStatus; // open · pending (مستني تأكيد) · approved · disputed (اعتراض) · void (اتلغى)
   final DateTime? reviewDue; // بيتعتمد لوحده بعدها لو مفيش علامات
   final List<String> flags; // علامات الغرابة (MatchFlags)
 
   /// مدة تقييم الجمهور بعد نهاية الماتش.
-  static const ratingWindow = Duration(hours: 24);
+  static Duration get ratingWindow => kTestMode ? const Duration(minutes: 30) : const Duration(hours: 24);
 
   bool get isFinished => status == 'finished';
 
@@ -57,8 +59,9 @@ class GameMatch extends Equatable {
   String get teamB => teams.length > 1 ? teams[1] : '';
 
   /// الديدلاين = ميعاد الماتش ناقص ساعة.
-  DateTime get deadline => dateTime.subtract(const Duration(hours: 1));
-  bool get isLocked => DateTime.now().isAfter(deadline);
+  DateTime get deadline =>
+      kTestMode ? dateTime : dateTime.subtract(const Duration(hours: 1)); // وضع التجربة: لحد البداية
+  bool get isLocked => !kTestMode && DateTime.now().isAfter(deadline); // وضع التجربة: التوقّع مفتوح لحد ما يخلص
   bool get hasStarted => DateTime.now().isAfter(dateTime);
 
   /// تقييم اللاعيبة مفتوح (٢٤ ساعة بعد النهاية ولسه رجل المباراة ماتعلنش).

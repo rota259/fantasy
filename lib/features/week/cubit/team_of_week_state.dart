@@ -6,40 +6,38 @@ class TeamOfWeekState extends Equatable {
   const TeamOfWeekState({
     required this.window,
     this.status = TeamOfWeekStatus.loading,
-    this.players = const [],
+    this.published,
+    this.ranking = const [],
     this.tie,
+    this.tied = const [],
+    this.slots = 0,
   });
 
   final WeekWindow window;
   final TeamOfWeekStatus status;
-  final List<WeekPlayer> players; // نقاط الجولة (الأعلى أولًا)
-  final PollView? tie; // تصويت التعادل على آخر مكان (لو اتعمل)
+  final List<WeekPlayer>? published; // الخمسة المعتمدين (null = لسه)
+  final List<WeekPlayer> ranking; // ترتيب الجولة (بيظهر بعد الاعتماد بس)
+  final PollView? tie; // تصويت التعادل على آخر مكان (لو فيه)
+  final List<WeekPlayer> tied; // المتعادلين (للتصويت)
+  final int slots; // كام مكان عليه تعادل
 
   bool get isLoading => status == TeamOfWeekStatus.loading;
   bool get isCurrent => window == WeekWindow.current();
+  bool get isPublished => published != null;
 
-  TeamOfWeek get team => TeamOfWeek.build(players);
+  /// الخمسة مترتّبين على الخماسي.
+  List<WeekPlayer?> get spots => TeamOfWeek.arrange(published ?? const []);
 
-  /// التعادل بيتحسم بتصويت بس لما الجولة تبقى نهائي (قبلها الترتيب بيتغيّر كل شوية).
-  bool get contested => team.hasTie && window.isFinal();
-
-  /// الخمسة مترتّبين على الخماسي. وقت التصويت المكان المتنازع عليه بيفضل فاضي لحد ما يتحسم.
-  List<WeekPlayer?> get spots {
-    final t = tie;
-    final List<String> winners;
-    if (!contested) {
-      winners = team.tied.map((p) => p.id).toList(); // مباشر: أول المتعادلين
-    } else if (t != null && !t.poll.open) {
-      winners = t.winners.map((o) => o.playerId ?? '').toList();
-    } else {
-      winners = const [];
-    }
-    return TeamOfWeek.arrange(team.lineup(winnerIds: winners));
-  }
-
-  TeamOfWeekState copyWith({TeamOfWeekStatus? status}) =>
-      TeamOfWeekState(window: window, status: status ?? this.status, players: players, tie: tie);
+  TeamOfWeekState copyWith({TeamOfWeekStatus? status}) => TeamOfWeekState(
+    window: window,
+    status: status ?? this.status,
+    published: published,
+    ranking: ranking,
+    tie: tie,
+    tied: tied,
+    slots: slots,
+  );
 
   @override
-  List<Object?> get props => [window, status, players, tie];
+  List<Object?> get props => [window, status, published, ranking, tie, tied, slots];
 }

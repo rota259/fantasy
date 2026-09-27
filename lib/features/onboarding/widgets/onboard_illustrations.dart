@@ -34,7 +34,7 @@ class OnboardFeedArt extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 230,
-      decoration: BoxDecoration(color: AppColors.night2, border: AppBorders.solid),
+      decoration: BoxDecoration(borderRadius: AppRadius.md, color: AppColors.night2, border: AppBorders.solid),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -76,8 +76,8 @@ class OnboardTrophyArt extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 230,
-      decoration: BoxDecoration(color: AppColors.accent, border: AppBorders.solid),
-      child: const Icon(Icons.emoji_events_outlined, color: AppColors.white, size: 88),
+      decoration: BoxDecoration(borderRadius: AppRadius.md, color: AppColors.accent, border: AppBorders.solid),
+      child: Icon(Icons.emoji_events_outlined, color: AppColors.white, size: 88),
     );
   }
 }

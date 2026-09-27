@@ -3,9 +3,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/models/venue.dart';
 import 'osm_layers.dart';
+import '../../../core/widgets/motion.dart';
 
 /// الملاعب كدبابيس على الخريطة. الضغط على دبوس بيطلّع كارت صغير يفتح الملعب.
 class VenuesMapView extends StatefulWidget {
@@ -54,7 +56,7 @@ class _VenuesMapViewState extends State<VenuesMapView> {
             left: 12,
             right: 12,
             child: Container(
-              color: AppColors.black,
+              decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
               padding: const EdgeInsets.all(10),
               child: Text(
                 'لسه مفيش ملاعب متحدّد مكانها على الخريطة',
@@ -68,13 +70,14 @@ class _VenuesMapViewState extends State<VenuesMapView> {
             left: 12,
             right: 12,
             bottom: 30,
-            child: GestureDetector(
+            child: Pressable(
               onTap: () => widget.onOpen(_selected!),
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
+                  borderRadius: AppRadius.md,
                   color: AppColors.bg,
-                  border: Border.all(color: AppColors.black, width: 2),
+                  border: Border.all(color: AppColors.line, width: 1.2),
                 ),
                 child: Row(
                   children: [

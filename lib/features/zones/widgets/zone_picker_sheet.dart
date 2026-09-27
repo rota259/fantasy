@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/zone.dart';
 import '../data/zones_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// اختيار المنطقة: المحافظة الأول، وبعدين المنطقة (مع بحث).
 Future<Zone?> showZonePicker(BuildContext context) => showModalBottomSheet<Zone>(
@@ -36,7 +37,7 @@ class _ZonePickerState extends State<_ZonePicker> {
           if (snap.hasError) {
             return Center(child: Text('مقدرتش أحمّل المناطق — جرّب تاني', style: AppText.body(13)));
           }
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+          if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
           final all = snap.data!;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,7 +57,7 @@ class _ZonePickerState extends State<_ZonePicker> {
     child: Row(
       children: [
         if (_gov != null)
-          GestureDetector(
+          Pressable(
             onTap: () => setState(() {
               _gov = null;
               _query = '';
@@ -100,12 +101,12 @@ class _ZonePickerState extends State<_ZonePicker> {
     return ListView(children: [for (final z in list) _row(z.name, () => Navigator.pop(context, z))]);
   }
 
-  Widget _row(String text, VoidCallback onTap) => GestureDetector(
+  Widget _row(String text, VoidCallback onTap) => Pressable(
     behavior: HitTestBehavior.opaque,
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.divider)),
       ),
       child: Row(

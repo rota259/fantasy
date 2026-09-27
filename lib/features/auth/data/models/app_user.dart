@@ -24,7 +24,7 @@ class AppUser extends Equatable {
   final String name;
   final String email;
   final String? phone;
-  final String role; // 'user' · 'organizer' (منظّم ماتشات) · 'manager' (الأدمن)
+  final String role; // 'user' · 'organizer' (مدير منطقة) · 'manager' (الأدمن)
   final List<String> team; // ids اللاعيبة في التشكيلة
   final String? leagueId;
   final String? photoUrl;
@@ -39,7 +39,7 @@ class AppUser extends Equatable {
   bool get isManager => role == 'manager';
   bool get isOrganizer => role == 'organizer';
 
-  /// يقدر يعمل ماتشات ويدخّل أحداثها (المنظّم في ماتشاته، والأدمن في الكل).
+  /// يقدر يعمل ماتشات ويدخّل أحداثها (المدير في ماتشاته، والأدمن في الكل).
   bool get canOrganize => isOrganizer || isManager;
 
   /// أول حرفين من الاسم (بديل الصورة).

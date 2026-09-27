@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
-import '../../../core/supabase/live.dart';
+import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../polls/data/models/poll.dart';
 import '../../polls/data/polls_repository.dart';
@@ -13,13 +13,13 @@ import '../../../core/utils/perf.dart';
 part 'awards_state.dart';
 
 /// ViewModel هدف وتصدّي الجولة (والموسم لو المدير عمله).
-/// الصوت بيظهر فورًا (قبل ما السيرفر يرد)، والنتايج اللحظية بتتجمّع كل ثانيتين عشان الشاشة متعلّقش.
+/// الصوت بيظهر فورًا (قبل ما السيرفر يرد)، والنتايج بتتحدّث كل ٣٠ ثانية وانت فاتح الشاشة.
 class AwardsCubit extends Cubit<AwardsState> {
   AwardsCubit(this._repo, this.userId) : super(const AwardsState());
 
   final PollsRepository _repo;
   final String? userId;
-  StreamSubscription<void>? _votesSub;
+  Timer? _votesTimer; // النتايج كل ٣٠ ثانية وانت فاتح الشاشة (مش مع كل صوت)
   StreamSubscription<void>? _pollsSub;
   Timer? _debounce;
 
@@ -31,8 +31,8 @@ class AwardsCubit extends Cubit<AwardsState> {
       return;
     }
     await timed('awards', _fetchAll);
-    _votesSub ??= liveTable('poll_votes', _scheduleRefresh);
-    _pollsSub ??= liveTable('polls', _scheduleRefresh);
+    _votesTimer ??= Timer.periodic(const Duration(seconds: 30), (_) => _fetchAll());
+    _pollsSub ??= LiveHub.on('polls', _scheduleRefresh);
   }
 
   /// أصوات الناس بتيجي كتير ورا بعض — نحدّث مرة واحدة بعد ما تهدى.
@@ -90,7 +90,7 @@ class AwardsCubit extends Cubit<AwardsState> {
 
   @override
   Future<void> close() {
-    _votesSub?.cancel();
+    _votesTimer?.cancel();
     _pollsSub?.cancel();
     _debounce?.cancel();
     return super.close();

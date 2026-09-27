@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/motion.dart';
 
 /// وسط القاهرة (نقطة البداية لما مفيش موقع).
 const cairo = LatLng(30.0444, 31.2357);
@@ -25,7 +26,7 @@ Marker venuePin(LatLng point, {bool selected = false, VoidCallback? onTap}) => M
   width: 40,
   height: 40,
   alignment: Alignment.topCenter,
-  child: GestureDetector(
+  child: Pressable(
     onTap: onTap,
     child: Icon(Icons.location_on, size: 40, color: selected ? AppColors.danger : AppColors.accent),
   ),

@@ -42,7 +42,7 @@ abstract final class BadgeCatalog {
   BadgeCatalog._();
 
   static const tierNames = ['', 'برونز', 'فضة', 'دهب'];
-  static const tierColors = [AppColors.neutral300, AppColors.bronze, AppColors.silver, AppColors.gold];
+  static final tierColors = [AppColors.neutral300, AppColors.bronze, AppColors.silver, AppColors.gold];
 
   static const all = <BadgeDef>[
     // 🔥 الاستمرار
@@ -72,7 +72,11 @@ abstract final class BadgeCatalog {
       secret: true,
     ),
     // 🧠 الكابتن والاختيارات
-    BadgeDef('hawk_eye', 'عين الصقر', '🦅', 'الكابتن بتاعك جاب هاتريك في الجولة ({n} مرة)', [1, 3, 10], group: 'الاختيارات'),
+    BadgeDef('hawk_eye', 'عين الصقر', '🦅', 'الكابتن بتاعك جاب هاتريك في الجولة ({n} مرة)', [
+      1,
+      3,
+      10,
+    ], group: 'الاختيارات'),
     BadgeDef('right_captain', 'الكابتن الصح', '©️', 'الكابتن جاب أعلى نقط في الجولة ({n} مرة)', [
       1,
       5,
@@ -110,7 +114,7 @@ abstract final class BadgeCatalog {
     ], group: 'النتايج'),
     BadgeDef('league_leader', 'البطل', '🏆', 'خلّصت جولة وانت الأول في دوري ({n} مرة)', [1, 5, 15], group: 'النتايج'),
     // 🎯 التوقعات والتصويت
-    BadgeDef('oracle', 'العرّاف', '🔮', 'جبت نتيجة التحدّي بالظبط ({n} مرة)', [1, 3, 10], group: 'التوقعات'),
+    BadgeDef('oracle', 'العرّاف', '🔮', 'جبت فرق أهداف التحدّي صح ({n} مرة)', [1, 3, 10], group: 'التوقعات'),
     BadgeDef('people_voice', 'صوت الشعب', '🗳️', 'صوّتت واللي اخترته كسب ({n} مرة)', [1, 5, 15], group: 'التوقعات'),
     BadgeDef('critic', 'ناقد رياضي', '📝', 'قيّمت اللاعيبة في {n} ماتش', [5, 20, 50], group: 'التوقعات'),
     // 🤝 اجتماعي

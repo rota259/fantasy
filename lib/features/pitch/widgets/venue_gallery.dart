@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/motion.dart';
 
 /// صور الملعب بالتقليب + نقط العدّ. الضغط على صورة بيكبّرها.
 class VenueGallery extends StatefulWidget {
@@ -18,7 +19,7 @@ class _VenueGalleryState extends State<VenueGallery> {
   void _zoom(String url) {
     showDialog(
       context: context,
-      builder: (_) => GestureDetector(
+      builder: (_) => Pressable(
         onTap: () => Navigator.pop(context),
         child: InteractiveViewer(
           child: Center(child: NetImage(url, fit: BoxFit.contain)),
@@ -33,7 +34,7 @@ class _VenueGalleryState extends State<VenueGallery> {
       return Container(
         height: 200,
         color: AppColors.night2,
-        child: const Icon(Icons.stadium_outlined, size: 64, color: AppColors.white),
+        child: Icon(Icons.stadium_outlined, size: 64, color: AppColors.white),
       );
     }
     return SizedBox(
@@ -44,7 +45,7 @@ class _VenueGalleryState extends State<VenueGallery> {
             onPageChanged: (i) => setState(() => _page = i),
             children: [
               for (final url in widget.photos)
-                GestureDetector(
+                Pressable(
                   onTap: () => _zoom(url),
                   child: NetImage(url, fallback: Container(color: AppColors.night2)),
                 ),

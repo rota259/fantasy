@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
 import '../theme/app_text.dart';
 
 /// حقل كتابة بإطار أسود 2px (الستايل الموحّد للفورمز).
@@ -17,7 +18,10 @@ class BoxField extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.line, width: 1.2),
+        ),
         child: TextField(
           controller: controller,
           keyboardType: keyboard,

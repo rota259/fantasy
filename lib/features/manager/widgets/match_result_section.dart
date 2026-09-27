@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/supabase/db_error.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
+import '../../../core/widgets/motion.dart';
 
-/// كتابة نتيجة الماتش وإنهاؤه — السيرفر بيبعت إشعار النتيجة، ولو منظّم بيبدأ تأكيد اللاعيبة.
+/// كتابة نتيجة الماتش وإنهاؤه — السيرفر بيبعت إشعار النتيجة، ولو مدير بيبدأ تأكيد اللاعيبة.
 class MatchResultSection extends StatefulWidget {
   const MatchResultSection({super.key, required this.match, required this.isAdmin});
   final GameMatch match;
@@ -90,10 +92,13 @@ class _MatchResultSectionState extends State<MatchResultSection> {
           ],
         ),
         const SizedBox(height: 18),
-        GestureDetector(
+        Pressable(
           onTap: _saving ? null : _finish,
           child: Container(
-            color: _saving ? AppColors.neutral500 : AppColors.accent,
+            decoration: BoxDecoration(
+              color: _saving ? AppColors.neutral500 : AppColors.accent,
+              borderRadius: AppRadius.md,
+            ),
             padding: const EdgeInsets.all(13),
             alignment: Alignment.center,
             child: Text(
@@ -117,7 +122,10 @@ class _MatchResultSectionState extends State<MatchResultSection> {
         ),
         const SizedBox(height: 6),
         Container(
-          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.line, width: 1.2),
+          ),
           child: TextField(
             controller: c,
             keyboardType: TextInputType.number,

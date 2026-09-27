@@ -5,6 +5,7 @@ import '../../../core/theme/app_text.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/round_pick_cubit.dart';
 import 'player_search_list.dart';
+import '../../../core/widgets/motion.dart';
 
 /// اللاعيبة المتاحين للنقطة دي (من كل فرق المنطقة، غير المختارين).
 List<Player> _eligible(RoundPickState s, String kind) => s.players.where((p) {
@@ -103,7 +104,7 @@ Widget _title(String t) => Container(
 );
 
 Widget _option(BuildContext context, String label, VoidCallback onTap, {bool danger = false, bool keepOpen = false}) {
-  return GestureDetector(
+  return Pressable(
     behavior: HitTestBehavior.opaque,
     onTap: () {
       if (!keepOpen) Navigator.pop(context);
@@ -112,7 +113,7 @@ Widget _option(BuildContext context, String label, VoidCallback onTap, {bool dan
     child: Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Text(label, style: AppText.h(14, color: danger ? AppColors.danger : AppColors.ink)),

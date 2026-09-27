@@ -39,6 +39,8 @@ import '../../players/data/players_repository.dart';
 import '../../players/data/stats_repository.dart';
 import '../../players/data/supabase_players_repository.dart';
 import '../../players/data/supabase_stats_repository.dart';
+import '../../points/data/points_repository.dart';
+import '../../points/data/supabase_points_repository.dart';
 import '../../polls/data/polls_repository.dart';
 import '../../polls/data/supabase_polls_repository.dart';
 import '../../ratings/data/ratings_repository.dart';
@@ -91,6 +93,7 @@ class AppRepositories extends StatelessWidget {
         RepositoryProvider<IntegrityRepository>(create: (_) => SupabaseIntegrityRepository()),
         RepositoryProvider<ZonesRepository>(create: (_) => SupabaseZonesRepository()),
         RepositoryProvider<TeamsRepository>(create: (_) => SupabaseTeamsRepository()),
+        RepositoryProvider<PointsRepository>(create: (_) => SupabasePointsRepository()),
       ],
       child: child,
     );

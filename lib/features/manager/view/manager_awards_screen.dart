@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -14,6 +15,7 @@ import '../../polls/data/polls_repository.dart';
 import '../../week/data/week_window.dart';
 import '../widgets/award_candidate_field.dart';
 import '../widgets/manager_poll_results.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) هدف/تصدّي الجولة: المرشّحين بلينكات الفيديو + النتايج + تصويت الموسم.
 class ManagerAwardsScreen extends StatefulWidget {
@@ -104,12 +106,12 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'هدف وتصدّي الجولة', subtitle: 'MANAGER · AWARDS', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'هدف وتصدّي الجولة', subtitle: 'ADMIN · AWARDS', onBack: () => Navigator.pop(context)),
           Expanded(
             child: FutureBuilder<List<Player>>(
               future: _players,
               builder: (context, snap) {
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 final players = snap.data!;
                 return ListView(
                   padding: const EdgeInsets.all(16),
@@ -160,11 +162,12 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
 
   Widget _kindTab(String k, String label) {
     final on = _kind == k;
-    return GestureDetector(
+    return Pressable(
       onTap: () => setState(() => _kind = k),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: on ? AppColors.accent : null,
           border: Border.all(color: on ? AppColors.accent : AppColors.black, width: 2),
         ),
@@ -173,14 +176,15 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
     );
   }
 
-  Widget _button(String text, Color color, VoidCallback? onTap, {bool dark = true}) => GestureDetector(
+  Widget _button(String text, Color color, VoidCallback? onTap, {bool dark = true}) => Pressable(
     onTap: onTap,
     child: Container(
       padding: const EdgeInsets.all(12),
       alignment: Alignment.center,
       decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
         color: onTap == null ? AppColors.neutral500 : color,
-        border: dark ? null : Border.all(color: AppColors.black, width: 2),
+        border: dark ? null : Border.all(color: AppColors.line, width: 1.2),
       ),
       child: Text(text, style: AppText.h(13, color: dark ? AppColors.white : AppColors.ink)),
     ),

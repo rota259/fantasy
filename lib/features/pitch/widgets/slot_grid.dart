@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../matches/widgets/match_format.dart';
 import '../data/models/booking.dart';
 import '../data/models/venue.dart';
+import '../../../core/widgets/motion.dart';
 
 /// عدد الأيام اللي ينفع تحجز فيها قدّام.
 const bookingDaysAhead = 7;
@@ -58,15 +60,16 @@ class SlotGrid extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
               for (var i = 0; i < bookingDaysAhead; i++)
-                GestureDetector(
+                Pressable(
                   onTap: () => onDay(i),
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
+                      borderRadius: AppRadius.md,
                       color: i == dayIndex ? AppColors.black : null,
-                      border: Border.all(color: AppColors.black, width: 2),
+                      border: Border.all(color: AppColors.line, width: 1.2),
                     ),
                     child: Text(
                       _dayLabel(i),
@@ -115,12 +118,13 @@ class SlotGrid extends StatelessWidget {
         ? (AppColors.danger, mine ? 'حجزك ✅' : 'محجوز')
         : (const Color(0xFFCA8A04), mine ? 'طلبك ⏳' : 'معلّق');
 
-    return GestureDetector(
+    return Pressable(
       onTap: (past || b != null) ? null : () => onPick(h),
       child: Container(
         width: 96,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
           color: selected ? AppColors.accent : null,
           border: Border.all(color: color, width: 2),
         ),
@@ -140,7 +144,10 @@ class SlotGrid extends StatelessWidget {
       Container(
         width: 12,
         height: 12,
-        decoration: BoxDecoration(border: Border.all(color: c, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: c, width: 2),
+        ),
       ),
       const SizedBox(width: 4),
       Text(t, style: AppText.body(10, color: AppColors.neutral700)),

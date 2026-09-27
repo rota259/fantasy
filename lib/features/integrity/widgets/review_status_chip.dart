@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../matches/data/models/game_match.dart';
 
@@ -27,7 +28,7 @@ class ReviewStatusChip extends StatelessWidget {
     if (s == null) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      color: s.$2,
+      decoration: BoxDecoration(color: s.$2, borderRadius: AppRadius.sm),
       child: Text(s.$1, style: AppText.h(10, color: AppColors.white)),
     );
   }

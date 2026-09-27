@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../data/badge_catalog.dart';
+import '../../../core/widgets/motion.dart';
 
 /// شارة جوه خماسي بلون المستوى. السرّية اللي لسه ماتاخدتش بتظهر "؟".
 class BadgeTile extends StatelessWidget {
@@ -19,7 +20,7 @@ class BadgeTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final earned = tier > 0;
     final hidden = def.secret && !earned;
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,

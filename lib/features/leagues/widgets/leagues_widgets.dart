@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../badges/data/models/user_badge.dart';
 import '../data/models/league.dart';
 import '../data/models/league_standing.dart';
+import '../../../core/widgets/motion.dart';
 
 /// هيرو الترتيب العام (أسود) — الترتيب محسوب من نقاط كل المستخدمين.
 class LeaguesHero extends StatelessWidget {
@@ -55,23 +57,23 @@ class LeagueCodeBar extends StatelessWidget {
           if (league.isGlobal)
             Text('كل اليوزرز', style: AppText.h(11, color: AppColors.accent))
           else ...[
-            GestureDetector(
+            Pressable(
               onTap: onCopy,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                color: AppColors.black,
+                decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(league.inviteCode, style: AppText.h(12, color: AppColors.white, spacingEm: 0.1)),
                     const SizedBox(width: 6),
-                    const Icon(Icons.share_outlined, size: 14, color: AppColors.white),
+                    Icon(Icons.share_outlined, size: 14, color: AppColors.white),
                   ],
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            GestureDetector(
+            Pressable(
               onTap: onLeave,
               child: Icon(isOwner ? Icons.delete_outline : Icons.logout, size: 20, color: AppColors.danger),
             ),
@@ -98,7 +100,7 @@ class StandingRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: me ? AppColors.accent100 : null,
-        border: const Border(top: BorderSide(color: AppColors.divider)),
+        border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
         children: [

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/launchers.dart';
 import '../data/models/venue.dart';
+import '../../../core/widgets/motion.dart';
 
 /// أزرار التواصل مع الملعب: الموقع (لينك جوجل مابس الأدق) · اتصل · واتساب.
 class VenueContactBar extends StatelessWidget {
@@ -37,7 +39,7 @@ class VenueContactBar extends StatelessWidget {
   }
 
   Widget _action(BuildContext context, IconData icon, String label, Future<bool> Function() onTap) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: () async {
         final messenger = ScaffoldMessenger.of(context);
         if (!await onTap()) messenger.showSnackBar(const SnackBar(content: Text('مقدرتش أفتحه على الموبايل ده')));
@@ -45,7 +47,10 @@ class VenueContactBar extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.line, width: 1.2),
+        ),
         child: Column(
           children: [
             Icon(icon, size: 20, color: AppColors.accent),

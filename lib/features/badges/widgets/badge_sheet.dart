@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/share/share_card.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/badge_catalog.dart';
 import '../data/models/user_badge.dart';
 import 'badge_tile.dart';
+import '../../../core/widgets/motion.dart';
 
 /// تفاصيل شارة: المستويات + التقدّم + مشاركة (لو اتاخدت).
 Future<void> showBadgeSheet(BuildContext context, BadgeDef def, UserBadge? mine, String userName) {
@@ -40,7 +42,7 @@ class _BadgeSheet extends StatelessWidget {
             RepaintBoundary(
               key: _cardKey,
               child: Container(
-                color: AppColors.bg,
+                decoration: BoxDecoration(color: AppColors.bg, borderRadius: AppRadius.md),
                 padding: const EdgeInsets.all(8),
                 child: Row(
                   children: [
@@ -86,11 +88,11 @@ class _BadgeSheet extends StatelessWidget {
             ],
             if (tier > 0) ...[
               const SizedBox(height: 16),
-              GestureDetector(
+              Pressable(
                 onTap: () =>
                     ShareCard.share(_cardKey, 'خدت شارة «${def.name}» ${BadgeCatalog.tierNames[tier]} في الخماسي 🏅'),
                 child: Container(
-                  color: AppColors.accent,
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                   padding: const EdgeInsets.all(12),
                   alignment: Alignment.center,
                   child: Text('شيّرها', style: AppText.h(14, color: AppColors.white)),
@@ -110,7 +112,7 @@ class _BadgeSheet extends StatelessWidget {
         Container(width: 12, height: 12, color: BadgeCatalog.tierColors[t + 1]),
         const SizedBox(width: 8),
         Expanded(child: Text('${BadgeCatalog.tierNames[t + 1]}: ${def.describe(t)}', style: AppText.body(12))),
-        if (tier > t) const Icon(Icons.check, size: 16, color: AppColors.accent),
+        if (tier > t) Icon(Icons.check, size: 16, color: AppColors.accent),
       ],
     ),
   );

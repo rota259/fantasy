@@ -12,6 +12,7 @@ import '../../pitch/data/venues_repository.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../pitch/view/venue_form_screen.dart';
 import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) كل الملاعب (بتاعة المدير واليوزرز): إضافة/تعديل/حذف + تغيير صاحب الملعب.
 class ManagerVenuesScreen extends StatefulWidget {
@@ -52,7 +53,6 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('حذف الملعب', style: AppText.h(16)),
         content: Text('متأكد إنك عايز تحذف «${v.name}»؟ كل حجوزاته هتتمسح.', style: AppText.body(13)),
         actions: [
@@ -83,13 +83,13 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
           const StatusArea(),
           Masthead(
             title: 'الملاعب',
-            subtitle: 'MANAGER · VENUES',
+            subtitle: 'ADMIN · VENUES',
             onBack: () => Navigator.pop(context),
-            trailing: GestureDetector(
+            trailing: Pressable(
               onTap: () => _open(),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(border: AppBorders.white(0.5)),
+                decoration: BoxDecoration(borderRadius: AppRadius.md, border: AppBorders.white(0.5)),
                 child: Text('+ ملعب', style: AppText.h(12, color: AppColors.white)),
               ),
             ),
@@ -103,7 +103,7 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('لسه مفيش ملاعب — اضغط "+ ملعب"', style: AppText.body(13, color: AppColors.neutral600)),
@@ -119,12 +119,12 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
   }
 
   Widget _row(Venue v) {
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: () => _open(v),
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
         child: Row(
@@ -149,16 +149,16 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
                   Text(
                     [
                       if (!v.hasAnyLocation) '⚠️ من غير موقع' else if (!v.hasLocation) 'لينك بس (مش ظاهر على الخريطة)',
-                      v.ownerId == null ? 'المدير بيأكّد الحجز' : 'ليه صاحب',
+                      v.ownerId == null ? 'الإدارة بيأكّد الحجز' : 'ليه صاحب',
                     ].join(' · '),
                     style: AppText.body(10, color: v.hasAnyLocation ? AppColors.neutral600 : AppColors.danger),
                   ),
                 ],
               ),
             ),
-            GestureDetector(
+            Pressable(
               onTap: () => _delete(v),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(6),
                 child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
               ),

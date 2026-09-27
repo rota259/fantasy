@@ -1,21 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/box_field.dart';
 import '../../points/points_engine.dart';
 import '../cubit/manager_match_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
-/// أنواع الأحداث اللي المدير يسجّلها (رجل المباراة بيتحسب من تصويت الجمهور لوحده).
-const _eventTypes = [
-  ('goal', 'جول'),
-  ('assist', 'أسيست'),
-  ('cleanSheet', 'شباك نظيفة'),
-  ('save', 'تصدّي'),
-  ('bonus', 'بونص'),
-  ('yellowCard', 'أصفر'),
-  ('redCard', 'أحمر'),
-];
+/// أنواع الأحداث اللي المدير يسجّلها (رجل المباراة بتصويت الجمهور، والكلين شيت من النتيجة).
+const _eventTypes = PointsEngine.managerEvents;
 
 /// (مدير) تاب الأحداث: اختار اللاعب والنوع والدقيقة — والمتابعين بيوصلهم إشعار لوحده.
 class MatchEventsSection extends StatefulWidget {
@@ -64,7 +58,10 @@ class _MatchEventsSectionState extends State<MatchEventsSection> {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.line, width: 1.2),
+          ),
           child: DropdownButton<String>(
             value: _playerId,
             isExpanded: true,
@@ -86,11 +83,12 @@ class _MatchEventsSectionState extends State<MatchEventsSection> {
           runSpacing: 8,
           children: [
             for (final t in _eventTypes)
-              GestureDetector(
+              Pressable(
                 onTap: () => setState(() => _type = t.$1),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
+                    borderRadius: AppRadius.md,
                     color: _type == t.$1 ? AppColors.accent : null,
                     border: Border.all(color: _type == t.$1 ? AppColors.accent : AppColors.black, width: 2),
                   ),
@@ -101,10 +99,10 @@ class _MatchEventsSectionState extends State<MatchEventsSection> {
         ),
         const SizedBox(height: 12),
         BoxField(controller: _minute, hint: 'الدقيقة (اختياري)', keyboard: TextInputType.number),
-        GestureDetector(
+        Pressable(
           onTap: _add,
           child: Container(
-            color: AppColors.accent,
+            decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
             padding: const EdgeInsets.all(13),
             alignment: Alignment.center,
             child: Text('أضِف الحدث', style: AppText.h(14, color: AppColors.white)),
@@ -121,7 +119,7 @@ class _MatchEventsSectionState extends State<MatchEventsSection> {
         for (final e in s.events)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(top: BorderSide(color: AppColors.divider)),
             ),
             child: Row(
@@ -133,9 +131,9 @@ class _MatchEventsSectionState extends State<MatchEventsSection> {
                 Expanded(child: Text(widget.cubit.playerName(e.playerId), style: AppText.h(13))),
                 Text(PointsEngine.eventLabel(e.type), style: AppText.body(11, color: AppColors.neutral700)),
                 const SizedBox(width: 10),
-                GestureDetector(
+                Pressable(
                   onTap: () => widget.cubit.removeEvent(e.id),
-                  child: const Icon(Icons.close, size: 18, color: AppColors.danger),
+                  child: Icon(Icons.close, size: 18, color: AppColors.danger),
                 ),
               ],
             ),

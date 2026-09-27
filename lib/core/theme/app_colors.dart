@@ -1,58 +1,69 @@
 import 'package:flutter/material.dart';
 
-/// توكنز ألوان "الخماسي" — أخضر النجيلة على حبر/ورق.
-/// مطابقة للـ design handoff. مفيش لون hard-coded في الشاشات.
+import 'app_palette.dart';
+
+/// توكنز ألوان "الخماسي" — بتتقري من الوضع الحالي (فاتح هادي / داكن) في [AppPalette].
+/// مفيش لون hard-coded في الشاشات. تغيير الوضع بيبني الشاشات من جديد (AppThemeScope).
 abstract final class AppColors {
   AppColors._();
 
+  static AppPalette _p = AppPalette.light;
+
+  static AppPalette get palette => _p;
+  static bool get isDark => _p.brightness == Brightness.dark;
+
+  /// بيتنادى من AppThemeScope قبل بناء الشاشات.
+  static void use(AppPalette p) => _p = p;
+
   // ===== الأخضر (الهوية) + السلّم =====
-  static const Color accent = Color(0xFF12924A);
-  static const Color accent100 = Color(0xFFEAFAF0);
-  static const Color accent200 = Color(0xFFC9F0D8);
-  static const Color accent300 = Color(0xFF97E2B6);
-  static const Color accent400 = Color(0xFF4FCA85); // فاتح — للنقاط على خلفية غامقة
-  static const Color accent500 = Color(0xFF1FAE5F);
-  static const Color accent600 = Color(0xFF0F8A48);
-  static const Color accent700 = Color(0xFF0A6E39); // نص أخضر على فاتح
-  static const Color accent800 = Color(0xFF0A542D);
-  static const Color accent900 = Color(0xFF0C3D23);
+  static Color get accent => _p.accent;
+  static Color get accent100 => _p.accent100;
+  static Color get accent200 => _p.accent200;
+  static Color get accent300 => _p.accent300;
+  static Color get accent400 => _p.accent400; // فاتح — للنقاط على خلفية غامقة
+  static Color get accent500 => _p.accent500;
+  static Color get accent600 => _p.accent600;
+  static Color get accent700 => _p.accent700; // نص أخضر على الأرضية
+  static Color get accent800 => _p.accent800;
+  static Color get accent900 => _p.accent900;
 
   // ===== أسطح غامقة =====
-  static const Color black = Color(0xFF000000);
-  static const Color night = Color(0xFF0A0A0A); // أرضية الملعب
-  static const Color night2 = Color(0xFF0C0C0C); // البث الحي
-  static const Color nightStripe = Color(0xFF0E0E0E); // خطوط الأرضية
+  static Color get black => _p.black;
+  static Color get night => _p.night; // أرضية الملعب
+  static Color get night2 => _p.night2; // البث الحي
+  static Color get nightStripe => _p.nightStripe; // خطوط الأرضية
 
   // ===== ورق/حبر =====
-  static const Color bg = Color(0xFFF3F2F2); // الأرضية العامة
-  static const Color surface = Color(0xFFEAE9E9);
-  static const Color ink = Color(0xFF201E1D); // النص الأساسي
-  static const Color white = Color(0xFFFFFFFF);
+  static Color get bg => _p.bg; // الأرضية العامة
+  static Color get surface => _p.surface;
+  static Color get card => _p.card; // الكروت
+  static Color get ink => _p.ink; // النص الأساسي
+  static Color get white => _p.white; // الكلام فوق الأسطح الغامقة
 
   // ===== سلّم رمادي =====
-  static const Color neutral100 = Color(0xFFF0EFEF);
-  static const Color neutral200 = Color(0xFFE2E0E0);
-  static const Color neutral300 = Color(0xFFD3D1D1); // حدود/مسارات
-  static const Color neutral400 = Color(0xFFB8B5B5);
-  static const Color neutral500 = Color(0xFF8F8B8B); // رمادي متوسط
-  static const Color neutral600 = Color(0xFF6B6867);
-  static const Color neutral700 = Color(0xFF4A4746); // نص خافت
-  static const Color neutral800 = Color(0xFF2B2928); // شرائح غامقة
+  static Color get neutral100 => _p.neutral100;
+  static Color get neutral200 => _p.neutral200;
+  static Color get neutral300 => _p.neutral300;
+  static Color get neutral400 => _p.neutral400;
+  static Color get neutral500 => _p.neutral500;
+  static Color get neutral600 => _p.neutral600;
+  static Color get neutral700 => _p.neutral700; // نص خافت
+  static Color get neutral800 => _p.neutral800;
 
-  // فاصل: مزيج الحبر 40%
-  static const Color divider = Color(0x66201E1D);
+  static Color get divider => _p.divider;
+  static Color get line => _p.line; // حدود الكروت والحقول
+  static Color get shadow => _p.shadow;
 
-  // خطأ/تحذير
-  static const Color danger = Color(0xFFDC2626);
+  static Color get danger => _p.danger;
 
   // أزرق: تشكيلة الجولة + علامة التوثيق
-  static const Color info = Color(0xFF1D6FE0);
-  static const Color navy = Color(0xFF0A1A33); // أرضية تشكيلة الجولة
-  static const Color navyStripe = Color(0xFF0D2242);
-  static const Color navyLine = Color(0x8C5B9BFF);
+  static Color get info => _p.info;
+  static Color get navy => _p.navy;
+  static Color get navyStripe => _p.navyStripe;
+  static Color get navyLine => _p.navyLine;
 
   // مستويات الشارات
-  static const Color bronze = Color(0xFFB0703C);
-  static const Color silver = Color(0xFF9AA3AD);
-  static const Color gold = Color(0xFFD4A017);
+  static Color get bronze => _p.bronze;
+  static Color get silver => _p.silver;
+  static Color get gold => _p.gold;
 }

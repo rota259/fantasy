@@ -39,11 +39,28 @@ class LeaguesCubit extends Cubit<LeaguesState> {
   }
 
   Future<void> selectLeague(String leagueId) async {
-    emit(state.copyWith(selectedLeagueId: leagueId));
+    emit(state.copyWith(selectedLeagueId: leagueId, standings: const [], hasMore: false));
+    await _page(leagueId, const []);
+  }
+
+  /// الصفحة الجاية من الترتيب (٥٠ كمان).
+  Future<void> loadMore() async {
+    final id = state.selectedLeagueId;
+    if (id != null && state.hasMore) await _page(id, state.standings);
+  }
+
+  Future<void> _page(String leagueId, List<LeagueStanding> before) async {
     try {
-      final table = await _repo.standings(leagueId);
-      final badges = await _badges.earnedFor(table.map((s) => s.userId).toList());
-      emit(state.copyWith(standings: table, badges: badges));
+      final page = await _repo.standings(leagueId, offset: before.length);
+      final badges = await _badges.earnedFor(page.map((s) => s.userId).toList());
+      if (isClosed || state.selectedLeagueId != leagueId) return;
+      emit(
+        state.copyWith(
+          standings: [...before, ...page],
+          badges: {...state.badges, ...badges},
+          hasMore: page.length == LeagueStanding.pageSize,
+        ),
+      );
     } catch (_) {}
   }
 

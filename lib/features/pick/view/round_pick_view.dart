@@ -17,7 +17,7 @@ import '../widgets/pick_pitch.dart';
 import '../widgets/pick_sheets.dart';
 import '../widgets/round_pick_bars.dart';
 
-/// تشكيلة الجولة: ٧ من أي فرق في منطقتك + الكروت. بتتقفل السبت ١٢ الضهر (والوايلد كارد لحد ٤ العصر).
+/// تشكيلة الجولة: ٧ من أي فرق في منطقتك + الكروت. بتتقفل السبت ٣ العصر (والوايلد كارد لحد ٤ العصر).
 class RoundPickView extends StatelessWidget {
   const RoundPickView({super.key, required this.window, required this.userId, this.isOrganizer = false});
 
@@ -52,7 +52,8 @@ class _View extends StatelessWidget {
   final WeekWindow window;
 
   /// التعديل مسموح قبل الديدلاين، أو بالوايلد كارد لحد ما الجولة تبدأ.
-  bool _editable(ChipType? chip) => !window.hasStarted() && (!window.isLocked() || chip == ChipType.wildcard);
+  /// (في وضع التجربة الديدلاين = نهاية الجولة، فالتشكيلة مفتوحة حتى والجولة شغّالة)
+  bool _editable(ChipType? chip) => !window.isLocked() || (chip == ChipType.wildcard && !window.hasStarted());
 
   Future<void> _save(BuildContext context, bool wildcard) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -88,9 +89,9 @@ class _View extends StatelessWidget {
   Widget _body(BuildContext context, bool editable) {
     return BlocBuilder<RoundPickCubit, RoundPickState>(
       builder: (context, s) {
-        if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+        if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
         if (s.players.isEmpty) {
-          return _note('لسه مفيش لاعيبة في منطقتك — المنظّمين بينزّلوا فرقهم وماتشاتهم قبل السبت ١٢ الضهر');
+          return _note('لسه مفيش لاعيبة في منطقتك — المديرين بينزّلوا فرقهم وماتشاتهم قبل السبت ٣ العصر');
         }
         final cubit = context.read<RoundPickCubit>();
         return ListView(
@@ -102,7 +103,7 @@ class _View extends StatelessWidget {
                 text: 'دي تشكيلتك من الجولة اللي فاتت — احفظها عشان تتحسب في الجولة دي',
                 color: AppColors.info,
               ),
-            if (!s.saved && !editable) const PickBanner(text: 'معملتش تشكيلة للجولة دي', color: AppColors.neutral600),
+            if (!s.saved && !editable) PickBanner(text: 'معملتش تشكيلة للجولة دي', color: AppColors.neutral600),
             PickPitch(
               state: s,
               onSlotTap: editable ? (kind) => showAddPlayerSheet(context, cubit, s, kind) : (_) {},

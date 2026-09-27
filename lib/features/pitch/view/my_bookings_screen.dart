@@ -5,12 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../data/bookings_repository.dart';
 import '../data/models/booking.dart';
 import '../widgets/booking_sheets.dart';
+import '../../../core/widgets/motion.dart';
 
 /// حجوزاتي: كل طلبات الحجز بحالتها (بتتحدّث لوحدها لما صاحب الملعب يرد).
 class MyBookingsScreen extends StatefulWidget {
@@ -51,7 +53,6 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.bg,
-        shape: const RoundedRectangleBorder(),
         title: Text('إلغاء الحجز', style: AppText.h(16)),
         content: Text('تلغي حجز ${b.venueName ?? ''} يوم ${slotText(b.day, b.hour)}؟', style: AppText.body(13)),
         actions: [
@@ -91,7 +92,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('لسه محجزتش أي ملعب', style: AppText.body(13, color: AppColors.neutral600)),
@@ -110,7 +111,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     final canCancel = b.isActive && !b.isPast;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -126,11 +127,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             ),
           ),
           if (canCancel)
-            GestureDetector(
+            Pressable(
               onTap: () => _cancel(b),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(border: Border.all(color: AppColors.danger, width: 2)),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.md,
+                  border: Border.all(color: AppColors.danger, width: 2),
+                ),
                 child: Text('إلغاء', style: AppText.h(11, color: AppColors.danger)),
               ),
             ),

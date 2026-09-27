@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// توقّع يوزر لنتيجة ماتش التحدّي.
+/// توقّع يوزر لنتيجة ماتش التحدّي (المهم فرق الأهداف).
 class Prediction extends Equatable {
   const Prediction({required this.matchId, required this.scoreA, required this.scoreB});
 
@@ -8,10 +8,11 @@ class Prediction extends Equatable {
   final int scoreA;
   final int scoreB;
 
-  /// البونص لو التوقّع صح بالظبط.
+  /// البونص لو فرق الأهداف صح.
   static const bonus = 5;
 
-  bool matches(int? a, int? b) => a == scoreA && b == scoreB;
+  /// صح = فرق الأهداف نفسه (مين كسب وبكام): توقّع ٣-١ والنتيجة ٢-٠ → صح.
+  bool matches(int? a, int? b) => a != null && b != null && a - b == scoreA - scoreB;
 
   factory Prediction.fromMap(Map<String, dynamic> m) => Prediction(
     matchId: m['match_id'].toString(),

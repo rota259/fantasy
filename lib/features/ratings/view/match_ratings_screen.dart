@@ -62,7 +62,7 @@ class MatchRatingsScreen extends StatelessWidget {
   }
 
   Widget _list(BuildContext context, MatchRatingsState s) {
-    if (s.loading) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+    if (s.loading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
     if (s.players.isEmpty) {
       return Center(
         child: Text('مفيش تشكيلة للماتش ده', style: AppText.body(13, color: AppColors.neutral600)),

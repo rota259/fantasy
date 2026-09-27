@@ -2,7 +2,7 @@ import 'team.dart';
 
 /// عقد الفرق.
 abstract interface class TeamsRepository {
-  /// فرقي كمنظّم.
+  /// فرقي كمدير.
   Future<List<Team>> mine(String userId);
 
   /// (أدمن) كل الفرق بأصحابها.

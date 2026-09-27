@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
@@ -16,6 +17,7 @@ import '../widgets/slot_grid.dart';
 import '../widgets/venue_contact_bar.dart';
 import '../widgets/venue_gallery.dart';
 import '../widgets/venue_reviews_section.dart';
+import '../../../core/widgets/motion.dart';
 
 /// صفحة الملعب: الصور + البيانات + التواصل + المواعيد المتاحة/المحجوزة + طلب الحجز.
 class VenueScreen extends StatefulWidget {
@@ -115,7 +117,7 @@ class _VenueScreenState extends State<VenueScreen> {
                   child: Text('المواعيد', style: AppText.h(15)),
                 ),
                 if (_loading)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(30),
                     child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
                   )
@@ -141,10 +143,13 @@ class _VenueScreenState extends State<VenueScreen> {
             padding: const EdgeInsets.all(12),
             child: SafeArea(
               top: false,
-              child: GestureDetector(
+              child: Pressable(
                 onTap: (_hour == null || _sending) ? null : _book,
                 child: Container(
-                  color: (_hour == null || _sending) ? AppColors.neutral600 : AppColors.accent,
+                  decoration: BoxDecoration(
+                    color: (_hour == null || _sending) ? AppColors.neutral600 : AppColors.accent,
+                    borderRadius: AppRadius.md,
+                  ),
                   padding: const EdgeInsets.all(13),
                   alignment: Alignment.center,
                   child: Text(

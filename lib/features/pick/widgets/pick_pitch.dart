@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../../core/widgets/pentagon_pitch.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/round_pick_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
 /// ملعب خماسي: ٥ نقاط للأساسيين (حارس + ٤ من أي فرق) + ٢ احتياطي تحت.
 /// النقطة الفاضية عليها علامة +، والمليانة عليها اللاعب وشارة C/V.
@@ -83,10 +85,22 @@ class PickPitch extends StatelessWidget {
   PitchToken _token(double l, double t, Player? p, String kind) => PitchToken(
     leftPct: l,
     topPct: t,
-    child: p == null ? _plus(() => onSlotTap(kind)) : _filled(p, () => onPlayerTap(p)),
+    // اللاعب بيدخل مكانه بتكبير خفيف (والمكان الفاضي بيرجع كده برضه)
+    child: AnimatedSwitcher(
+      duration: Motion.medium,
+      switchInCurve: Curves.easeOutBack,
+      transitionBuilder: (child, a) => ScaleTransition(
+        scale: a,
+        child: FadeTransition(opacity: a, child: child),
+      ),
+      child: KeyedSubtree(
+        key: ValueKey(p?.id ?? 'empty-$l-$t'),
+        child: p == null ? _plus(() => onSlotTap(kind)) : _filled(p, () => onPlayerTap(p)),
+      ),
+    ),
   );
 
-  Widget _plus(VoidCallback onTap) => GestureDetector(
+  Widget _plus(VoidCallback onTap) => Pressable(
     onTap: onTap,
     child: PentagonIcon(
       size: 48,
@@ -98,7 +112,7 @@ class PickPitch extends StatelessWidget {
 
   Widget _filled(Player p, VoidCallback onTap) {
     final badge = state.captainId == p.id ? 'C' : (state.viceId == p.id ? 'V' : null);
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: SizedBox(
         width: 76,
@@ -141,27 +155,36 @@ class PickPitch extends StatelessWidget {
   Widget _pts(int n) => Container(
     margin: const EdgeInsets.only(top: 2),
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-    color: n > 0 ? AppColors.accent : (n < 0 ? AppColors.danger : AppColors.neutral600),
+    decoration: BoxDecoration(
+      color: n > 0 ? AppColors.accent : (n < 0 ? AppColors.danger : AppColors.neutral600),
+      borderRadius: AppRadius.sm,
+    ),
     child: Text('$n', style: AppText.h(11, color: AppColors.white)),
   );
 
   Widget _benchSlot(Player? p) {
     if (p == null) {
-      return GestureDetector(
+      return Pressable(
         onTap: () => onSlotTap('bench'),
         child: Container(
           padding: const EdgeInsets.all(12),
           alignment: Alignment.center,
-          decoration: BoxDecoration(border: Border.all(color: AppColors.divider, width: 2)),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.divider, width: 2),
+          ),
           child: Text('+ احتياطي', style: AppText.h(12, color: AppColors.neutral600)),
         ),
       );
     }
-    return GestureDetector(
+    return Pressable(
       onTap: () => onPlayerTap(p),
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.md,
+          border: Border.all(color: AppColors.line, width: 1.2),
+        ),
         child: Row(
           children: [
             PentagonAvatar(

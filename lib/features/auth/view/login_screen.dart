@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/supabase_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../cubit/auth_cubit.dart';
+import '../widgets/google_button.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_header.dart';
+import '../../../core/widgets/motion.dart';
 
 /// شاشة تسجيل الدخول — موصولة بـ AuthCubit (دخول حقيقي عند تظبيط Supabase).
 class LoginScreen extends StatefulWidget {
@@ -31,14 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
   void _signIn() {
     FocusScope.of(context).unfocus();
     context.read<AuthCubit>().signIn(_id.text, _pass.text);
-  }
-
-  void _social() {
-    if (SupabaseConfig.isConfigured) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الدخول بجوجل/آبل قريباً')));
-    } else {
-      context.read<AuthCubit>().signIn('', ''); // وضع demo
-    }
   }
 
   @override
@@ -69,10 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 18),
                   _errorText(),
                   _primaryButton(),
-                  _divider(),
-                  _secondary('ادخل بحساب جوجل'),
-                  const SizedBox(height: 10),
-                  _secondary('ادخل بحساب آبل'),
+                  const GoogleButton(),
                 ],
               ),
             ),
@@ -100,14 +91,14 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocBuilder<AuthCubit, AuthState>(
       buildWhen: (p, c) => p.isBusy != c.isBusy,
       builder: (context, s) {
-        return GestureDetector(
+        return Pressable(
           onTap: s.isBusy ? null : _signIn,
           child: Container(
-            color: AppColors.accent,
+            decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
             padding: const EdgeInsets.all(14),
             alignment: Alignment.center,
             child: s.isBusy
-                ? const SizedBox(
+                ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.white),
@@ -116,34 +107,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _secondary(String label) {
-    return GestureDetector(
-      onTap: _social,
-      child: Container(
-        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
-        padding: const EdgeInsets.all(12),
-        alignment: Alignment.center,
-        child: Text(label, style: AppText.h(14)),
-      ),
-    );
-  }
-
-  Widget _divider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 18),
-      child: Row(
-        children: [
-          const Expanded(child: Divider(color: AppColors.divider, height: 1)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text('أو', style: AppText.kicker().copyWith(letterSpacing: 1)),
-          ),
-          const Expanded(child: Divider(color: AppColors.divider, height: 1)),
-        ],
-      ),
     );
   }
 
@@ -159,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text('لسه مامعندكش حساب؟ ', style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.7))),
-            GestureDetector(
+            Pressable(
               onTap: context.read<AppNavCubit>().goRegister,
               child: Text('أنشئ حساب', style: AppText.h(13, color: AppColors.accent400)),
             ),

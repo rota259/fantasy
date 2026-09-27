@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/motion.dart';
 
 /// مختصر في الهوم: أيقونة + اسم + اللي بيحصل لما يتداس.
 typedef HomeShortcut = ({IconData icon, String label, VoidCallback onTap});
@@ -30,7 +31,7 @@ class HomeShortcuts extends StatelessWidget {
             childAspectRatio: 1.05,
             children: [
               for (final it in items)
-                GestureDetector(
+                Pressable(
                   behavior: HitTestBehavior.opaque,
                   onTap: it.onTap,
                   child: Column(

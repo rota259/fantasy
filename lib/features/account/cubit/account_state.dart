@@ -7,7 +7,7 @@ class AccountState extends Equatable {
 
   final AccountStatus status;
   final int rank;
-  final int bestMatch; // أعلى نقط في ماتش واحد
+  final int bestMatch; // أعلى نقط في جولة واحدة
   final Player? linkedPlayer; // لو اليوزر لاعب موثّق
 
   @override

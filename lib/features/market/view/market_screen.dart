@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/live.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/initials_tile.dart';
@@ -18,6 +15,7 @@ import '../../week/data/week_window.dart';
 import '../../players/widgets/availability_badge.dart';
 import '../../players/data/players_repository.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
+import '../../../core/widgets/motion.dart';
 
 /// تبويب اللاعيبة — تصفّح كل اللاعيبة ونقاطهم (بلا ميزانية/تحويلات).
 class MarketScreen extends StatelessWidget {
@@ -38,21 +36,12 @@ class _PlayersView extends StatefulWidget {
 
 class _PlayersViewState extends State<_PlayersView> {
   Map<String, PlayerGwStat> _stats = const {};
-  StreamSubscription<void>? _sub;
 
   @override
   void initState() {
     super.initState();
     _loadStats();
-    // حد حفظ/غيّر تشكيلته → الامتلاك يتحدّث
-    // التشكيلات بتتغيّر كتير — نحدّث الامتلاك مرة كل ١٥ ثانية بالكتير
-    _sub = liveTable('round_picks', _loadStats, debounce: const Duration(seconds: 15));
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
+    // الامتلاك محسوب مسبقًا في السيرفر كل ١٠ دقايق (player_round_stats) — مفيش لايف هنا
   }
 
   /// الامتلاك الحقيقي لكل لاعب في الجولة الحالية.
@@ -75,7 +64,7 @@ class _PlayersViewState extends State<_PlayersView> {
           child: BlocBuilder<PlayersCubit, PlayersState>(
             builder: (context, s) {
               if (s.isLoading) {
-                return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                return Center(child: CircularProgressIndicator(color: AppColors.accent));
               }
               final players = [...s.players]..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
               if (players.isEmpty) {
@@ -85,7 +74,9 @@ class _PlayersViewState extends State<_PlayersView> {
               }
               return ListView(
                 padding: EdgeInsets.zero,
-                children: [for (final p in players) _row(p, () => nav.openPlayer(p))],
+                children: [
+                  for (final (i, p) in players.indexed) FadeSlideIn(index: i, child: _row(p, () => nav.openPlayer(p))),
+                ],
               );
             },
           ),
@@ -95,12 +86,12 @@ class _PlayersViewState extends State<_PlayersView> {
   }
 
   Widget _row(Player p, VoidCallback onTap) {
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
         child: Row(

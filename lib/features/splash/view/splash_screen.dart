@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/splash_logo.dart';
+import '../../../core/widgets/motion.dart';
 
 /// شاشة البداية: لوجو متحرّك ثم انتقال تلقائي بعد 2.8 ثانية، أو ضغطة للتخطّي.
 class SplashScreen extends StatefulWidget {
@@ -36,7 +37,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: _skip,
       child: Scaffold(
         backgroundColor: AppColors.black,

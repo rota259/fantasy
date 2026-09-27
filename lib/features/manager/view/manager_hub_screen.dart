@@ -12,8 +12,11 @@ import '../../matches/data/matches_repository.dart';
 import '../../pitch/view/venue_requests_screen.dart';
 import '../../players/data/players_repository.dart';
 import '../../teams/view/admin_teams_screen.dart';
+import '../../week/view/admin_totw_screen.dart';
 import '../data/lineup_repository.dart';
 import '../widgets/manager_dashboard.dart';
+import 'admin_late_matches_screen.dart';
+import 'admin_log_screen.dart';
 import 'manager_availability_screen.dart';
 import 'manager_awards_screen.dart';
 import 'manager_broadcast_screen.dart';
@@ -25,8 +28,9 @@ import 'manager_players_screen.dart';
 import 'manager_seasons_screen.dart';
 import 'manager_users_screen.dart';
 import 'manager_venues_screen.dart';
+import '../../../core/widgets/motion.dart';
 
-/// لوحة المدير: إحصائيات سريعة + كل أدوات الإدارة.
+/// لوحة الأدمن: إحصائيات سريعة + كل أدوات الإدارة.
 class ManagerHubScreen extends StatelessWidget {
   const ManagerHubScreen({super.key});
 
@@ -38,7 +42,7 @@ class ManagerHubScreen extends StatelessWidget {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'لوحة المدير', subtitle: 'MANAGER', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'لوحة الأدمن', subtitle: 'ADMIN', onBack: () => Navigator.pop(context)),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -55,10 +59,18 @@ class ManagerHubScreen extends StatelessWidget {
                 _tile(
                   context,
                   Icons.how_to_reg_outlined,
-                  'طلبات المنظّمين',
+                  'طلبات المديرين',
                   'مين عايز ينظّم ماتشات — وافق أو ارفض',
                   const AdminOrganizersScreen(),
                 ),
+                _tile(
+                  context,
+                  Icons.schedule_send_outlined,
+                  'ماتشات بعد الديدلاين',
+                  'طلبات المديرين يضيفوا ماتش بعد قفل الجولة',
+                  const AdminLateMatchesScreen(),
+                ),
+                _tile(context, Icons.history, 'سجل العمليات', 'مين من الأدمنز عمل إيه وإمتى', const AdminLogScreen()),
                 _group('الماتشات واللاعيبة'),
                 _tile(
                   context,
@@ -103,6 +115,13 @@ class ManagerHubScreen extends StatelessWidget {
                 _group('الموسم والمسابقات'),
                 _tile(
                   context,
+                  Icons.star_border,
+                  'تشكيلات الجولة',
+                  'اعتمد تشكيلة كل منطقة عشان تنزل لأهلها',
+                  const AdminTotwScreen(),
+                ),
+                _tile(
+                  context,
                   Icons.date_range_outlined,
                   'الموسم',
                   'البداية + نص الموسم + النهاية (للكروت)',
@@ -112,7 +131,7 @@ class ManagerHubScreen extends StatelessWidget {
                   context,
                   Icons.sports_score_outlined,
                   'تحدّي الجولة',
-                  'اختار ماتش (أو عشوائي) — التوقّع الصح +٥',
+                  'أي ماتش (المديرين بيختاروا من ماتشاتهم) — فرق الأهداف الصح +٥',
                   const ManagerChallengeScreen(),
                 ),
                 _tile(
@@ -141,7 +160,7 @@ class ManagerHubScreen extends StatelessWidget {
                   context,
                   Icons.manage_accounts_outlined,
                   'المستخدمين',
-                  'خلّي حد مدير أو شيل الإدارة',
+                  'مديرين المناطق + نقل حد لمنطقة تانية',
                   const ManagerUsersScreen(),
                 ),
                 _tile(
@@ -173,12 +192,12 @@ class ManagerHubScreen extends StatelessWidget {
   );
 
   Widget _tile(BuildContext context, IconData icon, String title, String sub, Widget screen) {
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
         child: Row(

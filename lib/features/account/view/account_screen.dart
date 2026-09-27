@@ -7,6 +7,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../badges/widgets/badges_preview.dart';
 import '../../claims/data/claims_repository.dart';
 import '../../leagues/data/leagues_repository.dart';
+import '../../points/view/my_points_screen.dart';
 import '../../squad/data/profile_repository.dart';
 import '../cubit/account_cubit.dart';
 import '../widgets/account_menu.dart';
@@ -35,9 +36,22 @@ class AccountScreen extends StatelessWidget {
                   builder: (context, s) => ListView(
                     padding: EdgeInsets.zero,
                     children: [
-                      AccountStats(user: user, rank: s.rank, bestMatch: s.bestMatch),
-                      if (user != null) BadgesPreview(userId: user.id, userName: user.name),
-                      const Divider(color: AppColors.divider, height: 2, thickness: 2),
+                      // حساب المدير حساب شغل: مفيش نقط ولا شارات
+                      if (!(user?.isOrganizer ?? false)) ...[
+                        AccountStats(
+                          user: user,
+                          rank: s.rank,
+                          bestMatch: s.bestMatch,
+                          onPointsTap: user == null
+                              ? null
+                              : () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => MyPointsScreen(userId: user.id)),
+                                ),
+                        ),
+                        if (user != null) BadgesPreview(userId: user.id, userName: user.name),
+                      ],
+                      Divider(color: AppColors.divider, height: 2, thickness: 2),
                       AccountMenu(user: user, linkedPlayer: s.linkedPlayer),
                     ],
                   ),

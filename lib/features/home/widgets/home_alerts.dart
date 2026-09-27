@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/motion.dart';
 
 /// تنبيه في الهوم (قيّم ماتش / صوّت في تعادل تشكيلة الجولة ...).
 typedef HomeAlert = ({String text, Color color, VoidCallback onTap});
@@ -18,13 +20,13 @@ class HomeAlerts extends StatelessWidget {
     return Column(
       children: [
         for (final a in alerts)
-          GestureDetector(
+          Pressable(
             onTap: a.onTap,
             child: Container(
               width: double.infinity,
               margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              color: a.color,
+              decoration: BoxDecoration(color: a.color, borderRadius: AppRadius.md),
               child: Row(
                 children: [
                   Expanded(

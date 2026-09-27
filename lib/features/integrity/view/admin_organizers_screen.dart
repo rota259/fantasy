@@ -3,12 +3,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/utils/launchers.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../data/integrity_repository.dart';
 import '../data/models/organizer_request.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (أدمن) طلبات "عايز أنظّم ماتشات": اتصل واتأكد، ووافق أو ارفض.
 class AdminOrganizersScreen extends StatefulWidget {
@@ -26,7 +28,7 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await _repo.reviewOrganizerRequest(r.id, approve);
-      messenger.showSnackBar(SnackBar(content: Text(approve ? '${r.userName} بقى منظّم ✓' : 'اترفض الطلب')));
+      messenger.showSnackBar(SnackBar(content: Text(approve ? '${r.userName} بقى مدير ✓' : 'اترفض الطلب')));
       setState(() {
         _future = _repo.pendingOrganizerRequests();
       });
@@ -42,7 +44,7 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'طلبات المنظّمين', subtitle: 'ADMIN · ORGANIZERS', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'طلبات المديرين', subtitle: 'ADMIN · ORGANIZERS', onBack: () => Navigator.pop(context)),
           Expanded(
             child: FutureBuilder<List<OrganizerRequest>>(
               future: _future,
@@ -52,7 +54,7 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('مفيش طلبات دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
@@ -71,7 +73,7 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
     final phone = r.phone;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Column(
@@ -101,10 +103,10 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
   }
 
   Widget _btn(String t, Color color, VoidCallback onTap) => Expanded(
-    child: GestureDetector(
+    child: Pressable(
       onTap: onTap,
       child: Container(
-        color: color,
+        decoration: BoxDecoration(color: color, borderRadius: AppRadius.md),
         padding: const EdgeInsets.all(9),
         alignment: Alignment.center,
         child: Text(t, style: AppText.h(12, color: AppColors.white)),

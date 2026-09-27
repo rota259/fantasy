@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/box_field.dart';
+import '../../../core/widgets/motion.dart';
 
 const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
 
@@ -54,11 +56,12 @@ class _SheetState extends State<_Sheet> {
                 runSpacing: 8,
                 children: [
                   for (final p in _positions)
-                    GestureDetector(
+                    Pressable(
                       onTap: () => setState(() => _pos = p.$1),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
+                          borderRadius: AppRadius.md,
                           color: _pos == p.$1 ? AppColors.accent : null,
                           border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
                         ),
@@ -68,13 +71,13 @@ class _SheetState extends State<_Sheet> {
                 ],
               ),
               const SizedBox(height: 14),
-              GestureDetector(
+              Pressable(
                 onTap: () {
                   final n = _name.text.trim();
                   if (n.isNotEmpty) Navigator.pop(context, (name: n, position: _pos));
                 },
                 child: Container(
-                  color: AppColors.accent,
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                   padding: const EdgeInsets.all(13),
                   alignment: Alignment.center,
                   child: Text('أضِف', style: AppText.h(14, color: AppColors.white)),

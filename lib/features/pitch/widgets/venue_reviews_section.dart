@@ -3,12 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
+import '../../auth/cubit/auth_cubit.dart';
 import '../data/models/venue.dart';
 import '../data/models/venue_review.dart';
 import '../data/reviews_repository.dart';
 import 'review_sheet.dart';
+import '../../../core/widgets/motion.dart';
 
 /// تقييمات الملعب في صفحته: المتوسط + "قيّم" + آخر التعليقات.
 class VenueReviewsSection extends StatefulWidget {
@@ -26,6 +29,21 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
   late Future<List<VenueReview>> _future = _repo.list(widget.venue.id);
 
   bool get _isOwner => widget.venue.ownerId == widget.userId;
+  late final bool _isAdmin = context.read<AuthCubit>().state.user?.isManager ?? false;
+
+  /// (أدمن) مسح تقييم مسيء.
+  Future<void> _remove(VenueReview r) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _repo.delete(widget.venue.id, r.userId);
+      setState(() {
+        _future = _repo.list(widget.venue.id);
+      });
+      messenger.showSnackBar(const SnackBar(content: Text('اتمسح التقييم ✓')));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(dbMessage(e))));
+    }
+  }
 
   Future<void> _review(VenueReview? mine) async {
     final input = await showReviewSheet(context, mine);
@@ -66,11 +84,14 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
                     Text('★ ${avg.toStringAsFixed(1)} (${list.length})', style: AppText.h(13, color: AppColors.gold)),
                   const Spacer(),
                   if (!_isOwner)
-                    GestureDetector(
+                    Pressable(
                       onTap: () => _review(mine),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+                        decoration: BoxDecoration(
+                          borderRadius: AppRadius.md,
+                          border: Border.all(color: AppColors.line, width: 1.2),
+                        ),
                         child: Text(mine == null ? '★ قيّم' : 'عدّل تقييمك', style: AppText.h(11)),
                       ),
                     ),
@@ -78,7 +99,7 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
               ),
               const SizedBox(height: 6),
               if (!snap.hasData)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(12),
                   child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
                 )
@@ -95,7 +116,7 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
 
   Widget _row(VenueReview r) => Container(
     padding: const EdgeInsets.symmetric(vertical: 10),
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       border: Border(top: BorderSide(color: AppColors.divider)),
     ),
     child: Row(
@@ -115,6 +136,14 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
                 children: [
                   Expanded(child: Text(r.name.isEmpty ? 'يوزر' : r.name, style: AppText.h(12))),
                   Text('★' * r.stars, style: AppText.h(12, color: AppColors.gold)),
+                  if (_isAdmin && r.userId != widget.userId)
+                    Pressable(
+                      onTap: () => _remove(r),
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
+                      ),
+                    ),
                 ],
               ),
               if (r.comment != null) Text(r.comment!, style: AppText.body(12)),

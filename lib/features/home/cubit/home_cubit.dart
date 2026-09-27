@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/supabase/live.dart';
-import '../../../core/supabase/server_tick.dart';
+import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../integrity/data/integrity_repository.dart';
 import '../../integrity/data/models/pending_review.dart';
@@ -47,19 +46,22 @@ class HomeCubit extends Cubit<HomeState> {
       return;
     }
     emit(const HomeState(status: HomeStatus.loading));
-    ServerTick.run(); // احتياطي لمهمة السيرفر الدورية
     await timed('home', _fetch);
-    _matchesSub ??= liveTable('matches', _fetch);
-    _eventsSub ??= liveTable('events', _fetch);
+    _matchesSub ??= LiveHub.on('matches', _fetch);
+    _eventsSub ??= LiveHub.on('events', _fetch);
     _clock ??= Timer.periodic(const Duration(minutes: 1), (_) {
-      final win = WeekWindow.current();
+      final win = WeekWindow.live(); // الجولة اتغيّرت (السبت ٤ العصر) أو خلصت (٨ الصبح)
       if (_shown == null || _shown!.$1 != win || _shown!.$2 != win.isFinal()) _fetch();
-      ServerTick.run();
     });
   }
 
   /// بعد ما اليوزر يأكد ورقة ماتش مثلًا.
   Future<void> refresh() => _fetch();
+
+  Future<({WeekWindow window, List<WeekPlayer>? team})?> _latestTeam() async {
+    final w = await _week.latestPublishedRound();
+    return w == null ? null : (window: w, team: await _week.publishedTeam(w));
+  }
 
   Future<void> _fetch() async {
     final userId = _userId;
@@ -68,30 +70,30 @@ class HomeCubit extends Cubit<HomeState> {
       final win = WeekWindow.current();
       // كل الطلبات مع بعض (مش ورا بعض) — الوقت = أبطأ طلب بس
       final open = WeekWindow.open();
-      final (points, upcoming, finished, current, previous, tie, reviews, myRound) = await (
-        _profiles.points(userId),
+      final live = WeekWindow.live();
+      final (points, upcoming, finished, team, tie, reviews, myRound) = await (
+        // نقط الجولة اللي بتتلعب بس (كل جولة من صفر — الإجمالي في البروفايل)
+        _profiles.roundPoints(userId, live.cutoff),
         _matches.fetchUpcoming(),
         _matches.fetchFinished(),
-        _week.pointsBetween(win.start, win.cutoff),
-        _week.pointsBetween(win.previous.start, win.previous.cutoff),
+        // نجم الجولة = الأعلى في آخر تشكيلة جولة الإدارة اعتمدتها لمنطقتي (بيفضل لحد اللي بعدها)
+        _latestTeam().catchError((_) => null),
         // تعادل تشكيلة الجولة اللي لسه خالصة (التصويت مفتوح ٢٠ ساعة بعدها)
         _polls.tieFor(win.previous.cutoff, userId),
         _integrity.myPendingReviews().catchError((_) => const <PendingReview>[]),
         _picks.fetchRound(userId, open.cutoff).catchError((_) => const <Pick>[]),
       ).wait;
-      final star = current.firstOrNull ?? previous.firstOrNull;
-      final fromPrevious = current.isEmpty && star != null;
+      final star = team?.team?.firstOrNull;
       if (isClosed) return;
-      _shown = (win, win.isFinal());
+      _shown = (live, live.isFinal());
       emit(
         HomeState(
           status: HomeStatus.ready,
           points: points,
           nextMatch: upcoming.firstOrNull,
           star: star,
-          starFromPrevious: fromPrevious,
-          weekFinal: win.isFinal(),
-          weekLabel: fromPrevious ? win.previous.label : win.label,
+          weekFinal: star != null,
+          weekLabel: (team?.window ?? win.previous).label,
           toRate: finished.where((m) => m.ratingOpen).take(3).toList(),
           tieOpen: tie != null && tie.poll.open,
           toReview: reviews,

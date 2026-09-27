@@ -16,8 +16,9 @@ import '../data/lineup_repository.dart';
 import '../widgets/delete_match_dialog.dart';
 import 'manager_add_match_screen.dart';
 import 'manager_match_screen.dart';
+import '../../../core/widgets/motion.dart';
 
-/// قائمة الماتشات + إنشاء ماتش جديد — الأدمن بيشوف الكل، والمنظّم ماتشاته بس ([organizerId]).
+/// قائمة الماتشات + إنشاء ماتش جديد — الأدمن بيشوف الكل، والمدير منطقةه بس ([organizerId]).
 class ManagerMatchesScreen extends StatefulWidget {
   const ManagerMatchesScreen({
     super.key,
@@ -103,14 +104,14 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
         children: [
           const StatusArea(),
           Masthead(
-            title: widget.organizerId == null ? 'إدارة الماتشات' : 'ماتشاتي كمنظّم',
-            subtitle: widget.organizerId == null ? 'MANAGER · MATCHES' : 'ORGANIZER',
+            title: widget.organizerId == null ? 'إدارة الماتشات' : 'ماتشاتي كمدير',
+            subtitle: widget.organizerId == null ? 'ADMIN · MATCHES' : 'ORGANIZER',
             onBack: () => Navigator.pop(context),
-            trailing: GestureDetector(
+            trailing: Pressable(
               onTap: _addMatch,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(border: AppBorders.white(0.5)),
+                decoration: BoxDecoration(borderRadius: AppRadius.md, border: AppBorders.white(0.5)),
                 child: Text('+ ماتش', style: AppText.h(12, color: AppColors.white)),
               ),
             ),
@@ -120,7 +121,7 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
               future: _future,
               builder: (context, snap) {
                 if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.accent));
+                  return Center(child: CircularProgressIndicator(color: AppColors.accent));
                 }
                 final matches = snap.data!;
                 if (matches.isEmpty) {
@@ -138,7 +139,7 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
   }
 
   Widget _row(GameMatch m) {
-    return GestureDetector(
+    return Pressable(
       behavior: HitTestBehavior.opaque,
       onTap: () => Navigator.push(
         context,
@@ -153,7 +154,7 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           border: Border(top: BorderSide(color: AppColors.divider)),
         ),
         child: Row(
@@ -178,18 +179,18 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
             ),
             Text('إدارة ›', style: AppText.h(12, color: AppColors.accent)),
             const SizedBox(width: 8),
-            GestureDetector(
+            Pressable(
               onTap: () => _editMatch(m),
               behavior: HitTestBehavior.opaque,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.all(4),
                 child: Icon(Icons.edit_outlined, size: 20, color: AppColors.neutral700),
               ),
             ),
-            GestureDetector(
+            Pressable(
               onTap: () => _confirmDelete(m),
               behavior: HitTestBehavior.opaque,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
               ),

@@ -42,7 +42,7 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
     }
   }
 
-  /// إبلاغ كل اليوزرز إن التشكيلة نزلت (السيرفر بيبعته — المنظّم مرة واحدة لكل ماتش).
+  /// إبلاغ كل اليوزرز إن التشكيلة نزلت (السيرفر بيبعته — المدير مرة واحدة لكل ماتش).
   Future<String> notifyUsers() async {
     try {
       await _integrity.notifyLineup(match.id);

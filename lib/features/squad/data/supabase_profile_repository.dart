@@ -25,10 +25,19 @@ class SupabaseProfileRepository implements ProfileRepository {
 
   @override
   Future<int> bestMatch(String userId) async {
+    // أحسن جولة (نظام الجولة)
     final rows = await SupabaseService.table(
-      'user_match_points',
+      'user_round_points',
     ).select('points').eq('user_id', userId).order('points', ascending: false).limit(1);
     return rows.isEmpty ? 0 : (rows.first['points'] as int? ?? 0);
+  }
+
+  @override
+  Future<int> roundPoints(String userId, DateTime roundEnd) async {
+    final row = await SupabaseService.table(
+      'user_round_points',
+    ).select('points').eq('user_id', userId).eq('round_end', roundEnd.toUtc().toIso8601String()).maybeSingle();
+    return (row?['points'] as int?) ?? 0;
   }
 
   @override

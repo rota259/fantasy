@@ -30,8 +30,13 @@ class SupabaseLeaguesRepository implements LeaguesRepository {
   }
 
   @override
-  Future<List<LeagueStanding>> standings(String leagueId) async {
-    final rows = await SupabaseService.client.rpc('league_standings', params: {'p_league': leagueId}) as List;
+  Future<List<LeagueStanding>> standings(String leagueId, {int offset = 0}) async {
+    final rows =
+        await SupabaseService.client.rpc(
+              'league_standings',
+              params: {'p_league': leagueId, 'p_offset': offset, 'p_limit': LeagueStanding.pageSize},
+            )
+            as List;
     return rows.map((r) => LeagueStanding.fromMap(r as Map<String, dynamic>)).toList();
   }
 

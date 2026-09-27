@@ -38,7 +38,6 @@ class _NoteDialogState extends State<_NoteDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppColors.bg,
-      shape: const RoundedRectangleBorder(),
       title: Text(widget.title, style: AppText.h(16)),
       content: TextField(
         controller: _c,

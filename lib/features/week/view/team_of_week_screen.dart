@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
@@ -13,8 +14,9 @@ import '../data/models/week_player.dart';
 import '../data/week_repository.dart';
 import '../widgets/totw_pitch.dart';
 import '../widgets/totw_tie_section.dart';
+import '../../../core/widgets/motion.dart';
 
-/// تشكيلة الجولة: أعلى ٥ نقط على خماسي أزرق — مباشر لحد الجمعة ٤ الفجر، بعدها نهائي.
+/// تشكيلة الجولة لمنطقتك: أعلى ٥ نقط على خماسي أزرق — بتنزل بعد ما الجولة تخلص والإدارة تعتمدها.
 class TeamOfWeekScreen extends StatelessWidget {
   const TeamOfWeekScreen({super.key});
 
@@ -38,7 +40,11 @@ class _View extends StatelessWidget {
       body: BlocBuilder<TeamOfWeekCubit, TeamOfWeekState>(
         builder: (context, s) {
           final cubit = context.read<TeamOfWeekCubit>();
-          final isFinal = s.window.isFinal();
+          final (badge, badgeColor) = s.isPublished
+              ? ('معتمدة ✓', AppColors.info)
+              : s.isCurrent
+              ? ('الجولة شغّالة', AppColors.neutral600)
+              : ('مستنية اعتماد الإدارة', AppColors.bronze);
           return Column(
             children: [
               const StatusArea(),
@@ -49,11 +55,11 @@ class _View extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    GestureDetector(
+                    Pressable(
                       onTap: cubit.previous,
                       child: Text('‹  ', style: AppText.h(20, color: AppColors.white)),
                     ),
-                    GestureDetector(
+                    Pressable(
                       onTap: s.isCurrent ? null : cubit.next,
                       child: Text(
                         '  ›',
@@ -71,11 +77,8 @@ class _View extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      color: isFinal ? AppColors.info : AppColors.danger,
-                      child: Text(
-                        isFinal ? 'النهائي ✓' : '● مباشر — بتتغيّر مع كل نقطة',
-                        style: AppText.h(10, color: AppColors.white),
-                      ),
+                      decoration: BoxDecoration(color: badgeColor, borderRadius: AppRadius.sm),
+                      child: Text(badge, style: AppText.h(10, color: AppColors.white)),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -93,34 +96,45 @@ class _View extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, TeamOfWeekState s) {
-    if (s.isLoading) return const Center(child: CircularProgressIndicator(color: AppColors.info));
-    final team = s.team;
-    if (team.sure.isEmpty && !team.hasTie) {
-      return Center(
-        child: Text('لسه مفيش نقاط في الجولة دي', style: AppText.body(13, color: AppColors.neutral600)),
+    if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.info));
+    final cubit = context.read<TeamOfWeekCubit>();
+    if (!s.isPublished) {
+      return ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(28),
+            child: Text(
+              s.isCurrent
+                  ? 'الجولة لسه بتتلعب ⚽\nتشكيلة الجولة بتنزل بعد ما الجولة تخلص (السبت ٨ الصبح) والإدارة تعتمدها.'
+                  : 'الإدارة بتراجع تشكيلة الجولة دي — هيوصلك إشعار أول ما تنزل.',
+              textAlign: TextAlign.center,
+              style: AppText.body(13, color: AppColors.neutral700),
+            ),
+          ),
+          if (s.tie != null && s.tied.isNotEmpty)
+            TotwTieSection(
+              tied: s.tied,
+              slots: s.slots,
+              poll: s.tie,
+              onVote: (id) async {
+                final messenger = ScaffoldMessenger.of(context);
+                final err = await cubit.voteTie(id);
+                if (err != null) messenger.showSnackBar(SnackBar(content: Text(err)));
+              },
+            ),
+        ],
       );
     }
-    final cubit = context.read<TeamOfWeekCubit>();
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        TotwPitch(spots: s.spots, contested: s.contested),
-        if (s.contested)
-          TotwTieSection(
-            tied: team.tied,
-            slots: team.openSlots,
-            poll: s.tie,
-            onVote: (id) async {
-              final messenger = ScaffoldMessenger.of(context);
-              final err = await cubit.voteTie(id);
-              if (err != null) messenger.showSnackBar(SnackBar(content: Text(err)));
-            },
-          ),
+        TotwPitch(spots: s.spots),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
           child: Text('ترتيب الجولة', style: AppText.h(15)),
         ),
-        for (var i = 0; i < s.players.length && i < 15; i++) _row(i + 1, s.players[i]),
+        for (var i = 0; i < s.ranking.length && i < 15; i++) FadeSlideIn(index: i, child: _row(i + 1, s.ranking[i])),
         const SizedBox(height: 16),
       ],
     );
@@ -128,7 +142,7 @@ class _View extends StatelessWidget {
 
   Widget _row(int rank, WeekPlayer p) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       border: Border(top: BorderSide(color: AppColors.divider)),
     ),
     child: Row(

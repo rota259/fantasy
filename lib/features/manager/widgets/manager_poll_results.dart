@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../polls/data/models/poll.dart';
 import '../../polls/data/polls_repository.dart';
 import '../data/admin_repository.dart';
+import '../../../core/widgets/motion.dart';
 
 /// (مدير) نتايج آخر تصويت + زرار قفله وإعلان الفايز بإشعار.
 class ManagerPollResults extends StatefulWidget {
@@ -58,7 +60,10 @@ class _ManagerPollResultsState extends State<ManagerPollResults> {
         return Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+          decoration: BoxDecoration(
+            borderRadius: AppRadius.md,
+            border: Border.all(color: AppColors.line, width: 1.2),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -82,10 +87,13 @@ class _ManagerPollResultsState extends State<ManagerPollResults> {
               Text('الإجمالي: ${v.totalVotes}', style: AppText.body(10, color: AppColors.neutral600)),
               if (active) ...[
                 const SizedBox(height: 10),
-                GestureDetector(
+                Pressable(
                   onTap: _closing ? null : () => _close(v),
                   child: Container(
-                    color: _closing ? AppColors.neutral500 : AppColors.black,
+                    decoration: BoxDecoration(
+                      color: _closing ? AppColors.neutral500 : AppColors.black,
+                      borderRadius: AppRadius.md,
+                    ),
                     padding: const EdgeInsets.all(11),
                     alignment: Alignment.center,
                     child: Text('🏆 اقفل وأعلن الفايز', style: AppText.h(13, color: AppColors.white)),

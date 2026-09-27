@@ -27,7 +27,7 @@ class PlayerStatsSection extends StatelessWidget {
       future: _load(repo),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.all(24),
             child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
           );
@@ -70,7 +70,7 @@ class PlayerStatsSection extends StatelessWidget {
   Widget _tile(String value, String label, Color color) => Expanded(
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           top: BorderSide(color: AppColors.divider),
           bottom: BorderSide(color: AppColors.divider),

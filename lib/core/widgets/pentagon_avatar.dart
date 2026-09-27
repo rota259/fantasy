@@ -15,16 +15,16 @@ class PentagonAvatar extends StatelessWidget {
     required this.initials,
     this.photoUrl,
     this.size = 46,
-    this.background = AppColors.accent,
-    this.color = AppColors.white,
+    this.background,
+    this.color,
     this.verified = false,
   });
 
   final String initials;
   final String? photoUrl;
   final double size;
-  final Color background;
-  final Color color;
+  final Color? background; // الافتراضي accent
+  final Color? color; // الافتراضي white
 
   /// علامة ✓ صغيرة (لاعب موثّق).
   final bool verified;
@@ -35,7 +35,7 @@ class PentagonAvatar extends StatelessWidget {
     final fallback = Center(
       child: Padding(
         padding: EdgeInsets.only(top: size * 0.12),
-        child: Text(initials, style: AppText.h(size * 0.3, color: color)),
+        child: Text(initials, style: AppText.h(size * 0.3, color: color ?? AppColors.white)),
       ),
     );
     final shape = SizedBox(
@@ -44,7 +44,7 @@ class PentagonAvatar extends StatelessWidget {
       child: ClipPath(
         clipper: const ShapeBorderClipper(shape: kPentagon),
         child: ColoredBox(
-          color: background,
+          color: background ?? AppColors.accent,
           child: (url == null || url.isEmpty) ? fallback : NetImage(url, width: size, height: size, fallback: fallback),
         ),
       ),
@@ -61,7 +61,7 @@ class PentagonAvatar extends StatelessWidget {
             width: size * 0.34,
             height: size * 0.34,
             alignment: Alignment.center,
-            decoration: const ShapeDecoration(color: AppColors.info, shape: CircleBorder()),
+            decoration: ShapeDecoration(color: AppColors.info, shape: CircleBorder()),
             child: Icon(Icons.check, size: size * 0.24, color: AppColors.white),
           ),
         ),
@@ -72,19 +72,12 @@ class PentagonAvatar extends StatelessWidget {
 
 /// كارت/زرار على شكل خماسي فيه أيقونة (المختصرات والشارات).
 class PentagonIcon extends StatelessWidget {
-  const PentagonIcon({
-    super.key,
-    required this.child,
-    this.size = 56,
-    this.fill = AppColors.white,
-    this.stroke = AppColors.black,
-    this.strokeWidth = 2,
-  });
+  const PentagonIcon({super.key, required this.child, this.size = 56, this.fill, this.stroke, this.strokeWidth = 2});
 
   final Widget child;
   final double size;
-  final Color fill;
-  final Color stroke;
+  final Color? fill; // الافتراضي card
+  final Color? stroke; // الافتراضي line
   final double strokeWidth;
 
   @override
@@ -95,10 +88,10 @@ class PentagonIcon extends StatelessWidget {
       padding: EdgeInsets.only(top: size * 0.1),
       alignment: Alignment.center,
       decoration: ShapeDecoration(
-        color: fill,
+        color: fill ?? AppColors.card,
         shape: StarBorder.polygon(
           sides: 5,
-          side: strokeWidth <= 0 ? BorderSide.none : BorderSide(color: stroke, width: strokeWidth),
+          side: strokeWidth <= 0 ? BorderSide.none : BorderSide(color: stroke ?? AppColors.line, width: strokeWidth),
         ),
       ),
       child: child,

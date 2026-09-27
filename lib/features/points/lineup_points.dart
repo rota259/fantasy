@@ -1,8 +1,6 @@
 import '../chips/data/chip_type.dart';
-import '../events/data/models/match_event.dart';
 import '../pick/data/models/pick.dart';
-import '../players/data/models/player.dart';
-import 'points_engine.dart';
+import 'data/player_round_points.dart';
 
 /// نقاط لاعب واحد في تشكيلة اليوزر في جولة.
 class PickPoints {
@@ -10,22 +8,23 @@ class PickPoints {
     required this.pick,
     required this.base,
     required this.multiplier,
-    required this.events,
+    this.items = const [],
     this.counted = true,
   });
 
   final Pick pick;
-  final int base; // نقاطه من أحداثه في كل ماتشات الجولة
-  final int multiplier; // 2 = الكابتن (أو النائب لو الكابتن ملعبش) · 3 مع كارت كابتن ×٣
-  final List<MatchEvent> events;
+  final int base; // نقطه في كل ماتشات الجولة (من السيرفر)
+  final int multiplier; // 2 = الكابتن (أو البديل لو الكابتن ملعبش) · 3 مع كارت كابتن ×٣
+  final List<ScoreItem> items; // التفصيل (جول ×٢، هاتريك، تصديات...)
   final bool counted; // الاحتياطي مش بيتحسب (إلا مع كارت الاحتياطي يتحسب)
 
   int get total => counted ? base * multiplier : 0;
 }
 
-/// نقاط تشكيلة يوزر في جولة — **نفس** قاعدة الداتابيز (fn_user_round_points):
+/// نقاط تشكيلة يوزر في جولة — **نفس** fn_round_points_bulk في السيرفر.
+/// نقط كل لاعب نفسها جاية جاهزة من السيرفر (قواعد التسجيل هناك بس)، وهنا المضاعفات:
 ///   • الأساسيين بس بيتحسبوا (مع كارت "الاحتياطي يتحسب" الكل).
-///   • الكابتن ×2 لو ليه أي حدث في الجولة (لعب)، ولو ملعبش → الكابتن البديل ×2.
+///   • الكابتن ×2 لو لعب في الجولة، ولو ملعبش → الكابتن البديل ×2.
 ///   • كارت كابتن ×٣ → المضاعف ×3 · كارت الدبل → المجموع كله ×2.
 class LineupPoints {
   LineupPoints._(this.rows, this.chip);
@@ -42,32 +41,26 @@ class LineupPoints {
     return null;
   }
 
+  /// [approvedOnly]: النقط المعتمدة بس (اللي بتدخل الإجمالي).
   factory LineupPoints.compute({
     required List<Pick> picks,
-    required List<MatchEvent> events, // أحداث ماتشات الجولة دي بس
-    required Map<String, Player> players,
+    required Map<String, PlayerRoundPoints> points,
+    bool approvedOnly = false,
     ChipType? chip,
   }) {
-    List<MatchEvent> eventsOf(String id) => events.where((e) => e.playerId == id).toList();
-    final captainPlayed = picks.any((p) => p.isCaptain && eventsOf(p.playerId).isNotEmpty);
+    int baseOf(String id) => approvedOnly ? (points[id]?.finalPoints ?? 0) : (points[id]?.points ?? 0);
+    bool playedOf(String id) => approvedOnly ? (points[id]?.playedFinal ?? false) : (points[id]?.played ?? false);
+    final captainPlayed = picks.any((p) => p.isCaptain && playedOf(p.playerId));
     final boosted = chip == ChipType.triple ? 3 : 2;
-
-    final rows = <PickPoints>[];
-    for (final p in picks) {
-      final evs = eventsOf(p.playerId);
-      final pos = players[p.playerId]?.position ?? '';
-      final base = evs.fold(0, (s, e) => s + PointsEngine.eventPoints(e.type, pos));
-      final doubled = (p.isCaptain && captainPlayed) || (p.isVice && !captainPlayed);
-      rows.add(
+    return LineupPoints._([
+      for (final p in picks)
         PickPoints(
           pick: p,
-          base: base,
-          multiplier: doubled ? boosted : 1,
-          events: evs,
+          base: baseOf(p.playerId),
+          multiplier: ((p.isCaptain && captainPlayed) || (p.isVice && !captainPlayed)) ? boosted : 1,
+          items: points[p.playerId]?.items ?? const [],
           counted: p.status == 'starting' || chip == ChipType.benchBoost,
         ),
-      );
-    }
-    return LineupPoints._(rows, chip);
+    ], chip);
   }
 }

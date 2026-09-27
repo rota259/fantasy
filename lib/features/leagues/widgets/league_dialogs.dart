@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/motion.dart';
 
 const _types = [('public', 'كلاسيك'), ('private', 'خاص')];
 
@@ -38,7 +40,6 @@ class _TextDialogState extends State<_TextDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     backgroundColor: AppColors.bg,
-    shape: const RoundedRectangleBorder(),
     title: Text(widget.title, style: AppText.h(16)),
     content: TextField(
       controller: _ctrl,
@@ -72,7 +73,6 @@ class _NewLeagueDialogState extends State<_NewLeagueDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     backgroundColor: AppColors.bg,
-    shape: const RoundedRectangleBorder(),
     title: Text('اعمل دوري', style: AppText.h(16)),
     content: Column(
       mainAxisSize: MainAxisSize.min,
@@ -87,11 +87,12 @@ class _NewLeagueDialogState extends State<_NewLeagueDialog> {
         Row(
           children: [
             for (final t in _types) ...[
-              GestureDetector(
+              Pressable(
                 onTap: () => setState(() => _type = t.$1),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
+                    borderRadius: AppRadius.md,
                     color: _type == t.$1 ? AppColors.accent : null,
                     border: Border.all(color: _type == t.$1 ? AppColors.accent : AppColors.black, width: 2),
                   ),

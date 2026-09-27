@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/pentagon_avatar.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../polls/data/models/poll.dart';
 import '../data/models/week_player.dart';
+import '../../../core/widgets/motion.dart';
 
 /// تعادل على آخر مكان في تشكيلة الجولة: المتعادلين + التصويت (أو النتيجة).
 class TotwTieSection extends StatelessWidget {
@@ -28,12 +30,15 @@ class TotwTieSection extends StatelessWidget {
         : 'التصويت خلص${v.winners.isEmpty ? ' من غير أصوات' : ' — دخل: ${v.winners.map((o) => o.label).join('، ')}'}';
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-      decoration: BoxDecoration(border: Border.all(color: AppColors.info, width: 2)),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.md,
+        border: Border.all(color: AppColors.info, width: 2),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            color: AppColors.info,
+            decoration: BoxDecoration(color: AppColors.info, borderRadius: AppRadius.md),
             padding: const EdgeInsets.all(10),
             child: Text('⚖️ $header', style: AppText.h(12, color: AppColors.white)),
           ),
@@ -50,7 +55,7 @@ class TotwTieSection extends StatelessWidget {
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(top: BorderSide(color: AppColors.divider)),
       ),
       child: Row(
@@ -60,11 +65,14 @@ class TotwTieSection extends StatelessWidget {
           Expanded(child: Text('${p.name} · ${p.points} نقطة', style: AppText.h(13))),
           if (opt != null && (v!.iVoted || !open)) Text('${opt.votes} صوت  ', style: AppText.h(11)),
           if (opt != null && open)
-            GestureDetector(
+            Pressable(
               onTap: () => onVote(opt!.id),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                color: opt.mine ? AppColors.accent : AppColors.info,
+                decoration: BoxDecoration(
+                  color: opt.mine ? AppColors.accent : AppColors.info,
+                  borderRadius: AppRadius.md,
+                ),
                 child: Text(opt.mine ? 'صوتك ✓' : 'صوّت', style: AppText.h(11, color: AppColors.white)),
               ),
             ),

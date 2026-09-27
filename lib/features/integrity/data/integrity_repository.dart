@@ -2,7 +2,7 @@ import 'models/organizer_request.dart';
 import 'models/pending_review.dart';
 import 'models/review_case.dart';
 
-/// عقد نزاهة الماتشات: تأكيد اللاعيبة + حكم الأدمن + طلبات المنظّمين.
+/// عقد نزاهة الماتشات: تأكيد اللاعيبة + حكم الأدمن + طلبات المديرين.
 abstract interface class IntegrityRepository {
   /// الماتشات اللي مستنية تأكيدي كلاعب موثّق.
   Future<List<PendingReview>> myPendingReviews();
@@ -16,7 +16,7 @@ abstract interface class IntegrityRepository {
   /// (أدمن) approve · void · reopen.
   Future<void> resolve(String matchId, String action);
 
-  /// (منظّم/أدمن) إشعار "التشكيلة نزلت".
+  /// (مدير/أدمن) إشعار "التشكيلة نزلت".
   Future<void> notifyLineup(String matchId);
 
   /// آخر طلب تنظيم ليا (null = مقدّمتش).

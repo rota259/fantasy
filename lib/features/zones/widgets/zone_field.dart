@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/zone.dart';
 import 'zone_picker_sheet.dart';
+import '../../../core/widgets/motion.dart';
 
 /// حقل "منطقتك" في الفورم — بيفتح اختيار المحافظة والمنطقة.
 class ZoneField extends StatelessWidget {
@@ -24,14 +26,17 @@ class ZoneField extends StatelessWidget {
       children: [
         Text('منطقتك', style: AppText.h(12)),
         const SizedBox(height: 6),
-        GestureDetector(
+        Pressable(
           onTap: () => _pick(context),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
-            decoration: BoxDecoration(border: Border.all(color: AppColors.black, width: 2)),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.md,
+              border: Border.all(color: AppColors.line, width: 1.2),
+            ),
             child: Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 18, color: AppColors.accent),
+                Icon(Icons.location_on_outlined, size: 18, color: AppColors.accent),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
