@@ -12,6 +12,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/late_match_request.dart';
 import '../../matches/widgets/match_format.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) طلبات ماتشات بعد الديدلاين من مديرين المناطق: وافق (الماتش بيتعمل باسم المدير) أو ارفض.
 class AdminLateMatchesScreen extends StatefulWidget {
@@ -55,13 +56,16 @@ class _AdminLateMatchesScreenState extends State<AdminLateMatchesScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('مفيش طلبات دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
                   );
                 }
-                return ListView(padding: EdgeInsets.zero, children: [for (final r in snap.data!) _row(r)]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final r in snap.data!) _row(r)],
+                );
               },
             ),
           ),
@@ -74,10 +78,9 @@ class _AdminLateMatchesScreenState extends State<AdminLateMatchesScreen> {
     final phone = r.phone;
     final teams = r.teams.length == 2 ? '${r.teams[0]} × ${r.teams[1]}' : r.teams.join(' × ');
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: AppDecor.tile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

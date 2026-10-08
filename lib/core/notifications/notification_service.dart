@@ -48,6 +48,19 @@ abstract final class NotificationService {
     } catch (_) {}
   }
 
+  static bool _tapsWired = false;
+
+  /// الضغط على push: والأبلكيشن في الخلفية، أو مقفول وفتح بيه — [onTap] بياخد data الإشعار (link · match_id).
+  static Future<void> listenTaps(void Function(Map<String, dynamic> data) onTap) async {
+    if (_tapsWired) return;
+    _tapsWired = true;
+    try {
+      FirebaseMessaging.onMessageOpenedApp.listen((m) => onTap(m.data));
+      final first = await FirebaseMessaging.instance.getInitialMessage();
+      if (first != null) onTap(first.data);
+    } catch (_) {}
+  }
+
   /// عند الخروج: الجهاز ميستقبلش إشعارات الحساب ده تاني.
   static Future<void> unregister() async {
     try {

@@ -27,11 +27,14 @@ class PlayerRoundPoints extends Equatable {
     finalPoints: (m['final_points'] as num?)?.toInt() ?? 0,
     played: (m['played'] ?? false) as bool,
     playedFinal: (m['played_final'] ?? false) as bool,
-    items: [
-      for (final i in (m['items'] as List? ?? const []).cast<Map<String, dynamic>>())
-        (label: (i['k'] ?? '') as String, count: (i['n'] as num).toInt(), points: (i['p'] as num).toInt()),
-    ],
+    items: itemsFrom(m['items']),
   );
+
+  /// تفصيل النقط من السيرفر: [{k, n, p}].
+  static List<ScoreItem> itemsFrom(Object? raw) => [
+    for (final i in (raw as List? ?? const []).cast<Map<String, dynamic>>())
+      (label: (i['k'] ?? '') as String, count: (i['n'] as num).toInt(), points: (i['p'] as num).toInt()),
+  ];
 
   @override
   List<Object?> get props => [playerId, points, finalPoints, played, playedFinal, items];

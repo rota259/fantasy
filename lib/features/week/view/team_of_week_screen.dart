@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../points/widgets/player_matches_sheet.dart';
+import '../data/week_window.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
@@ -9,11 +12,14 @@ import '../../../core/widgets/pentagon_avatar.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../polls/data/polls_repository.dart';
+import '../../zones/data/zones_repository.dart';
+import '../../../core/zone/zone_scope.dart';
 import '../cubit/team_of_week_cubit.dart';
 import '../data/models/week_player.dart';
 import '../data/week_repository.dart';
 import '../widgets/totw_pitch.dart';
 import '../widgets/totw_tie_section.dart';
+import 'totw_reveal_screen.dart';
 import '../../../core/widgets/motion.dart';
 
 /// تشكيلة الجولة لمنطقتك: أعلى ٥ نقط على خماسي أزرق — بتنزل بعد ما الجولة تخلص والإدارة تعتمدها.
@@ -33,11 +39,36 @@ class TeamOfWeekScreen extends StatelessWidget {
 class _View extends StatelessWidget {
   const _View();
 
+  /// كشف التشكيلة (زي فتح الباكات) — أوتوماتيك أول مرة تشوف تشكيلة جديدة، وبعدها من الزرار.
+  static Future<void> _reveal(BuildContext context, TeamOfWeekState s, {bool auto = false}) async {
+    final team = s.published;
+    if (team == null || team.isEmpty) return;
+    final key = 'totw_seen_${s.window.cutoff.millisecondsSinceEpoch}_${team.map((p) => p.id).join(',')}';
+    if (auto) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (prefs.getBool(key) ?? false) return;
+        await prefs.setBool(key, true);
+      } catch (_) {}
+    }
+    if (!context.mounted) return;
+    final zone = await context.read<ZonesRepository>().byId(ZoneScope.current).catchError((_) => null);
+    if (!context.mounted) return;
+    await TotwRevealScreen.open(
+      context,
+      team,
+      [?zone?.label, s.window.label].join(' · '),
+      refCode: context.read<AuthCubit>().state.user?.refCode,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: BlocBuilder<TeamOfWeekCubit, TeamOfWeekState>(
+      body: BlocConsumer<TeamOfWeekCubit, TeamOfWeekState>(
+        listenWhen: (p, c) => c.published != null && p.published != c.published,
+        listener: (context, s) => _reveal(context, s, auto: true),
         builder: (context, s) {
           final cubit = context.read<TeamOfWeekCubit>();
           final (badge, badgeColor) = s.isPublished
@@ -100,7 +131,7 @@ class _View extends StatelessWidget {
     final cubit = context.read<TeamOfWeekCubit>();
     if (!s.isPublished) {
       return ListView(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.only(bottom: 24),
         children: [
           Padding(
             padding: const EdgeInsets.all(28),
@@ -127,24 +158,50 @@ class _View extends StatelessWidget {
       );
     }
     return ListView(
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.only(bottom: 24),
       children: [
-        TotwPitch(spots: s.spots),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Pressable(
+            onTap: () => _reveal(context, s),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF7A5A12), Color(0xFFF2C14E)]),
+                borderRadius: AppRadius.md,
+              ),
+              child: Text('🎴 اكشف التشكيلة وشيّرها', style: AppText.h(14, color: AppColors.black)),
+            ),
+          ),
+        ),
+        TotwPitch(spots: s.spots, onTap: (p) => _open(context, p, s.window)),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
           child: Text('ترتيب الجولة', style: AppText.h(15)),
         ),
-        for (var i = 0; i < s.ranking.length && i < 15; i++) FadeSlideIn(index: i, child: _row(i + 1, s.ranking[i])),
+        for (var i = 0; i < s.ranking.length && i < 15; i++)
+          FadeSlideIn(
+            index: i,
+            child: Pressable(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _open(context, s.ranking[i], s.window),
+              child: _row(i + 1, s.ranking[i]),
+            ),
+          ),
         const SizedBox(height: 16),
       ],
     );
   }
 
+  /// الضغط على لاعب = عمل إيه في الجولة (كل ماتش · ضد مين · نقطه).
+  void _open(BuildContext context, WeekPlayer p, WeekWindow w) =>
+      showPlayerMatchesSheet(context, playerId: p.id, name: p.name, team: p.team, window: w);
+
   Widget _row(int rank, WeekPlayer p) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-    decoration: BoxDecoration(
-      border: Border(top: BorderSide(color: AppColors.divider)),
-    ),
+    margin: AppDecor.tileMargin,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+    decoration: AppDecor.tile,
     child: Row(
       children: [
         SizedBox(

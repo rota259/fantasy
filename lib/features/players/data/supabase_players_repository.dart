@@ -48,10 +48,13 @@ class SupabasePlayersRepository implements PlayersRepository {
   }
 
   @override
-  Future<int> deletePlayer(String id) async {
-    // .select() بيرجّع الصفوف المحذوفة فعلًا — 0 يعني RLS منع الحذف (مش مدير).
-    final rows = await SupabaseService.table(_table).delete().eq('id', id).select('id');
-    return rows.length;
+  Future<int> deletePlayer(String id) => deletePlayers([id]);
+
+  @override
+  Future<int> deletePlayers(List<String> ids) async {
+    if (ids.isEmpty) return 0;
+    final n = await SupabaseService.client.rpc('delete_players', params: {'p_ids': ids});
+    return (n as num?)?.toInt() ?? 0;
   }
 
   @override

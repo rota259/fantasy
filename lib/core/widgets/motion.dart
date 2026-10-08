@@ -8,6 +8,9 @@ abstract final class Motion {
   static const medium = Duration(milliseconds: 280);
   static const slow = Duration(milliseconds: 420);
   static const curve = Curves.easeOutCubic;
+
+  /// الموبايل مفعّل "تقليل الحركة" (أو أجهزة ضعيفة) → الاحتفالات والحركات المتكررة بتتلغي.
+  static bool reduced(BuildContext context) => MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 }
 
 /// العنصر بيدخل بظهور تدريجي + طلوع خفيف. [index] بيأخّر كل عنصر شوية عن اللي قبله (قايمة متتابعة).

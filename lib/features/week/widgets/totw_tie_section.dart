@@ -54,9 +54,9 @@ class TotwTieSection extends StatelessWidget {
       if (o.playerId == p.id) opt = o;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
+        border: Border(top: BorderSide(color: AppColors.divider.withValues(alpha: 0.55))),
       ),
       child: Row(
         children: [

@@ -7,16 +7,24 @@ import '../../pick/widgets/pick_pitch.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/my_points_cubit.dart';
 import '../play_status.dart';
+import 'player_round_sheet.dart';
 import 'round_point_row.dart';
 
 /// تشكيلتي في جولة على الخماسي — جنب كل لاعب نقطه + تفصيل عمل إيه في ماتشات الجولة.
 /// [statusFor] (الجولة الشغّالة): مين لعب ومين بيلعب ومين لسه.
 class RoundPointsBody extends StatelessWidget {
-  const RoundPointsBody({super.key, required this.entry, required this.players, this.statusFor = const {}});
+  const RoundPointsBody({
+    super.key,
+    required this.entry,
+    required this.players,
+    this.statusFor = const {},
+    this.liveTeams = const {},
+  });
 
   final RoundEntry entry;
   final Map<String, Player> players;
   final Map<String, PlayStatus> statusFor;
+  final Set<String> liveTeams; // لاعيبتها بتنوّر وقت الماتش
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +53,24 @@ class RoundPointsBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PickPitch(state: state, onSlotTap: (_) {}, onPlayerTap: (_) {}, pointsFor: pointsFor),
+        PickPitch(
+          state: state,
+          onSlotTap: (_) {},
+          liveTeams: liveTeams,
+          pointsFor: pointsFor,
+          // الضغط على لاعب = كل اللي عمله لحد دلوقتي
+          onPlayerTap: (p) {
+            final row = r.rows.where((x) => x.pick.playerId == p.id).firstOrNull;
+            showPlayerRoundSheet(
+              context,
+              player: p,
+              points: row?.base ?? 0,
+              multiplier: (row?.counted ?? false) ? row!.multiplier : 1,
+              items: row?.items ?? const [],
+              status: statusFor[p.id],
+            );
+          },
+        ),
         if (statusFor.isNotEmpty)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),

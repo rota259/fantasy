@@ -14,6 +14,7 @@ import '../data/bookings_repository.dart';
 import '../data/models/booking.dart';
 import '../widgets/booking_sheets.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// طلبات الحجز لصاحب الملعب (ownerId) أو كل الحجوزات للمدير (ownerId = null).
 /// بتتحدّث لوحدها أول ما حد يطلب حجز.
@@ -90,7 +91,7 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final all = snap.data!;
                 final pending = all.where((b) => b.isPending && !b.isPast).toList();
                 final upcoming = all.where((b) => b.isConfirmed && !b.isPast).toList();
@@ -128,10 +129,9 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
     final busy = _busy.contains(b.id);
     final phone = b.userPhone;
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: AppDecor.tile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -36,7 +36,7 @@ async function send(target: Target, n: Record<string, string>, accessToken: stri
       message: {
         ...target,
         notification: { title: n.title, body: n.body },
-        data: { kind: n.kind, match_id: n.match_id ?? "" },
+        data: { kind: n.kind, match_id: n.match_id ?? "", link: n.link ?? "" }, // الضغط بيفتح الصفحة دي
         android: { priority: "high", notification: { sound: "default" } },
         apns: { payload: { aps: { sound: "default" } } },
       },
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
     if (ok !== true) return json({ error: "forbidden" }, 403);
 
     const { data: n } = await supabase
-      .from("notifications").select("title, body, kind, audience, user_id, match_id, zone_id")
+      .from("notifications").select("title, body, kind, audience, user_id, match_id, zone_id, link")
       .eq("id", id).maybeSingle();
     if (!n) return json({ error: "not found" }, 404);
 

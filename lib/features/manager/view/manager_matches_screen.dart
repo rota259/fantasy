@@ -17,6 +17,7 @@ import '../widgets/delete_match_dialog.dart';
 import 'manager_add_match_screen.dart';
 import 'manager_match_screen.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// قائمة الماتشات + إنشاء ماتش جديد — الأدمن بيشوف الكل، والمدير منطقةه بس ([organizerId]).
 class ManagerMatchesScreen extends StatefulWidget {
@@ -121,7 +122,7 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
               future: _future,
               builder: (context, snap) {
                 if (!snap.hasData) {
-                  return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                  return const SkeletonList();
                 }
                 final matches = snap.data!;
                 if (matches.isEmpty) {
@@ -129,7 +130,10 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
                     child: Text('مفيش ماتشات — اضغط "+ ماتش"', style: AppText.body(13, color: AppColors.neutral600)),
                   );
                 }
-                return ListView(padding: EdgeInsets.zero, children: [for (final m in matches) _row(m)]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final m in matches) _row(m)],
+                );
               },
             ),
           ),
@@ -153,10 +157,9 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
         ),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider)),
-        ),
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        decoration: AppDecor.tile,
         child: Row(
           children: [
             Expanded(

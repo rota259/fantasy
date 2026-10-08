@@ -97,10 +97,11 @@ class StandingRow extends StatelessWidget {
     final s = standing;
     final top = badges.where((b) => b.def != null).take(3).map((b) => b.def!.emoji).join();
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: me ? AppColors.accent100 : null,
-        border: Border(top: BorderSide(color: AppColors.divider)),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: AppDecor.tile.copyWith(
+        color: me ? AppColors.accent100 : AppColors.card,
+        border: me ? Border.all(color: AppColors.accent300) : null,
       ),
       child: Row(
         children: [
@@ -122,8 +123,31 @@ class StandingRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if ((s.moved ?? 0) != 0) _Moved(s.moved!),
           Text('${s.points}', style: AppText.h(14)),
         ],
+      ),
+    );
+  }
+}
+
+/// سهم طلع/نزل كام مركز — بيتنطّط مرة لما يظهر.
+class _Moved extends StatelessWidget {
+  const _Moved(this.n);
+  final int n;
+
+  @override
+  Widget build(BuildContext context) {
+    final up = n > 0;
+    final color = up ? AppColors.accent : AppColors.danger;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.elasticOut,
+      builder: (_, t, c) => Transform.translate(offset: Offset(0, (1 - t) * (up ? 10 : -10)), child: c),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(end: 8),
+        child: Text('${up ? '▲' : '▼'}${n.abs()}', style: AppText.h(11, color: color)),
       ),
     );
   }

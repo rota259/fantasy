@@ -9,6 +9,7 @@ class HomeState extends Equatable {
     this.nextMatch,
     this.star,
     this.starFromPrevious = false,
+    this.starRound,
     this.weekFinal = false,
     this.weekLabel = '',
     this.toRate = const [],
@@ -23,6 +24,7 @@ class HomeState extends Equatable {
   final GameMatch? nextMatch;
   final WeekPlayer? star; // نجم الجولة (أعلى نقط)
   final bool starFromPrevious; // الجولة الجديدة لسه فاضية → نجم اللي فاتت
+  final WeekWindow? starRound; // جولة النجم (لتفاصيله)
   final bool weekFinal; // الجولة خلصت (الترتيب نهائي)
   final String weekLabel;
   final List<GameMatch> toRate; // ماتشات التقييم فيها مفتوح
@@ -40,6 +42,7 @@ class HomeState extends Equatable {
     nextMatch,
     star,
     starFromPrevious,
+    starRound,
     weekFinal,
     weekLabel,
     toRate,

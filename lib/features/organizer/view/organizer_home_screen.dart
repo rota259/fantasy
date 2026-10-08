@@ -12,15 +12,18 @@ import '../../events/data/events_repository.dart';
 import '../../manager/data/lineup_repository.dart';
 import '../../manager/view/manager_challenge_screen.dart';
 import '../../manager/view/manager_matches_screen.dart';
+import '../../manager/view/manager_players_screen.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../overlays/view/pitch_overlay.dart';
 import '../../players/data/players_repository.dart';
+import '../../teams/data/teams_repository.dart';
 import '../../teams/view/my_teams_screen.dart';
 import '../../week/data/week_window.dart';
 import '../../zones/data/zone.dart';
 import '../../zones/data/zones_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../tournaments/view/tournaments_screen.dart';
 
 /// رئيسية مدير المنطقة: ماتشاته وفرقه + مواعيد الجولة. (حساب شغل — مفيش فانتازي)
 class OrganizerHomeScreen extends StatelessWidget {
@@ -76,6 +79,13 @@ class OrganizerHomeScreen extends StatelessWidget {
                 }),
                 _tile(
                   context,
+                  Icons.emoji_events_outlined,
+                  'البطولات',
+                  'اعمل بطولة لمنطقتك — القرعة والجدول والشجرة لوحدهم',
+                  () => _push(context, const TournamentsScreen()),
+                ),
+                _tile(
+                  context,
                   Icons.sports_score_outlined,
                   'تحدّي الجولة',
                   'اختار ماتش من ماتشاتك ويوزرز منطقتك يتوقّعوا',
@@ -93,6 +103,17 @@ class OrganizerHomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                _tile(context, Icons.groups_outlined, 'لاعيبتي', 'لاعيبة فرقك — احذف واحد أو كذا أو الكل', () async {
+                  final teams = await context.read<TeamsRepository>().mine(user.id);
+                  if (!context.mounted) return;
+                  _push(
+                    context,
+                    ManagerPlayersScreen(
+                      playersRepo: context.read<PlayersRepository>(),
+                      teams: [for (final t in teams) t.name],
+                    ),
+                  );
+                }),
                 _tile(
                   context,
                   Icons.shield_outlined,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_mode.dart';
 import '../../../core/supabase/live_hub.dart';
 import '../../../core/utils/perf.dart';
 import '../../challenge/data/challenge_repository.dart';

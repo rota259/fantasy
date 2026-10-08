@@ -13,6 +13,7 @@ import '../data/models/review_case.dart';
 import '../widgets/match_sheet_view.dart';
 import 'match_review_screen.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) الحكم في ماتش: الورقة + آراء اللاعيبة + اعتماد / إلغاء / مراجعة من الأول / تعديل الأحداث.
 class AdminCaseScreen extends StatefulWidget {
@@ -86,7 +87,7 @@ class _AdminCaseScreenState extends State<AdminCaseScreen> {
             child: FutureBuilder<MatchSheet>(
               future: _sheet,
               builder: (context, snap) {
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [

@@ -5,28 +5,36 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
+import '../../../core/widgets/selection_bar.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../widgets/player_edit_sheet.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
 
-/// شاشة المدير: إضافة/حذف لاعيبة.
+/// إدارة اللاعيبة: الأدمن (إضافة · تعديل · حذف أي لاعب) أو مدير المنطقة ([teams] = فرقه: حذف لاعيبته
+/// اللي لسه ملعبوش). الحذف واحد واحد، أو تحديد كذا لاعب، أو الكل.
 class ManagerPlayersScreen extends StatelessWidget {
-  const ManagerPlayersScreen({super.key, required this.playersRepo});
+  const ManagerPlayersScreen({super.key, required this.playersRepo, this.teams});
 
   final PlayersRepository playersRepo;
+  final List<String>? teams;
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(create: (_) => ManagerPlayersCubit(playersRepo)..load(), child: const _View());
+    return BlocProvider(
+      create: (_) => ManagerPlayersCubit(playersRepo, teams: teams)..load(),
+      child: _View(organizer: teams != null),
+    );
   }
 }
 
 class _View extends StatefulWidget {
-  const _View();
+  const _View({required this.organizer});
+  final bool organizer;
   @override
   State<_View> createState() => _ViewState();
 }
@@ -35,6 +43,7 @@ class _ViewState extends State<_View> {
   final _name = TextEditingController();
   final _team = TextEditingController();
   String _pos = 'FWD';
+  Set<String>? _sel; // null = مش في وضع التحديد
 
   @override
   void dispose() {
@@ -60,7 +69,11 @@ class _ViewState extends State<_View> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'إدارة اللاعيبة', subtitle: 'ADMIN · PLAYERS', onBack: () => Navigator.pop(context)),
+          Masthead(
+            title: widget.organizer ? 'لاعيبتي' : 'إدارة اللاعيبة',
+            subtitle: widget.organizer ? 'MY PLAYERS' : 'ADMIN · PLAYERS',
+            onBack: () => Navigator.pop(context),
+          ),
           Expanded(
             child: BlocBuilder<ManagerPlayersCubit, ManagerPlayersState>(
               builder: (context, s) {
@@ -68,29 +81,56 @@ class _ViewState extends State<_View> {
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    _field(_name, 'اسم اللاعب'),
-                    const SizedBox(height: 10),
-                    _field(_team, 'النادي'),
-                    const SizedBox(height: 10),
-                    _positionChips(),
-                    const SizedBox(height: 12),
-                    Pressable(
-                      onTap: () => _add(cubit),
-                      child: Container(
-                        decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
-                        padding: const EdgeInsets.all(13),
-                        alignment: Alignment.center,
-                        child: Text('أضِف اللاعب', style: AppText.h(14, color: AppColors.white)),
+                    if (!widget.organizer) ...[
+                      _field(_name, 'اسم اللاعب'),
+                      const SizedBox(height: 10),
+                      _field(_team, 'النادي'),
+                      const SizedBox(height: 10),
+                      _positionChips(),
+                      const SizedBox(height: 12),
+                      Pressable(
+                        onTap: () => _add(cubit),
+                        child: Container(
+                          decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
+                          padding: const EdgeInsets.all(13),
+                          alignment: Alignment.center,
+                          child: Text('أضِف اللاعب', style: AppText.h(14, color: AppColors.white)),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text('اللاعيبة (${s.players.length})', style: AppText.h(15)),
-                    const SizedBox(height: 6),
-                    if (s.isLoading)
+                      const SizedBox(height: 20),
+                    ] else
                       Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          'بتضيف لاعيبة من تشكيلة الماتش. الحذف للاعيبة اللي لسه ملعبوش بس — اللي لعب كلّم الإدارة.',
+                          style: AppText.body(11, color: AppColors.neutral700),
+                        ),
                       ),
+                    SelectionBar(
+                      title: 'اللاعيبة (${s.players.length})',
+                      selecting: _sel != null,
+                      selected: _sel?.length ?? 0,
+                      total: s.players.length,
+                      onStart: () => setState(() => _sel = {}),
+                      onCancel: () => setState(() => _sel = null),
+                      onSelectAll: () => setState(() {
+                        _sel = _sel!.length == s.players.length ? {} : {for (final p in s.players) p.id};
+                      }),
+                      actions: [
+                        (
+                          label: '🗑 احذف المحدّد (${_sel?.length ?? 0})',
+                          color: AppColors.danger,
+                          onTap: (_sel?.isEmpty ?? true) ? null : () => _bulkDelete(cubit, _sel!.toList(), all: false),
+                        ),
+                        (
+                          label: '🗑 احذف الكل (${s.players.length})',
+                          color: AppColors.black,
+                          onTap: () => _bulkDelete(cubit, [for (final p in s.players) p.id], all: true),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    if (s.isLoading) Padding(padding: EdgeInsets.all(20), child: const SkeletonList()),
                     if (!s.isLoading && s.players.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -100,12 +140,22 @@ class _ViewState extends State<_View> {
                         ),
                       ),
                     for (final p in s.players)
-                      _playerRow(
-                        p.name,
-                        '${p.team} · ${p.positionAr}',
-                        onEdit: () => showPlayerEditSheet(context, cubit, p),
-                        onDelete: () => _confirmDelete(cubit, p.id, p.name),
-                      ),
+                      if (_sel != null)
+                        CheckboxListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          value: _sel!.contains(p.id),
+                          onChanged: (on) => setState(() => on == true ? _sel!.add(p.id) : _sel!.remove(p.id)),
+                          title: Text(p.name, style: AppText.h(13)),
+                          subtitle: Text('${p.team} · ${p.positionAr}', style: AppText.body(10)),
+                        )
+                      else
+                        _playerRow(
+                          p.name,
+                          '${p.team} · ${p.positionAr}',
+                          onEdit: widget.organizer ? null : () => showPlayerEditSheet(context, cubit, p),
+                          onDelete: () => _confirmDelete(cubit, p.id, p.name),
+                        ),
                   ],
                 );
               },
@@ -114,6 +164,25 @@ class _ViewState extends State<_View> {
         ],
       ),
     );
+  }
+
+  /// حذف المحدّدين أو الكل (الكل لازم يكتب "احذف").
+  Future<void> _bulkDelete(ManagerPlayersCubit cubit, List<String> ids, {required bool all}) async {
+    final ok = await confirmBulk(
+      context,
+      all ? 'حذف كل اللاعيبة' : 'حذف ${ids.length} لاعب',
+      all
+          ? 'هتحذف ${ids.length} لاعب، ومعاهم أحداثهم ونقطهم في تشكيلات الناس. مفيش رجوع.'
+          : 'متأكد؟ أحداثهم ونقطهم في تشكيلات الناس هتتمسح معاهم.',
+      typeToConfirm: all ? 'احذف' : null,
+    );
+    if (!ok || !mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final r = await cubit.removeMany(ids);
+    if (!mounted) return;
+    setState(() => _sel = null);
+    final skipped = r.skipped > 0 ? ' · ${r.skipped} مااتحذفوش (لعبوا واتسجّل لهم أحداث)' : '';
+    messenger.showSnackBar(SnackBar(content: Text(r.error ?? 'اتحذف ${r.deleted} ✓$skipped')));
   }
 
   Future<void> _confirmDelete(ManagerPlayersCubit cubit, String id, String name) async {
@@ -185,12 +254,10 @@ class _ViewState extends State<_View> {
     );
   }
 
-  Widget _playerRow(String name, String meta, {required VoidCallback onEdit, required VoidCallback onDelete}) {
+  Widget _playerRow(String name, String meta, {required VoidCallback? onEdit, required VoidCallback onDelete}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      decoration: AppDecor.softDivider,
       child: Row(
         children: [
           Expanded(
@@ -202,13 +269,14 @@ class _ViewState extends State<_View> {
               ],
             ),
           ),
-          Pressable(
-            onTap: onEdit,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10),
-              child: Icon(Icons.edit_outlined, size: 18, color: AppColors.neutral700),
+          if (onEdit != null)
+            Pressable(
+              onTap: onEdit,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Icon(Icons.edit_outlined, size: 18, color: AppColors.neutral700),
+              ),
             ),
-          ),
           Pressable(
             onTap: onDelete,
             child: Icon(Icons.close, size: 18, color: AppColors.danger),

@@ -10,6 +10,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../../seasons/data/season.dart';
 import '../../seasons/data/seasons_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 String _fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
@@ -142,7 +143,7 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
                 FutureBuilder<List<Season>>(
                   future: _future,
                   builder: (context, snap) {
-                    if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                    if (!snap.hasData) return const SkeletonList();
                     if (snap.data!.isEmpty) {
                       return Text('لسه مفيش مواسم', style: AppText.body(12, color: AppColors.neutral600));
                     }
@@ -183,10 +184,8 @@ class _ManagerSeasonsScreenState extends State<ManagerSeasonsScreen> {
     behavior: HitTestBehavior.opaque,
     onTap: () => _edit(s),
     child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: AppDecor.softDivider,
       child: Row(
         children: [
           Expanded(

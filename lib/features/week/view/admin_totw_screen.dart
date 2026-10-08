@@ -11,6 +11,7 @@ import '../data/models/totw_candidates.dart';
 import '../data/week_repository.dart';
 import '../data/week_window.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) تشكيلات الجولة لكل منطقة: النظام بيقترح الأعلى نقط، والأدمن يراجع ويعتمد → تنزل لأهل المنطقة.
 class AdminTotwScreen extends StatefulWidget {
@@ -78,7 +79,7 @@ class _AdminTotwScreenState extends State<AdminTotwScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(child: Text('مفيش ماتشات في الجولة دي', style: AppText.body(13)));
                 }

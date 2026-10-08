@@ -18,6 +18,7 @@ import '../widgets/match_lineup_section.dart';
 import '../widgets/match_picks_section.dart';
 import '../widgets/match_result_section.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير/مدير) إدارة ماتش: التشكيلة · الأحداث · النتيجة · مين نزّل تشكيلته (للأدمن بس).
 class ManagerMatchScreen extends StatelessWidget {
@@ -87,7 +88,7 @@ class _ViewState extends State<_View> {
           Expanded(
             child: BlocBuilder<ManagerMatchCubit, ManagerMatchState>(
               builder: (context, s) {
-                if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (s.isLoading) return const SkeletonList();
                 final cubit = context.read<ManagerMatchCubit>();
                 return ListView(
                   padding: const EdgeInsets.all(16),
@@ -104,7 +105,7 @@ class _ViewState extends State<_View> {
                     switch (_mode) {
                       'lineup' => MatchLineupSection(match: m, cubit: cubit, state: s),
                       'events' => MatchEventsSection(cubit: cubit, state: s),
-                      'result' => MatchResultSection(match: m, isAdmin: isAdmin),
+                      'result' => MatchResultSection(match: m, isAdmin: isAdmin, cubit: cubit),
                       _ => MatchPicksSection(match: m),
                     },
                   ],

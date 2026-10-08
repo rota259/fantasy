@@ -13,6 +13,7 @@ import '../../shell/cubit/app_nav_cubit.dart';
 import '../cubit/awards_cubit.dart';
 import '../widgets/award_option_card.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// هدف وتصدّي الجولة (والموسم): اتفرّج على الفيديوهات وصوّت.
 class AwardsOverlay extends StatelessWidget {
@@ -52,10 +53,7 @@ class _ViewState extends State<_View> {
               child: Row(children: [for (final t in tabs) _tab(t.$1, t.$2)]),
             ),
             if (s.loading)
-              Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-              )
+              Padding(padding: EdgeInsets.all(40), child: const SkeletonList())
             else if (s.polls[_kind] == null)
               _note('الإدارة لسه منزّلش المرشّحين')
             else

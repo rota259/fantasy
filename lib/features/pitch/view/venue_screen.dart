@@ -18,6 +18,7 @@ import '../widgets/venue_contact_bar.dart';
 import '../widgets/venue_gallery.dart';
 import '../widgets/venue_reviews_section.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// صفحة الملعب: الصور + البيانات + التواصل + المواعيد المتاحة/المحجوزة + طلب الحجز.
 class VenueScreen extends StatefulWidget {
@@ -117,10 +118,7 @@ class _VenueScreenState extends State<VenueScreen> {
                   child: Text('المواعيد', style: AppText.h(15)),
                 ),
                 if (_loading)
-                  Padding(
-                    padding: EdgeInsets.all(30),
-                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-                  )
+                  Padding(padding: EdgeInsets.all(30), child: const SkeletonList())
                 else
                   SlotGrid(
                     venue: v,

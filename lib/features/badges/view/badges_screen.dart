@@ -11,6 +11,7 @@ import '../data/badges_repository.dart';
 import '../data/models/user_badge.dart';
 import '../widgets/badge_sheet.dart';
 import '../widgets/badge_tile.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// كل الإنجازات متقسّمة مجموعات — اللي اتاخد ملوّن، والسرّي مخفي لحد ما يتاخد.
 class BadgesScreen extends StatelessWidget {
@@ -36,7 +37,7 @@ class BadgesScreen extends StatelessWidget {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final mine = {for (final b in snap.data!) b.key: b};
                 final earned = mine.values.where((b) => b.earned).length;
                 final groups = <String, List<BadgeDef>>{};

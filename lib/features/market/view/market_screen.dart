@@ -16,6 +16,8 @@ import '../../players/widgets/availability_badge.dart';
 import '../../players/data/players_repository.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تبويب اللاعيبة — تصفّح كل اللاعيبة ونقاطهم (بلا ميزانية/تحويلات).
 class MarketScreen extends StatelessWidget {
@@ -64,7 +66,7 @@ class _PlayersViewState extends State<_PlayersView> {
           child: BlocBuilder<PlayersCubit, PlayersState>(
             builder: (context, s) {
               if (s.isLoading) {
-                return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                return const SkeletonList();
               }
               final players = [...s.players]..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
               if (players.isEmpty) {
@@ -73,7 +75,7 @@ class _PlayersViewState extends State<_PlayersView> {
                 );
               }
               return ListView(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.only(top: 14, bottom: 24),
                 children: [
                   for (final (i, p) in players.indexed) FadeSlideIn(index: i, child: _row(p, () => nav.openPlayer(p))),
                 ],
@@ -90,10 +92,9 @@ class _PlayersViewState extends State<_PlayersView> {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider)),
-        ),
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: AppDecor.tile,
         child: Row(
           children: [
             InitialsTile(p.initials, photoUrl: p.imageUrl),

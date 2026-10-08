@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../points/view/live_round_screen.dart';
+import 'zone_league_screen.dart';
 import '../../../core/share/share_card.dart';
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
@@ -18,6 +20,7 @@ import '../data/leagues_repository.dart';
 import '../widgets/league_dialogs.dart';
 import '../widgets/leagues_widgets.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تبويب الدوريات: اعمل دوري أو انضم بكود، وشوف الترتيب بالصور والشارات.
 class LeaguesScreen extends StatelessWidget {
@@ -57,11 +60,38 @@ class _LeaguesView extends StatelessWidget {
         Expanded(
           child: BlocBuilder<LeaguesCubit, LeaguesState>(
             builder: (context, s) {
-              if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+              if (s.isLoading) return const SkeletonList();
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
                   LeaguesHero(rank: s.globalRank > 0 ? '${s.globalRank}' : '—'),
+                  // دوري المناطق: منطقتك ضد باقي المناطق
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: Pressable(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ZoneLeagueScreen())),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [AppColors.navy, AppColors.info]),
+                          borderRadius: AppRadius.md,
+                        ),
+                        child: Row(
+                          children: [
+                            Text('🏙', style: AppText.h(22)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'دوري المناطق — منطقتك ترتيبها كام؟',
+                                style: AppText.h(14, color: AppColors.white),
+                              ),
+                            ),
+                            Text('›', style: AppText.h(18, color: AppColors.white)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   ..._body(context, s),
                 ],
               );
@@ -129,7 +159,18 @@ class _LeaguesView extends StatelessWidget {
             for (final (i, st) in s.standings.indexed)
               FadeSlideIn(
                 index: i,
-                child: StandingRow(standing: st, me: st.userId == userId, badges: s.badges[st.userId] ?? const []),
+                // الضغط على يوزر = تشكيلته في الجولة (للفرجة بس)
+                child: Pressable(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          LiveRoundScreen(userId: st.userId, ownerName: st.userId == userId ? null : st.name),
+                    ),
+                  ),
+                  child: StandingRow(standing: st, me: st.userId == userId, badges: s.badges[st.userId] ?? const []),
+                ),
               ),
             if (s.hasMore)
               TextButton(

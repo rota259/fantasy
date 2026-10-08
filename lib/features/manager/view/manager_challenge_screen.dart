@@ -15,6 +15,7 @@ import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تحدّي الجولة: مدير المنطقة بيختار ماتش من ماتشاته (واحد في الجولة)، والأدمن من أي ماتش.
 /// يوزرز منطقة الماتش بس بيتوقّعوا — اللي يجيب فرق الأهداف صح ياخد +٥.
@@ -88,7 +89,7 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
             child: FutureBuilder<List<GameMatch>>(
               future: _future,
               builder: (context, snap) {
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final list = snap.data!;
                 final open = list.where((m) => !m.isChallenge).toList();
                 return ListView(
@@ -130,10 +131,8 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
   }
 
   Widget _row(GameMatch m) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 11),
-    decoration: BoxDecoration(
-      border: Border(top: BorderSide(color: AppColors.divider)),
-    ),
+    padding: const EdgeInsets.symmetric(vertical: 14),
+    decoration: AppDecor.softDivider,
     child: Row(
       children: [
         Expanded(

@@ -13,6 +13,7 @@ import '../data/bookings_repository.dart';
 import '../data/models/booking.dart';
 import '../widgets/booking_sheets.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// حجوزاتي: كل طلبات الحجز بحالتها (بتتحدّث لوحدها لما صاحب الملعب يرد).
 class MyBookingsScreen extends StatefulWidget {
@@ -92,13 +93,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('لسه محجزتش أي ملعب', style: AppText.body(13, color: AppColors.neutral600)),
                   );
                 }
-                return ListView(padding: EdgeInsets.zero, children: [for (final b in snap.data!) _row(b)]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final b in snap.data!) _row(b)],
+                );
               },
             ),
           ),
@@ -110,10 +114,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget _row(Booking b) {
     final canCancel = b.isActive && !b.isPast;
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: AppDecor.tile,
       child: Row(
         children: [
           Expanded(

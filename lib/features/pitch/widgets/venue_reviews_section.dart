@@ -12,6 +12,7 @@ import '../data/models/venue_review.dart';
 import '../data/reviews_repository.dart';
 import 'review_sheet.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تقييمات الملعب في صفحته: المتوسط + "قيّم" + آخر التعليقات.
 class VenueReviewsSection extends StatefulWidget {
@@ -99,10 +100,7 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
               ),
               const SizedBox(height: 6),
               if (!snap.hasData)
-                Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-                )
+                Padding(padding: EdgeInsets.all(12), child: const SkeletonList())
               else if (list.isEmpty)
                 Text('لسه محدش قيّم الملعب ده', style: AppText.body(12, color: AppColors.neutral600))
               else
@@ -115,10 +113,8 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
   }
 
   Widget _row(VenueReview r) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 10),
-    decoration: BoxDecoration(
-      border: Border(top: BorderSide(color: AppColors.divider)),
-    ),
+    padding: const EdgeInsets.symmetric(vertical: 13),
+    decoration: AppDecor.softDivider,
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

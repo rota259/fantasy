@@ -26,13 +26,13 @@ class BottomTabBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 18, offset: const Offset(0, -4))],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 66,
+          height: 70,
           child: Row(
             children: [
               for (final it in _items)
@@ -76,10 +76,10 @@ class _TabItem extends StatelessWidget {
             scale: active ? 1.12 : 1,
             duration: Motion.medium,
             curve: Motion.curve,
-            child: Icon(icon, size: 21, color: color),
+            child: Icon(icon, size: 22, color: color),
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         AnimatedDefaultTextStyle(
           duration: Motion.medium,
           style: AppText.body(9, color: color, weight: active ? FontWeight.w800 : FontWeight.w600),

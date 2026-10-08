@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_mode.dart';
 import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../integrity/data/integrity_repository.dart';
@@ -14,6 +15,7 @@ import '../../matches/data/models/game_match.dart';
 import '../../polls/data/polls_repository.dart';
 import '../../squad/data/profile_repository.dart';
 import '../../week/data/models/week_player.dart';
+import '../../week/data/team_of_week.dart';
 import '../../week/data/week_repository.dart';
 import '../../week/data/week_window.dart';
 import '../../../core/utils/perf.dart';
@@ -59,6 +61,12 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> refresh() => _fetch();
 
   Future<({WeekWindow window, List<WeekPlayer>? team})?> _latestTeam() async {
+    if (kTestMode) {
+      // التجربة: نجم الجولة = أعلى نقط في منطقتي لايف (من غير ما تستنى الإدارة)
+      final w = WeekWindow.current();
+      final top = TeamOfWeek.build(await _week.pointsBetween(w.start, w.cutoff)).lineup().whereType<WeekPlayer>();
+      return (window: w, team: await _week.publishedTeam(w) ?? top.toList());
+    }
     final w = await _week.latestPublishedRound();
     return w == null ? null : (window: w, team: await _week.publishedTeam(w));
   }
@@ -83,7 +91,7 @@ class HomeCubit extends Cubit<HomeState> {
         _integrity.myPendingReviews().catchError((_) => const <PendingReview>[]),
         _picks.fetchRound(userId, open.cutoff).catchError((_) => const <Pick>[]),
       ).wait;
-      final star = team?.team?.firstOrNull;
+      final star = TeamOfWeek.starOf(team?.team ?? const []);
       if (isClosed) return;
       _shown = (live, live.isFinal());
       emit(
@@ -92,6 +100,7 @@ class HomeCubit extends Cubit<HomeState> {
           points: points,
           nextMatch: upcoming.firstOrNull,
           star: star,
+          starRound: team?.window,
           weekFinal: star != null,
           weekLabel: (team?.window ?? win.previous).label,
           toRate: finished.where((m) => m.ratingOpen).take(3).toList(),

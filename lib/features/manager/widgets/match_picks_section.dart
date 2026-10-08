@@ -10,6 +10,7 @@ import '../../matches/widgets/match_format.dart';
 import '../../week/data/week_window.dart';
 import '../data/admin_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) كام واحد حفظ تشكيلة جولة الماتش ده + تذكير لأهل المنطقة (إشعار واحد مش لكل يوزر).
 class MatchPicksSection extends StatefulWidget {
@@ -51,10 +52,7 @@ class _MatchPicksSectionState extends State<MatchPicksSection> {
       builder: (context, snap) {
         if (snap.hasError) return Text('تعذّر التحميل', style: AppText.body(12, color: AppColors.danger));
         if (!snap.hasData) {
-          return Padding(
-            padding: EdgeInsets.all(30),
-            child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-          );
+          return Padding(padding: EdgeInsets.all(30), child: const SkeletonList());
         }
         final (picked, users) = snap.data!;
         return Column(

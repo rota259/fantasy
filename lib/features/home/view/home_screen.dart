@@ -17,6 +17,7 @@ import '../../matches/widgets/match_format.dart';
 import '../../notifications/cubit/notifications_badge_cubit.dart';
 import '../../pick/data/picks_repository.dart';
 import '../../points/view/live_round_screen.dart';
+import '../../points/view/round_wrapped_screen.dart';
 import '../../polls/data/polls_repository.dart';
 import '../../ratings/view/match_ratings_screen.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
@@ -27,11 +28,14 @@ import '../../week/view/team_of_week_screen.dart';
 import '../../zones/data/zone.dart';
 import '../../zones/data/zones_repository.dart';
 import '../cubit/home_cubit.dart';
+import '../../points/widgets/player_matches_sheet.dart';
 import '../widgets/home_alerts.dart';
 import '../widgets/home_bell.dart';
 import '../widgets/home_shortcuts.dart';
 import '../widgets/star_of_week_card.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
+import '../../tournaments/view/tournaments_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -72,6 +76,7 @@ class _HomeView extends StatelessWidget {
         label: 'تحدّي الجولة',
         onTap: () => nav.openOverlay(AppOverlayView.challenge),
       ),
+      (icon: Icons.emoji_events_outlined, label: 'البطولات', onTap: () => _push(context, const TournamentsScreen())),
       (icon: Icons.play_circle_outline, label: 'هدف وتصدّي', onTap: () => nav.openOverlay(AppOverlayView.awards)),
       (icon: Icons.star_outline, label: 'تشكيلة الجولة', onTap: () => _push(context, const TeamOfWeekScreen())),
       (icon: Icons.calendar_today_outlined, label: 'الماتشات', onTap: () => nav.openOverlay(AppOverlayView.fixtures)),
@@ -136,10 +141,11 @@ class _HomeView extends StatelessWidget {
         Expanded(
           child: BlocBuilder<HomeCubit, HomeState>(
             builder: (context, s) {
-              if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+              if (s.isLoading) return const SkeletonList();
               // الأقسام بتدخل واحدة ورا التانية (ظهور + طلوع خفيف)
               final sections = [
                 _pointsHero(context, s.points),
+                if (userId != null) _wrappedButton(context),
                 HomeAlerts(alerts: _alerts(context, s)),
                 _nextMatch(context, s.nextMatch, s.openRound),
                 HomeShortcuts(items: _shortcuts(context)),
@@ -148,6 +154,15 @@ class _HomeView extends StatelessWidget {
                   isFinal: s.weekFinal,
                   fromPrevious: s.starFromPrevious,
                   label: s.weekLabel,
+                  onTap: s.star == null || s.starRound == null
+                      ? null
+                      : () => showPlayerMatchesSheet(
+                          context,
+                          playerId: s.star!.id,
+                          name: '⭐ ${s.star!.name}',
+                          team: s.star!.team,
+                          window: s.starRound!,
+                        ),
                 ),
                 const SizedBox(height: 16),
               ];
@@ -203,6 +218,31 @@ class _HomeView extends StatelessWidget {
       ),
     );
   }
+
+  /// «جولتك في ٥ سلايدز» للجولة اللي بتتلعب.
+  Widget _wrappedButton(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+    child: Pressable(
+      onTap: () => RoundWrappedScreen.open(context, WeekWindow.live()),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [AppColors.accent700, AppColors.accent500]),
+          borderRadius: AppRadius.md,
+        ),
+        child: Row(
+          children: [
+            Text('🎬', style: AppText.h(18)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('جولتك في ٥ سلايدز — وشيّرها', style: AppText.h(14, color: AppColors.white)),
+            ),
+            Text('›', style: AppText.h(18, color: AppColors.white)),
+          ],
+        ),
+      ),
+    ),
+  );
 
   /// الماتش الجاي في منطقتك — الضغط بيفتح تشكيلة الجولة.
   Widget _nextMatch(BuildContext context, GameMatch? m, WeekWindow? open) {

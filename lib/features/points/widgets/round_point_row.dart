@@ -24,10 +24,9 @@ class RoundPointRow extends StatelessWidget {
     ].join(' · ');
     final st = status;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: AppDecor.tile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

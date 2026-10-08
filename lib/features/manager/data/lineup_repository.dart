@@ -13,5 +13,5 @@ abstract interface class LineupRepository {
 
   /// (مدير) حفظ التشكيلة كاملة مرة واحدة — بيستبدل القديمة.
   /// entries: playerId → starting|bench (اللي مش موجود = بره).
-  Future<void> replaceForMatch(String matchId, Map<String, String> entries);
+  Future<void> replaceForMatch(String matchId, Map<String, String> entries, {int? format});
 }

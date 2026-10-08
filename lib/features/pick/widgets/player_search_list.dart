@@ -5,6 +5,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/initials_tile.dart';
 import '../../players/data/models/player.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// قايمة لاعيبة ببحث (بالاسم أو الفريق) — لاعيبة المنطقة ممكن يبقوا كتير.
 class PlayerSearchList extends StatefulWidget {
@@ -57,10 +58,9 @@ class _PlayerSearchListState extends State<PlayerSearchList> {
     behavior: HitTestBehavior.opaque,
     onTap: () => widget.onPick(p),
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: AppDecor.tile,
       child: Row(
         children: [
           InitialsTile(p.initials, size: 32, photoUrl: p.imageUrl),

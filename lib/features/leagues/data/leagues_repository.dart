@@ -1,3 +1,4 @@
+import 'models/zone_standing.dart';
 import 'models/league.dart';
 import 'models/league_standing.dart';
 
@@ -29,4 +30,7 @@ abstract interface class LeaguesRepository {
 
   /// الخروج من دوري.
   Future<void> leave(String leagueId, String userId);
+
+  /// دوري المناطق: ترتيب المناطق بمجموع نقط ناسها.
+  Future<List<ZoneStanding>> zoneStandings();
 }

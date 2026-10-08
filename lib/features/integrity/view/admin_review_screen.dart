@@ -13,6 +13,8 @@ import '../data/models/review_case.dart';
 import '../widgets/review_status_chip.dart';
 import 'admin_case_screen.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) طابور المراجعة: الاعتراضات الأول، وبعدها الماتشات المعلّم عليها.
 class AdminReviewScreen extends StatefulWidget {
@@ -55,13 +57,16 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('مفيش ماتشات محتاجة مراجعة ✓', style: AppText.body(13, color: AppColors.neutral600)),
                   );
                 }
-                return ListView(padding: EdgeInsets.zero, children: [for (final c in snap.data!) _row(c)]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final c in snap.data!) _row(c)],
+                );
               },
             ),
           ),
@@ -77,10 +82,9 @@ class _AdminReviewScreenState extends State<AdminReviewScreen> {
       behavior: HitTestBehavior.opaque,
       onTap: () => _open(c),
       child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider)),
-        ),
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        decoration: AppDecor.tile,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -17,8 +17,11 @@ class WeekWindow extends Equatable {
   /// نهاية الجولة (السبت ٨ الصبح).
   final DateTime cutoff;
 
-  /// بداية الجولة (السبت اللي قبلها ٤ العصر).
-  DateTime get start => DateTime(cutoff.year, cutoff.month, cutoff.day - 7, startHour);
+  /// وضع التجربة: جولة واحدة لكل الماتشات (نفس fn_week_cutoff في السيرفر).
+  static WeekWindow get testRound => WeekWindow(DateTime(2099, 12, 31, endHour));
+
+  /// بداية الجولة (السبت اللي قبلها ٤ العصر) — في التجربة: من الأول خالص.
+  DateTime get start => kTestMode ? DateTime(2000) : DateTime(cutoff.year, cutoff.month, cutoff.day - 7, startHour);
 
   /// آخر ميعاد للتشكيلة (السبت ٣ العصر يوم البداية).
   /// (وضع التجربة: نهاية الجولة — التشكيلة مفتوحة طولها)
@@ -26,6 +29,7 @@ class WeekWindow extends Equatable {
 
   /// الجولة اللي فيها وقت معيّن (الافتراضي: دلوقتي = الجولة الشغّالة، أو الجاية لو إحنا في فاصل السبت).
   factory WeekWindow.current([DateTime? now]) {
+    if (kTestMode) return testRound;
     final n = now ?? DateTime.now();
     final daysToSaturday = (DateTime.saturday - n.weekday) % 7; // السبت = 0
     final c = DateTime(n.year, n.month, n.day + daysToSaturday, endHour);
@@ -68,7 +72,8 @@ class WeekWindow extends Equatable {
   WeekWindow get next => WeekWindow(DateTime(cutoff.year, cutoff.month, cutoff.day + 7, endHour));
 
   /// "من السبت 19/9 لحد السبت 26/9"
-  String get label => 'من السبت ${start.day}/${start.month} لحد السبت ${cutoff.day}/${cutoff.month}';
+  String get label =>
+      kTestMode ? 'جولة التجربة' : 'من السبت ${start.day}/${start.month} لحد السبت ${cutoff.day}/${cutoff.month}';
 
   @override
   List<Object?> get props => [cutoff];

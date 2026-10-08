@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../points/widgets/player_round_sheet.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/round_pick_cubit.dart';
 import 'player_search_list.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// اللاعيبة المتاحين للنقطة دي (من كل فرق المنطقة، غير المختارين).
 List<Player> _eligible(RoundPickState s, String kind) => s.players.where((p) {
@@ -41,6 +43,10 @@ Future<void> showPlayerOptionsSheet(BuildContext context, RoundPickCubit cubit, 
         mainAxisSize: MainAxisSize.min,
         children: [
           _title('${p.name} · ${p.team}'),
+          _option(context, '📊 عمل إيه في الجولة', () {
+            Navigator.pop(context);
+            showPlayerRoundSheetFor(context, p, cubit.window);
+          }, keepOpen: true),
           if (starting) ...[
             _option(context, 'اعمله كابتن (×٢)', () => cubit.setCaptain(p.id)),
             _option(context, 'اعمله كابتن بديل', () => cubit.setVice(p.id)),
@@ -112,10 +118,9 @@ Widget _option(BuildContext context, String label, VoidCallback onTap, {bool dan
     },
     child: Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: AppDecor.tile,
       child: Text(label, style: AppText.h(14, color: danger ? AppColors.danger : AppColors.ink)),
     ),
   );

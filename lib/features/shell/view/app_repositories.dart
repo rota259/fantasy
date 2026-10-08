@@ -51,6 +51,8 @@ import '../../squad/data/profile_repository.dart';
 import '../../squad/data/supabase_profile_repository.dart';
 import '../../teams/data/supabase_teams_repository.dart';
 import '../../teams/data/teams_repository.dart';
+import '../../tournaments/data/supabase_tournaments_repository.dart';
+import '../../tournaments/data/tournaments_repository.dart';
 import '../../week/data/supabase_week_repository.dart';
 import '../../week/data/week_repository.dart';
 import '../../zones/data/supabase_zones_repository.dart';
@@ -94,6 +96,7 @@ class AppRepositories extends StatelessWidget {
         RepositoryProvider<ZonesRepository>(create: (_) => SupabaseZonesRepository()),
         RepositoryProvider<TeamsRepository>(create: (_) => SupabaseTeamsRepository()),
         RepositoryProvider<PointsRepository>(create: (_) => SupabasePointsRepository()),
+        RepositoryProvider<TournamentsRepository>(create: (_) => SupabaseTournamentsRepository()),
       ],
       child: child,
     );

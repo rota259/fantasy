@@ -12,6 +12,7 @@ import '../../players/data/players_repository.dart';
 import '../cubit/match_ratings_cubit.dart';
 import '../data/ratings_repository.dart';
 import '../widgets/rating_row.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تقييم الجمهور بعد الماتش (٢٤ ساعة): الأعلى تقييمًا = رجل المباراة ويكسب +٣.
 class MatchRatingsScreen extends StatelessWidget {
@@ -62,7 +63,7 @@ class MatchRatingsScreen extends StatelessWidget {
   }
 
   Widget _list(BuildContext context, MatchRatingsState s) {
-    if (s.loading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+    if (s.loading) return const SkeletonList();
     if (s.players.isEmpty) {
       return Center(
         child: Text('مفيش تشكيلة للماتش ده', style: AppText.body(13, color: AppColors.neutral600)),

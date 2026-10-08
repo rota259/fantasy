@@ -6,6 +6,7 @@ import '../../../core/theme/app_text.dart';
 import '../data/zone.dart';
 import '../data/zones_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// اختيار المنطقة: المحافظة الأول، وبعدين المنطقة (مع بحث).
 Future<Zone?> showZonePicker(BuildContext context) => showModalBottomSheet<Zone>(
@@ -37,7 +38,7 @@ class _ZonePickerState extends State<_ZonePicker> {
           if (snap.hasError) {
             return Center(child: Text('مقدرتش أحمّل المناطق — جرّب تاني', style: AppText.body(13)));
           }
-          if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+          if (!snap.hasData) return const SkeletonList();
           final all = snap.data!;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

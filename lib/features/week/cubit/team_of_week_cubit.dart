@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_mode.dart';
 import '../../../core/supabase/db_error.dart';
 import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
@@ -43,6 +44,7 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
 
   /// آخر جولة خلصت — ولو لسه مااتعتمدتش ومفيش تصويت تعادل فيها، آخر واحدة اتعتمدت.
   Future<WeekWindow> _startWindow() async {
+    if (kTestMode) return WeekWindow.current(); // التجربة: جولة واحدة
     final last = WeekWindow.current().previous;
     try {
       final published = await _repo.latestPublishedRound();
@@ -63,7 +65,8 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
   Future<void> _fetch(WeekWindow w, {bool loading = false}) async {
     if (loading) emit(TeamOfWeekState(window: w));
     try {
-      final published = await _repo.publishedTeam(w);
+      // التجربة: لو الإدارة لسه ماعتمدتش، أعلى ٥ نقط في منطقتي لايف
+      final published = await _repo.publishedTeam(w) ?? (kTestMode ? await _liveTop(w) : null);
       var ranking = const <WeekPlayer>[];
       PollView? tie;
       var tied = const <WeekPlayer>[];
@@ -95,6 +98,13 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
     } catch (_) {
       if (!isClosed && state.window == w) emit(state.copyWith(status: TeamOfWeekStatus.ready));
     }
+  }
+
+  /// التجربة: تشكيلة الجولة لايف (أعلى حارس + أعلى ٤) من غير ما تستنى الإدارة.
+  Future<List<WeekPlayer>?> _liveTop(WeekWindow w) async {
+    final team = TeamOfWeek.build(await _repo.pointsBetween(w.start, w.cutoff)).lineup();
+    final top = team.whereType<WeekPlayer>().toList();
+    return top.isEmpty ? null : top;
   }
 
   /// صوت في تصويت التعادل. بيرجّع رسالة خطأ أو null.

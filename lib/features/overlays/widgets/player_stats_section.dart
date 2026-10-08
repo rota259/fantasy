@@ -6,6 +6,7 @@ import '../../../core/theme/app_text.dart';
 import '../../players/data/models/player_gw_stat.dart';
 import '../../players/data/stats_repository.dart';
 import '../../week/data/week_window.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// إحصائيات اللاعب في الجولة (نقاط/امتلاك/دخول/خروج) + نقاطه في كل جولة.
 class PlayerStatsSection extends StatelessWidget {
@@ -27,10 +28,7 @@ class PlayerStatsSection extends StatelessWidget {
       future: _load(repo),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-          );
+          return Padding(padding: EdgeInsets.all(24), child: const SkeletonList());
         }
         final (week, s, hist) = snap.data!;
         return Column(

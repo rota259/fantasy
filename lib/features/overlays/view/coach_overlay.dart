@@ -14,6 +14,7 @@ import '../../players/widgets/availability_badge.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// المدرّب — نصايح بالقواعد من داتا التطبيق (فورمة/امتلاك/دخول وخروج/حالة).
 class CoachOverlay extends StatelessWidget {
@@ -43,12 +44,7 @@ class _CoachView extends StatelessWidget {
           subtitle: 'COACH · من داتا الجولة',
           onBack: nav.back,
           children: s.isLoading
-              ? [
-                  Padding(
-                    padding: EdgeInsets.all(40),
-                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-                  ),
-                ]
+              ? [Padding(padding: EdgeInsets.all(40), child: const SkeletonList())]
               : (r == null || (r.captain == null && r.sections.isEmpty))
               ? [
                   Padding(
@@ -121,10 +117,8 @@ class _CoachView extends StatelessWidget {
         onTap: () => nav.openPlayer(it.player),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 18),
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: AppColors.divider)),
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: AppDecor.softDivider,
           child: Row(
             children: [
               InitialsTile(it.player.initials, size: 30, photoUrl: it.player.imageUrl),

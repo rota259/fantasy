@@ -12,6 +12,8 @@ import '../../zones/widgets/zone_picker_sheet.dart';
 import '../data/team.dart';
 import '../data/teams_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) كل الفرق: المنطقة والصاحب — الفرق القديمة من غير منطقة حدّدلها منطقتها من هنا.
 class AdminTeamsScreen extends StatefulWidget {
@@ -59,13 +61,16 @@ class _AdminTeamsScreenState extends State<AdminTeamsScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final (teams, zones) = snap.data!;
                 final byId = {for (final z in zones) z.id: z};
                 // اللي من غير منطقة الأول
                 final sorted = [...teams]
                   ..sort((a, b) => (a.zoneId == null ? 0 : 1).compareTo(b.zoneId == null ? 0 : 1));
-                return ListView(padding: EdgeInsets.zero, children: [for (final t in sorted) _row(t, byId[t.zoneId])]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final t in sorted) _row(t, byId[t.zoneId])],
+                );
               },
             ),
           ),
@@ -78,10 +83,9 @@ class _AdminTeamsScreenState extends State<AdminTeamsScreen> {
     behavior: HitTestBehavior.opaque,
     onTap: () => _setZone(t),
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: AppDecor.tile,
       child: Row(
         children: [
           Expanded(

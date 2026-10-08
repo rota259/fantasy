@@ -9,6 +9,7 @@ class LiveRoundState extends Equatable {
     this.entry,
     this.players = const {},
     this.statusFor = const {},
+    this.liveTeams = const {},
   });
 
   final WeekWindow window; // الجولة اللي بتتلعب
@@ -16,7 +17,8 @@ class LiveRoundState extends Equatable {
   final RoundEntry? entry; // null = معملتش تشكيلة للجولة دي
   final Map<String, Player> players;
   final Map<String, PlayStatus> statusFor;
+  final Set<String> liveTeams; // الفرق اللي بتلعب دلوقتي
 
   @override
-  List<Object?> get props => [window, status, entry, players, statusFor];
+  List<Object?> get props => [window, status, entry, players, statusFor, liveTeams];
 }

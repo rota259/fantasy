@@ -1,7 +1,8 @@
 import 'models/week_player.dart';
 
-/// تشكيلة الجولة = أعلى ٥ لاعيبة جابوا نقط (أي مركز).
-/// لو فيه تعادل على آخر مكان (أو أكتر)، المتعادلين بيدخلوا تصويت، والفايزين بياخدوا الأماكن.
+/// تشكيلة الجولة = أعلى حارس جاب نقط + أعلى ٤ لاعيبة (غير الحراس) جابوا نقط.
+/// لو فيه تعادل على آخر مكان من الأربعة (أو أكتر)، المتعادلين بيدخلوا تصويت، والفايزين بياخدوا الأماكن.
+/// (تعادل الحراس: الأول بالاسم)
 /// (نفس منطق fn_totw_tie في السيرفر)
 class TeamOfWeek {
   const TeamOfWeek._({required this.sure, required this.tied, required this.openSlots});
@@ -20,13 +21,33 @@ class TeamOfWeek {
   bool get hasTie => tied.isNotEmpty;
 
   factory TeamOfWeek.build(List<WeekPlayer> ranked) {
-    final pos = ranked.where((p) => p.points > 0).toList()..sort((a, b) => b.points.compareTo(a.points));
-    if (pos.length <= size || pos[size - 1].points != pos[size].points) {
-      return TeamOfWeek._(sure: pos.take(size).toList(), tied: const [], openSlots: 0);
+    final pos = ranked.where((p) => p.points > 0).toList()
+      ..sort((a, b) {
+        final c = b.points.compareTo(a.points);
+        return c != 0 ? c : a.name.compareTo(b.name);
+      });
+    final gk = pos.where((p) => p.position == 'GK').take(1).toList();
+    final out = pos.where((p) => p.position != 'GK').toList();
+    const n = size - 1; // الأربعة اللي في الملعب
+    if (out.length <= n || out[n - 1].points != out[n].points) {
+      return TeamOfWeek._(sure: [...gk, ...out.take(n)], tied: const [], openSlots: 0);
     }
-    final cut = pos[size - 1].points;
-    final sure = pos.where((p) => p.points > cut).toList();
-    return TeamOfWeek._(sure: sure, tied: pos.where((p) => p.points == cut).toList(), openSlots: size - sure.length);
+    final cut = out[n - 1].points;
+    final sureOut = out.where((p) => p.points > cut).toList();
+    return TeamOfWeek._(
+      sure: [...gk, ...sureOut],
+      tied: out.where((p) => p.points == cut).toList(),
+      openSlots: n - sureOut.length,
+    );
+  }
+
+  /// نجم الجولة = الأعلى نقط في التشكيلة.
+  static WeekPlayer? starOf(Iterable<WeekPlayer?> team) {
+    WeekPlayer? best;
+    for (final p in team) {
+      if (p != null && (best == null || p.points > best.points)) best = p;
+    }
+    return best;
   }
 
   /// الخمسة النهائيين. [winnerIds] = فايزين تصويت التعادل (بالترتيب).

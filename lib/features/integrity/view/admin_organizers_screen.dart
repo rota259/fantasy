@@ -11,6 +11,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../data/integrity_repository.dart';
 import '../data/models/organizer_request.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) طلبات "عايز أنظّم ماتشات": اتصل واتأكد، ووافق أو ارفض.
 class AdminOrganizersScreen extends StatefulWidget {
@@ -54,13 +55,16 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('مفيش طلبات دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
                   );
                 }
-                return ListView(padding: EdgeInsets.zero, children: [for (final r in snap.data!) _row(r)]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final r in snap.data!) _row(r)],
+                );
               },
             ),
           ),
@@ -72,10 +76,9 @@ class _AdminOrganizersScreenState extends State<AdminOrganizersScreen> {
   Widget _row(OrganizerRequest r) {
     final phone = r.phone;
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: AppDecor.tile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

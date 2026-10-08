@@ -11,6 +11,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../../claims/data/claims_repository.dart';
 import '../../claims/data/models/player_claim.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير) طلبات توثيق اللاعيبة: اتأكد (مكالمة/واتساب) ووافق أو ارفض.
 class ManagerClaimsScreen extends StatefulWidget {
@@ -54,13 +55,16 @@ class _ManagerClaimsScreenState extends State<ManagerClaimsScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('مفيش طلبات دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
                   );
                 }
-                return ListView(padding: EdgeInsets.zero, children: [for (final c in snap.data!) _row(c)]);
+                return ListView(
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
+                  children: [for (final c in snap.data!) _row(c)],
+                );
               },
             ),
           ),
@@ -72,10 +76,9 @@ class _ManagerClaimsScreenState extends State<ManagerClaimsScreen> {
   Widget _row(PlayerClaim c) {
     final phone = c.phone;
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      decoration: AppDecor.tile,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_service.dart';
 import 'leagues_repository.dart';
+import 'models/zone_standing.dart';
 import 'models/league.dart';
 import 'models/league_standing.dart';
 
@@ -89,5 +90,11 @@ class SupabaseLeaguesRepository implements LeaguesRepository {
   @override
   Future<void> leave(String leagueId, String userId) async {
     await SupabaseService.table('league_members').delete().eq('league_id', leagueId).eq('user_id', userId);
+  }
+
+  @override
+  Future<List<ZoneStanding>> zoneStandings() async {
+    final rows = await SupabaseService.client.rpc('zone_standings') as List;
+    return rows.cast<Map<String, dynamic>>().map(ZoneStanding.fromMap).toList();
   }
 }

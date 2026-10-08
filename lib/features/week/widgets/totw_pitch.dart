@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/motion.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
@@ -12,10 +13,11 @@ const _spots = [(50.0, 86.0), (29.0, 20.0), (71.0, 20.0), (16.0, 60.0), (84.0, 6
 
 /// تشكيلة الجولة على خماسي أزرق (مختلف عن ملعب تشكيلتك الأخضر).
 class TotwPitch extends StatelessWidget {
-  const TotwPitch({super.key, required this.spots, this.contested = false});
+  const TotwPitch({super.key, required this.spots, this.contested = false, this.onTap});
 
   final List<WeekPlayer?> spots; // ٥ أماكن
   final bool contested; // المكان الفاضي عليه تصويت تعادل
+  final void Function(WeekPlayer p)? onTap; // الضغط على لاعب = عمل إيه في الجولة
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +29,13 @@ class TotwPitch extends StatelessWidget {
       tokens: [
         for (var i = 0; i < _spots.length && i < spots.length; i++)
           if (spots[i] != null || contested)
-            PitchToken(leftPct: _spots[i].$1, topPct: _spots[i].$2, child: _token(spots[i])),
+            PitchToken(
+              leftPct: _spots[i].$1,
+              topPct: _spots[i].$2,
+              child: spots[i] == null || onTap == null
+                  ? _token(spots[i])
+                  : Pressable(onTap: () => onTap!(spots[i]!), child: _token(spots[i])),
+            ),
       ],
     );
   }

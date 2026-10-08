@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_mode.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
@@ -16,6 +17,8 @@ import '../data/points_repository.dart';
 import '../widgets/round_pager.dart';
 import '../widgets/round_points_body.dart';
 import '../widgets/season_chips.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// نقطي (من البروفايل): اختار الموسم، واتنقّل بين الجولات — كل جولة لوحدها بتفصيلها.
 /// كل جولة نقطها بتبدأ من صفر، والإجمالي = مجموع جولات الموسم (المعتمد) + بونص التوقعات.
@@ -44,7 +47,7 @@ class MyPointsScreen extends StatelessWidget {
             Expanded(
               child: BlocBuilder<MyPointsCubit, MyPointsState>(
                 builder: (context, s) => switch (s.status) {
-                  MyPointsStatus.loading => Center(child: CircularProgressIndicator(color: AppColors.accent)),
+                  MyPointsStatus.loading => const SkeletonList(),
                   MyPointsStatus.error => Center(
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   ),
@@ -101,7 +104,7 @@ class _SeasonRoundsState extends State<_SeasonRounds> {
                 ),
               ),
               Text('${s.totalIn(_season)}', style: AppText.h(22, color: AppColors.accent)),
-              Text(' معتمد', style: AppText.body(11, color: AppColors.neutral700)),
+              Text(kTestMode ? ' نقطة' : ' معتمد', style: AppText.body(11, color: AppColors.neutral700)),
             ],
           ),
         ),
@@ -123,10 +126,9 @@ class _SeasonRoundsState extends State<_SeasonRounds> {
         ],
         for (final m in bonuses)
           Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.divider)),
-            ),
+            margin: AppDecor.tileMargin,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            decoration: AppDecor.tile,
             child: Row(
               children: [
                 Expanded(child: Text('🎯 فرق أهداف ${m.teamA} ${m.scoreText} ${m.teamB} صح', style: AppText.h(13))),

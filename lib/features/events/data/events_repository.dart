@@ -14,8 +14,14 @@ abstract interface class EventsRepository {
   /// أحداث مجموعة لاعيبة (تشكيلة المستخدم).
   Future<List<MatchEvent>> fetchForPlayers(List<String> playerIds);
 
-  /// (مدير) إضافة حدث لماتش.
-  Future<void> addEvent({required String matchId, required String playerId, required String type, int? minute});
+  /// (مدير) إضافة حدث لماتش. التبديل: [playerId] اللي نزل و[otherPlayerId] اللي طلع.
+  Future<void> addEvent({
+    required String matchId,
+    required String playerId,
+    required String type,
+    int? minute,
+    String? otherPlayerId,
+  });
 
   /// (مدير) حذف حدث.
   Future<void> deleteEvent(String id);

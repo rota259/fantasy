@@ -67,10 +67,8 @@ class SupabaseMatchesRepository implements MatchesRepository {
   }
 
   @override
-  Future<void> finishMatch(String id, int scoreA, int scoreB) async {
-    final rows = await SupabaseService.table(
-      _table,
-    ).update({'status': 'finished', 'score_a': scoreA, 'score_b': scoreB}).eq('id', id).select('id');
+  Future<void> finishMatch(String id) async {
+    final rows = await SupabaseService.table(_table).update({'status': 'finished'}).eq('id', id).select('id');
     _ensureWritten(rows);
   }
 

@@ -46,3 +46,23 @@ abstract final class AppBorders {
   /// حد أبيض شفّاف (على الأسطح الغامقة).
   static Border white(double opacity) => Border.all(color: AppColors.white.withValues(alpha: opacity), width: 1.2);
 }
+
+/// أشكال جاهزة للقوايم: صفوف القايمة كروت ناعمة متفرقة (بدل جدول بخطوط) — عشان الشاشة تتنفّس.
+abstract final class AppDecor {
+  AppDecor._();
+
+  /// المسافة حوالين كارت صف في قايمة بعرض الشاشة.
+  static const EdgeInsets tileMargin = EdgeInsets.fromLTRB(16, 0, 16, 10);
+
+  /// كارت صف: أرضية فاتحة + زوايا ناعمة + ظل هادي جدًا (من غير حدود).
+  static BoxDecoration get tile => BoxDecoration(
+    color: AppColors.card,
+    borderRadius: AppRadius.md,
+    boxShadow: [BoxShadow(color: AppColors.shadow.withValues(alpha: 0.5), blurRadius: 10, offset: const Offset(0, 2))],
+  );
+
+  /// فاصل خفيف بين صفوف جوه كارت.
+  static BoxDecoration get softDivider => BoxDecoration(
+    border: Border(top: BorderSide(color: AppColors.divider.withValues(alpha: 0.55))),
+  );
+}

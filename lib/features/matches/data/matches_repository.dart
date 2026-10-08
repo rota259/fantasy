@@ -27,8 +27,8 @@ abstract interface class MatchesRepository {
   /// آخر الماتشات اللي خلصت (الأحدث الأول) — في منطقتي + العامة.
   Future<List<GameMatch>> fetchFinished();
 
-  /// (مدير) إنهاء الماتش بنتيجته.
-  Future<void> finishMatch(String id, int scoreA, int scoreB);
+  /// (مدير) إنهاء الماتش — النتيجة بتتحسب في السيرفر من الأهداف المسجّلة.
+  Future<void> finishMatch(String id);
 
   /// (مدير) تعديل بيانات ماتش.
   Future<void> updateMatch(String id, {required List<String> teams, required DateTime dateTime, required int week});

@@ -40,10 +40,10 @@ class MyPointsState extends Equatable {
       if (s == null || (!m.dateTime.isBefore(s.startsAt) && m.dateTime.isBefore(s.endsAt))) m,
   ];
 
-  /// المعتمد في موسم (الجولات + بونص التوقعات).
+  /// إجمالي موسم (الجولات + بونص التوقعات) — المعتمد، وفي وضع التجربة كله على طول (زي الدوري).
   int totalIn(Season? s) =>
-      roundsIn(s).fold(0, (t, e) => t + e.finalPoints.total) +
-      bonusesIn(s).where((m) => m.isApproved).length * predictionBonus;
+      roundsIn(s).fold(0, (t, e) => t + (kTestMode ? e.points.total : e.finalPoints.total)) +
+      bonusesIn(s).where((m) => kTestMode || m.isApproved).length * predictionBonus;
 
   /// المعتمد بس = نفس الإجمالي في السيرفر والترتيب.
   int get total =>

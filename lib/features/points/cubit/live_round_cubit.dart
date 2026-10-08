@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/supabase/live_hub.dart';
 import '../../chips/data/chips_repository.dart';
 import '../../matches/data/matches_repository.dart';
+import '../../matches/match_live.dart';
 import '../../pick/data/picks_repository.dart';
 import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
@@ -41,6 +42,7 @@ class LiveRoundCubit extends Cubit<LiveRoundState> {
   final PlayersRepository _players;
   final MatchesRepository _matches;
   final _subs = <StreamSubscription<void>>[];
+  Timer? _clock;
 
   Future<void> load() async {
     await _fetch();
@@ -49,6 +51,7 @@ class LiveRoundCubit extends Cubit<LiveRoundState> {
         ..add(LiveHub.on('events', _fetch, debounce: const Duration(seconds: 3)))
         ..add(LiveHub.on('matches', _fetch, debounce: const Duration(seconds: 3)));
     }
+    _clock ??= Timer.periodic(const Duration(minutes: 1), (_) => _fetch()); // ماتش بدأ ميعاده
   }
 
   Future<void> _fetch() async {
@@ -81,6 +84,7 @@ class LiveRoundCubit extends Cubit<LiveRoundState> {
           status: LiveRoundStatus.ready,
           entry: entry,
           players: byId,
+          liveTeams: MatchLive.liveTeams(matches),
           statusFor: {
             for (final id in ids)
               if (byId[id] != null) id: playStatus(byId[id]!.team, matches, played: pts[id]?.played ?? false),
@@ -96,6 +100,7 @@ class LiveRoundCubit extends Cubit<LiveRoundState> {
 
   @override
   Future<void> close() {
+    _clock?.cancel();
     for (final s in _subs) {
       s.cancel();
     }

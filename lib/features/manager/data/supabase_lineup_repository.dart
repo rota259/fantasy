@@ -25,7 +25,9 @@ class SupabaseLineupRepository implements LineupRepository {
   }
 
   @override
-  Future<void> replaceForMatch(String matchId, Map<String, String> entries) async {
+  Future<void> replaceForMatch(String matchId, Map<String, String> entries, {int? format}) async {
+    // الملعب (خماسي/سداسي) الأول عشان سقف الأساسيين في السيرفر يتحسب عليه
+    if (format != null) await SupabaseService.table('matches').update({'format': format}).eq('id', matchId);
     await SupabaseService.table(_table).delete().eq('match_id', matchId);
     final rows = [
       for (final e in entries.entries)

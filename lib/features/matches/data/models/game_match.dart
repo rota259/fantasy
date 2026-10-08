@@ -22,6 +22,10 @@ class GameMatch extends Equatable {
     this.reviewStatus = 'open',
     this.reviewDue,
     this.flags = const [],
+    this.format = 5,
+    this.tournamentId,
+    this.stage,
+    this.winner,
   });
 
   final String id;
@@ -40,6 +44,10 @@ class GameMatch extends Equatable {
   final String reviewStatus; // open · pending (مستني تأكيد) · approved · disputed (اعتراض) · void (اتلغى)
   final DateTime? reviewDue; // بيتعتمد لوحده بعدها لو مفيش علامات
   final List<String> flags; // علامات الغرابة (MatchFlags)
+  final int format; // خماسي (٥) أو سداسي (٦) — عدد الأساسيين بالحارس
+  final String? tournamentId; // ماتش بطولة
+  final String? stage; // مجموعة A · ربع النهائي · النهائي …
+  final String? winner; // خروج المغلوب: الفايز (بالنتيجة أو بضربات الجزاء)
 
   /// مدة تقييم الجمهور بعد نهاية الماتش.
   static Duration get ratingWindow => kTestMode ? const Duration(minutes: 30) : const Duration(hours: 24);
@@ -87,6 +95,10 @@ class GameMatch extends Equatable {
     reviewStatus: (map['review_status'] ?? 'open') as String,
     reviewDue: _date(map['review_due']),
     flags: List<String>.from(map['flags'] ?? const []),
+    format: (map['format'] as num?)?.toInt() ?? 5,
+    tournamentId: map['tournament_id']?.toString(),
+    stage: map['stage'] as String?,
+    winner: map['winner'] as String?,
   );
 
   /// للكتابة: الوقت UTC عشان السيرفر يفهمه صح (من غير فرق التوقيت).
@@ -110,5 +122,9 @@ class GameMatch extends Equatable {
     reviewStatus,
     reviewDue,
     flags,
+    format,
+    tournamentId,
+    stage,
+    winner,
   ];
 }

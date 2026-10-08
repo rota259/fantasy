@@ -12,11 +12,13 @@ import '../../follow/widgets/follow_button.dart';
 import '../../matches/cubit/matches_cubit.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
+import '../../matches/view/match_center_screen.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../ratings/view/match_ratings_screen.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// الماتشات: القادمة (+ تابع لايف) وآخر النتايج (+ قيّم اللاعيبة).
 class FixturesOverlay extends StatelessWidget {
@@ -49,10 +51,7 @@ class _FixturesView extends StatelessWidget {
           children: [
             if (next != null) _deadline(next),
             if (s.isLoading)
-              Padding(
-                padding: EdgeInsets.all(30),
-                child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-              )
+              Padding(padding: EdgeInsets.all(30), child: const SkeletonList())
             else if (s.matches.isEmpty)
               _empty()
             else
@@ -114,46 +113,52 @@ class _FixturesView extends StatelessWidget {
 
   Widget _row(BuildContext context, GameMatch m, bool following) {
     final uid = userId;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
-      child: Row(
-        children: [
-          FdrChip(m.fdr),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: '${m.teamA} ', style: AppText.h(13)),
-                      TextSpan(
-                        text: 'ضد',
-                        style: AppText.body(13, color: AppColors.neutral700),
-                      ),
-                      TextSpan(text: ' ${m.teamB}', style: AppText.h(13)),
-                    ],
+    final live = m.hasStarted && !m.isFinished;
+    return Pressable(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => MatchCenterScreen.open(context, m),
+      child: Container(
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: AppDecor.tile,
+        child: Row(
+          children: [
+            FdrChip(m.fdr),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: '${m.teamA} ', style: AppText.h(13)),
+                        TextSpan(
+                          text: 'ضد',
+                          style: AppText.body(13, color: AppColors.neutral700),
+                        ),
+                        TextSpan(text: ' ${m.teamB}', style: AppText.h(13)),
+                      ],
+                    ),
                   ),
-                ),
-                Text(
-                  '${arabicTime(m.dateTime)}${m.isChallenge ? ' · 🎯 تحدّي الجولة' : ''}',
-                  style: AppText.body(10, color: AppColors.neutral600),
-                ),
-              ],
+                  Text(
+                    live
+                        ? '🔴 لايف · ${m.scoreA ?? 0} - ${m.scoreB ?? 0}${m.isChallenge ? ' · 🎯 تحدّي الجولة' : ''}'
+                        : '${arabicTime(m.dateTime)}${m.isChallenge ? ' · 🎯 تحدّي الجولة' : ''}',
+                    style: AppText.body(10, color: live ? AppColors.danger : AppColors.neutral600),
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (uid != null)
-            FollowButton(
-              matchId: m.id,
-              userId: uid,
-              following: following,
-              onChanged: (on) => context.read<MatchesCubit>().setFollow(m.id, on),
-            ),
-        ],
+            if (uid != null)
+              FollowButton(
+                matchId: m.id,
+                userId: uid,
+                following: following,
+                onChanged: (on) => context.read<MatchesCubit>().setFollow(m.id, on),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -162,47 +167,50 @@ class _FixturesView extends StatelessWidget {
   Widget _result(BuildContext context, GameMatch m) {
     final uid = userId;
     final canRate = m.ratingOpen;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(m.teamA, textAlign: TextAlign.end, style: AppText.h(13)),
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
-            child: Text(m.scoreText.isEmpty ? '—' : m.scoreText, style: AppText.h(14, color: AppColors.white)),
-          ),
-          Expanded(child: Text(m.teamB, style: AppText.h(13))),
-          if (uid != null && (canRate || m.motmDone))
-            Pressable(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MatchRatingsScreen(match: m, userId: uid),
-                ),
-              ),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                color: canRate ? AppColors.accent : null,
-                decoration: canRate
-                    ? null
-                    : BoxDecoration(
-                        borderRadius: AppRadius.md,
-                        border: Border.all(color: AppColors.line, width: 1.2),
-                      ),
-                child: Text(
-                  canRate ? 'قيّم ⭐' : 'رجل الماتش',
-                  style: AppText.h(10, color: canRate ? AppColors.white : AppColors.ink),
-                ),
-              ),
+    return Pressable(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => MatchCenterScreen.open(context, m),
+      child: Container(
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: AppDecor.tile,
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(m.teamA, textAlign: TextAlign.end, style: AppText.h(13)),
             ),
-        ],
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
+              child: Text(m.scoreText.isEmpty ? '—' : m.scoreText, style: AppText.h(14, color: AppColors.white)),
+            ),
+            Expanded(child: Text(m.teamB, style: AppText.h(13))),
+            if (uid != null && (canRate || m.motmDone))
+              Pressable(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MatchRatingsScreen(match: m, userId: uid),
+                  ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  color: canRate ? AppColors.accent : null,
+                  decoration: canRate
+                      ? null
+                      : BoxDecoration(
+                          borderRadius: AppRadius.md,
+                          border: Border.all(color: AppColors.line, width: 1.2),
+                        ),
+                  child: Text(
+                    canRate ? 'قيّم ⭐' : 'رجل الماتش',
+                    style: AppText.h(10, color: canRate ? AppColors.white : AppColors.ink),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

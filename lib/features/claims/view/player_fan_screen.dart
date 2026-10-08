@@ -13,6 +13,9 @@ import '../../week/data/week_window.dart';
 import '../data/claims_repository.dart';
 import '../data/models/fan_stats.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
+import '../../auth/cubit/auth_cubit.dart';
+import '../../../core/share/story_frame.dart';
 
 /// "أنا كلاعب": اللاعب الحقيقي يشوف مين اختاره وخلّاه كابتن + يشيّر.
 class PlayerFanScreen extends StatefulWidget {
@@ -47,7 +50,7 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final s = snap.data!;
                 return ListView(
                   padding: EdgeInsets.zero,
@@ -85,51 +88,51 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
     );
   }
 
-  Widget _card(FanStats s) => Container(
-    decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
-    padding: const EdgeInsets.all(18),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
+  /// كارت story للاعب الحقيقي: «اختارني N واحد كابتن 🔥» + أرقامه — جاهز للستوري.
+  Widget _card(FanStats s) {
+    final refCode = context.read<AuthCubit>().state.user?.refCode;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: StoryFrame(
+        kicker: _window.label,
+        refCode: refCode,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 70, verified: true),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.name, style: AppText.h(22, color: AppColors.white)),
-                  Text('${p.team} · ${p.positionAr}', style: AppText.body(11, color: AppColors.neutral400)),
-                ],
-              ),
+            PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 110, verified: true),
+            const SizedBox(height: 10),
+            Text(p.name, style: AppText.h(26, color: AppColors.white)),
+            Text('${p.team} · ${p.positionAr}', style: AppText.body(12, color: AppColors.neutral400)),
+            const SizedBox(height: 18),
+            Text(
+              s.captains > 0 ? 'اختارني ${s.captains} واحد كابتن 🔥' : 'اختارني ${s.owners} واحد في تشكيلته ⚽',
+              textAlign: TextAlign.center,
+              style: AppText.h(24, color: const Color(0xFFF2C14E)),
             ),
-            Text('5', style: AppText.h(26, color: AppColors.accent)),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                _stat('${s.owners}', 'اختاروني'),
+                _stat('${s.ownership.toStringAsFixed(0)}%', 'الامتلاك'),
+                _stat('${s.pointsForUsers}', 'نقطة جبتها لهم'),
+              ],
+            ),
+            if (s.posTotal > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  '#${s.posRank} في ${p.positionAr} من ${s.posTotal}',
+                  style: AppText.h(14, color: AppColors.white),
+                ),
+              ),
           ],
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _stat('${s.owners}', 'اختاروك'),
-            _stat('${s.captains}', 'خلّوك كابتن'),
-            _stat('${s.ownership.toStringAsFixed(0)}%', 'الامتلاك'),
-          ],
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _stat(s.posTotal == 0 ? '—' : '#${s.posRank}', 'في ${p.positionAr} من ${s.posTotal}'),
-            _stat('${s.pointsForUsers}', 'نقطة جبتها لليوزرز'),
-            _stat('${s.managers}', 'عملوا تشكيلة'),
-          ],
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
 
   Widget _stat(String v, String k) => Expanded(
     child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(v, style: AppText.h(24, color: AppColors.accent400)),
         Text(k, style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.7))),

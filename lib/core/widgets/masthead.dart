@@ -31,10 +31,10 @@ class Masthead extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [AppColors.accent, AppColors.accent600],
         ),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(22)),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
         boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 14, offset: const Offset(0, 4))],
       ),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 22),
       child: Row(
         children: [
           if (onBack != null) ...[_BackButton(onBack!), const SizedBox(width: 12)],
@@ -48,9 +48,9 @@ class Masthead extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.h(18, color: AppColors.white),
+                  style: AppText.h(20, color: AppColors.white),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   subtitle,
                   maxLines: 1,

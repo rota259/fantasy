@@ -16,6 +16,7 @@ import '../../pitch/widgets/venue_tile.dart';
 import '../../pitch/widgets/venues_map_view.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// احجز ملعبك: الملاعب بتابين (قايمة / خريطة) → صفحة الملعب والحجز.
 /// (من غير OverlayShell عشان الخريطة تاخد المساحة كلها من غير scroll فوقها.)
@@ -89,7 +90,7 @@ class _PitchViewState extends State<_PitchView> {
           Expanded(
             child: BlocBuilder<VenuesCubit, VenuesState>(
               builder: (context, s) {
-                if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (s.isLoading) return const SkeletonList();
                 if (s.venues.isEmpty) {
                   return Center(
                     child: Text('لسه مفيش ملاعب متاحة', style: AppText.body(13, color: AppColors.neutral600)),

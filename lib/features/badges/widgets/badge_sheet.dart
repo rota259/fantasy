@@ -8,6 +8,7 @@ import '../data/badge_catalog.dart';
 import '../data/models/user_badge.dart';
 import 'badge_tile.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/effects.dart';
 
 /// تفاصيل شارة: المستويات + التقدّم + مشاركة (لو اتاخدت).
 Future<void> showBadgeSheet(BuildContext context, BadgeDef def, UserBadge? mine, String userName) {
@@ -46,7 +47,11 @@ class _BadgeSheet extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 child: Row(
                   children: [
-                    BadgeTile(def: def, tier: tier, size: 76, showName: false),
+                    tier > 0
+                        ? CoinSpin(
+                            child: BadgeTile(def: def, tier: tier, size: 76, showName: false),
+                          )
+                        : BadgeTile(def: def, tier: tier, size: 76, showName: false),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(

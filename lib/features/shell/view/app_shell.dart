@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../auth/cubit/auth_cubit.dart';
+import '../../live/goal_watcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/motion.dart';
 import '../../account/view/account_screen.dart';
@@ -33,7 +35,8 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final nav = context.read<AppNavCubit>();
-    return Scaffold(
+    final uid = context.read<AuthCubit>().state.user?.id;
+    final shell = Scaffold(
       backgroundColor: AppColors.bg,
       body: BlocBuilder<AppNavCubit, AppNavState>(
         builder: (context, state) {
@@ -86,6 +89,8 @@ class _AppShellState extends State<AppShell> {
         },
       ),
     );
+    // لحظة الجول: لاعب في تشكيلتي جاب جول وأنا فاتح الأبلكيشن
+    return uid == null ? shell : GoalWatcher(userId: uid, child: shell);
   }
 
   Widget _overlay(AppOverlayView o) {

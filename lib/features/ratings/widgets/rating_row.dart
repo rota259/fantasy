@@ -21,11 +21,9 @@ class RatingRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = rating;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      decoration: BoxDecoration(
-        color: leader ? AppColors.accent100 : null,
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: AppDecor.tile.copyWith(color: leader ? AppColors.accent100 : AppColors.card),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

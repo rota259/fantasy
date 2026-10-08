@@ -16,6 +16,7 @@ import '../data/integrity_repository.dart';
 import '../widgets/match_sheet_view.dart';
 import '../widgets/note_dialog.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 typedef MatchSheet = ({List<MatchEvent> events, Map<String, Player> players});
 
@@ -87,7 +88,7 @@ class _MatchReviewScreenState extends State<MatchReviewScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [

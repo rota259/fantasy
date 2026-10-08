@@ -21,7 +21,16 @@ void main() {
 
   test('المدير بيسجّل الأحداث الجديدة (والقديمة مش موجودة)', () {
     final types = PointsEngine.managerEvents.map((e) => e.$1).toSet();
-    expect(types, containsAll(['tackle', 'penaltySave', 'penaltyMiss', 'insult', 'ownGoal']));
-    expect(types.intersection({'yellowCard', 'redCard', 'cleanSheet', 'bonus', 'appearance'}), isEmpty);
+    expect(
+      types,
+      containsAll(['tackle', 'penaltySave', 'penaltyMiss', 'insult', 'ownGoal', 'yellowCard', 'redCard', 'sub']),
+    );
+    expect(types.intersection({'cleanSheet', 'bonus', 'appearance'}), isEmpty);
+  });
+
+  test('الكروت: أصفر −١ وأحمر −٢ · التبديل صفر', () {
+    expect(PointsEngine.eventPoints('yellowCard', 'MID'), -1);
+    expect(PointsEngine.eventPoints('redCard', 'MID'), -2);
+    expect(PointsEngine.eventPoints('sub', 'MID'), 0);
   });
 }

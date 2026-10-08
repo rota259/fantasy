@@ -11,6 +11,7 @@ import '../cubit/challenge_cubit.dart';
 import '../data/challenge_repository.dart';
 import '../data/models/prediction.dart';
 import '../widgets/challenge_card.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تحدّي الجولة: كل مدير في منطقتي بيختار ماتش من ماتشاته — توقّع، واللي يجيب فرق الأهداف صح ياخد +٥.
 class ChallengeOverlay extends StatelessWidget {
@@ -27,12 +28,7 @@ class ChallengeOverlay extends StatelessWidget {
           subtitle: 'PREDICT & WIN +${Prediction.bonus}',
           onBack: context.read<AppNavCubit>().back,
           children: s.loading
-              ? [
-                  Padding(
-                    padding: const EdgeInsets.all(40),
-                    child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-                  ),
-                ]
+              ? [Padding(padding: const EdgeInsets.all(40), child: const SkeletonList())]
               : s.items.isEmpty
               ? [_note('مفيش تحدّي في منطقتك دلوقتي — المديرين بينزّلوه قبل ماتشاتهم')]
               : [

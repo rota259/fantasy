@@ -13,6 +13,7 @@ import '../../week/widgets/totw_pitch.dart';
 import '../data/season.dart';
 import '../data/seasons_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// أبطال الموسم على مستوى كل المناطق: لاعب وتشكيلة النص الأول (بعد نص الموسم) والموسم كامل (بعد نهايته).
 class SeasonStarsScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
               future: _season,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                  return const SkeletonList();
                 }
                 final s = snap.data;
                 if (s == null) return _note('لسه مفيش موسم');
@@ -76,7 +77,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
       key: ValueKey(until),
       future: context.read<WeekRepository>().pointsBetween(s.startsAt, until, allZones: true),
       builder: (context, snap) {
-        if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+        if (!snap.hasData) return const SkeletonList();
         final ranked = snap.data!.where((p) => p.points > 0).toList();
         if (ranked.isEmpty) return _note('مفيش نقط في الفترة دي');
         final star = ranked.first;

@@ -1,5 +1,7 @@
 import '../../../core/supabase/supabase_service.dart';
+import 'player_match_line.dart';
 import 'player_round_points.dart';
+import 'round_recap.dart';
 import 'points_repository.dart';
 
 /// تنفيذ PointsRepository فوق دالة round_player_points.
@@ -14,5 +16,24 @@ class SupabasePointsRepository implements PointsRepository {
             )
             as List;
     return {for (final r in rows.cast<Map<String, dynamic>>()) r['player_id'].toString(): PlayerRoundPoints.fromMap(r)};
+  }
+
+  @override
+  Future<List<PlayerMatchLine>> playerRoundMatches(String playerId, DateTime roundEnd) async {
+    final rows =
+        await SupabaseService.client.rpc(
+              'player_round_matches',
+              params: {'p_player': playerId, 'p_round': roundEnd.toUtc().toIso8601String()},
+            )
+            as List;
+    return rows.cast<Map<String, dynamic>>().map(PlayerMatchLine.fromMap).toList();
+  }
+
+  @override
+  Future<RoundRecap> roundRecap(DateTime roundEnd) async {
+    final rows =
+        await SupabaseService.client.rpc('my_round_recap', params: {'p_round': roundEnd.toUtc().toIso8601String()})
+            as List;
+    return RoundRecap.fromMap(rows.isEmpty ? const {} : rows.first as Map<String, dynamic>);
   }
 }

@@ -9,6 +9,8 @@ import '../../../core/widgets/status_bar.dart';
 import '../../matches/widgets/match_format.dart';
 import '../data/admin_repository.dart';
 import '../data/models/admin_log_entry.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) سجل العمليات: مين من الأدمنز عمل إيه وإمتى.
 class AdminLogScreen extends StatelessWidget {
@@ -31,7 +33,7 @@ class AdminLogScreen extends StatelessWidget {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
                     child: Text('لسه مفيش عمليات', style: AppText.body(13, color: AppColors.neutral600)),
@@ -42,10 +44,9 @@ class AdminLogScreen extends StatelessWidget {
                   children: [
                     for (final e in snap.data!)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          border: Border(top: BorderSide(color: AppColors.divider)),
-                        ),
+                        margin: AppDecor.tileMargin,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        decoration: AppDecor.tile,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

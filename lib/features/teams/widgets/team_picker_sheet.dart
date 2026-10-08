@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/team.dart';
 import '../data/teams_repository.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير) اختيار فريق من فرقي — بيرجّع الاسم.
 Future<String?> showTeamPicker(BuildContext context, String userId) => showModalBottomSheet<String>(
@@ -15,10 +16,7 @@ Future<String?> showTeamPicker(BuildContext context, String userId) => showModal
       future: context.read<TeamsRepository>().mine(userId),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return SizedBox(
-            height: 160,
-            child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-          );
+          return SizedBox(height: 160, child: const SkeletonList());
         }
         if (snap.data!.isEmpty) {
           return Padding(

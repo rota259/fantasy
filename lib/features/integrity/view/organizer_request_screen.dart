@@ -11,6 +11,7 @@ import '../data/integrity_repository.dart';
 import '../data/models/organizer_request.dart';
 import '../widgets/note_dialog.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// "عايز أنظّم ماتشات": القواعد + طلب للأدمن + حالة الطلب.
 class OrganizerRequestScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _OrganizerRequestScreenState extends State<OrganizerRequestScreen> {
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
-                  return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                  return const SkeletonList();
                 }
                 return ListView(
                   padding: const EdgeInsets.all(16),

@@ -8,16 +8,18 @@ import '../../players/data/players_repository.dart';
 
 part 'manager_players_state.dart';
 
-/// ViewModel لإدارة اللاعيبة (المدير يضيف/يحذف).
+/// ViewModel لإدارة اللاعيبة: الأدمن (كل اللاعيبة) أو مدير المنطقة (لاعيبة [teams] بتوعه).
 class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
-  ManagerPlayersCubit(this._repo) : super(const ManagerPlayersState());
+  ManagerPlayersCubit(this._repo, {this.teams}) : super(const ManagerPlayersState());
 
   final PlayersRepository _repo;
+  final List<String>? teams;
 
   Future<void> load() async {
     emit(const ManagerPlayersState(status: ManagerPlayersStatus.loading));
     try {
-      final players = await _repo.fetchAll();
+      final t = teams;
+      final players = t == null ? await _repo.fetchAll() : (t.isEmpty ? const <Player>[] : await _repo.fetchByTeams(t));
       emit(ManagerPlayersState(status: ManagerPlayersStatus.ready, players: players));
     } catch (_) {
       emit(const ManagerPlayersState(status: ManagerPlayersStatus.ready));
@@ -59,15 +61,20 @@ class ManagerPlayersCubit extends Cubit<ManagerPlayersState> {
 
   /// بيرجّع null لو نجح، أو رسالة الخطأ لو فشل.
   Future<String?> remove(String id) async {
+    final r = await removeMany([id]);
+    return r.error ?? (r.deleted == 0 ? _notAllowed : null);
+  }
+
+  /// حذف بالجملة (المحدّدين أو الكل) — بيرجّع كام اتحذف وكام اتساب.
+  Future<({int deleted, int skipped, String? error})> removeMany(List<String> ids) async {
     try {
-      final n = await _repo.deletePlayer(id);
-      if (n == 0) {
-        return 'الحذف للأدمن بس';
-      }
+      final n = await _repo.deletePlayers(ids);
       await load();
-      return null;
+      return (deleted: n, skipped: ids.length - n, error: null);
     } catch (e) {
-      return 'فشل الحذف: $e';
+      return (deleted: 0, skipped: ids.length, error: 'فشل الحذف: $e');
     }
   }
+
+  String get _notAllowed => teams == null ? 'مقدرتش أحذفه' : 'اللاعب ده لعب واتسجّل له أحداث — الحذف من الأدمن بس';
 }

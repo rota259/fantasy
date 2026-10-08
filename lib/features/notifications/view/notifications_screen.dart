@@ -9,7 +9,10 @@ import '../../matches/widgets/match_format.dart';
 import '../cubit/notifications_cubit.dart';
 import '../data/models/app_notification.dart';
 import '../data/notifications_repository.dart';
+import '../notification_router.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// صندوق الإشعارات لكل اليوزرز (اللي المدير بيبعتها).
 class NotificationsScreen extends StatelessWidget {
@@ -31,7 +34,7 @@ class NotificationsScreen extends StatelessWidget {
               child: BlocBuilder<NotificationsCubit, NotificationsState>(
                 builder: (context, s) {
                   if (s.isLoading) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                    return const SkeletonList();
                   }
                   if (s.items.isEmpty) {
                     return Center(
@@ -42,8 +45,8 @@ class NotificationsScreen extends StatelessWidget {
                     color: AppColors.accent,
                     onRefresh: () => context.read<NotificationsCubit>().load(),
                     child: ListView(
-                      padding: EdgeInsets.zero,
-                      children: [for (final (i, n) in s.items.indexed) FadeSlideIn(index: i, child: _row(n))],
+                      padding: const EdgeInsets.only(top: 14, bottom: 24),
+                      children: [for (final (i, n) in s.items.indexed) FadeSlideIn(index: i, child: _row(context, n))],
                     ),
                   );
                 },
@@ -55,41 +58,47 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _row(AppNotification n) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 34,
-            height: 34,
-            alignment: Alignment.center,
-            color: AppColors.accent,
-            child: Icon(Icons.notifications, size: 18, color: AppColors.white),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(n.title, style: AppText.h(14)),
-                if (n.body.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(n.body, style: AppText.body(11, color: AppColors.neutral700)),
-                ],
-                const SizedBox(height: 3),
-                Text(
-                  '${arabicWeekday(n.createdAt)} ${arabicTime(n.createdAt)}',
-                  style: AppText.body(9, color: AppColors.neutral500),
-                ),
-              ],
+  /// الضغط على الإشعار بيفتح صفحته (الماتش · التحدّي · تشكيلة الجولة …).
+  Widget _row(BuildContext context, AppNotification n) {
+    final opens = (n.link?.isNotEmpty ?? false) || n.matchId != null;
+    return Pressable(
+      behavior: HitTestBehavior.opaque,
+      onTap: opens ? () => NotificationRouter.open(context, link: n.link, matchId: n.matchId) : null,
+      child: Container(
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: AppDecor.tile,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              color: AppColors.accent,
+              child: Icon(Icons.notifications, size: 18, color: AppColors.white),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(n.title, style: AppText.h(14)),
+                  if (n.body.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(n.body, style: AppText.body(11, color: AppColors.neutral700)),
+                  ],
+                  const SizedBox(height: 3),
+                  Text(
+                    '${arabicWeekday(n.createdAt)} ${arabicTime(n.createdAt)}',
+                    style: AppText.body(9, color: AppColors.neutral500),
+                  ),
+                ],
+              ),
+            ),
+            if (opens) Text('›', style: AppText.body(18, color: AppColors.neutral600)),
+          ],
+        ),
       ),
     );
   }

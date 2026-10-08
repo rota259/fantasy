@@ -30,6 +30,20 @@ class SupabaseAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<int> demoteOrganizers(List<String> userIds) async {
+    if (userIds.isEmpty) return 0;
+    final n = await SupabaseService.client.rpc('admin_demote_organizers', params: {'p_ids': userIds});
+    return (n as num?)?.toInt() ?? 0;
+  }
+
+  @override
+  Future<int> deleteUsers(List<String> userIds) async {
+    if (userIds.isEmpty) return 0;
+    final n = await SupabaseService.client.rpc('admin_delete_users', params: {'p_ids': userIds});
+    return (n as num?)?.toInt() ?? 0;
+  }
+
+  @override
   Future<void> setRole(String userId, String role) async {
     await SupabaseService.client.rpc('set_user_role', params: {'uid': userId, 'new_role': role});
   }

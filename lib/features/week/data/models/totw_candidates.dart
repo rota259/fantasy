@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../team_of_week.dart';
+
 import 'week_player.dart';
 
 /// (أدمن) اقتراح تشكيلة الجولة لمنطقة (admin_totw_candidates).
@@ -22,15 +24,13 @@ class TotwCandidates extends Equatable {
   final List<String> tieWinners; // فايزين التصويت (بعد ما يخلص)
   final bool published;
 
-  /// الاقتراح الافتراضي: الأعلى نقط، ولو فيه تعادل على آخر مكان → فايزين التصويت.
+  /// الاقتراح الافتراضي: أعلى حارس + أعلى ٤ (غير الحراس)، ولو فيه تعادل على آخر مكان → فايزين التصويت.
   List<String> get suggested {
-    final top = candidates.take(5).toList();
-    if (candidates.length <= 5 || top.last.points != candidates[5].points || tieWinners.isEmpty) {
-      return top.map((p) => p.id).toList();
-    }
-    final cut = top.last.points;
-    final sure = candidates.where((p) => p.points > cut).map((p) => p.id).toList();
-    return [...sure, ...tieWinners].take(5).toList();
+    final team = TeamOfWeek.build(candidates);
+    return [
+      for (final p in team.lineup(winnerIds: tieWinners))
+        if (p != null) p.id,
+    ];
   }
 
   factory TotwCandidates.fromMap(Map<String, dynamic> m) => TotwCandidates(

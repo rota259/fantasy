@@ -3,13 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/selection_bar.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/manager_match_cubit.dart';
 import 'add_team_player_sheet.dart';
-import '../../../core/widgets/motion.dart';
+import 'team_lineup_pitch.dart';
 
-/// (مدير) تاب التشكيلة: كل فريق ٤ + حارس أساسيين و٢ احتياطي، + حفظ + إبلاغ اليوزرز.
+/// (مدير) تاب التشكيلة: خماسي ولا سداسي، وكل فريق على ملعبه (الأول فوق والتاني تحت).
+/// دوس على مكان فاضي تختار لاعب، ودوس على لاعب تنقله احتياطي/أساسي أو تشيله أو تحذفه من الفريق.
 class MatchLineupSection extends StatelessWidget {
   const MatchLineupSection({super.key, required this.match, required this.cubit, required this.state});
 
@@ -20,7 +23,6 @@ class MatchLineupSection extends StatelessWidget {
   void _snack(BuildContext context, String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
-  /// ينفّذ عملية ويعرض رسالتها (الـ messenger بيتاخد قبل الانتظار).
   Future<void> _run(BuildContext context, Future<String> Function() action) async {
     final messenger = ScaffoldMessenger.of(context);
     final msg = await action();
@@ -32,16 +34,23 @@ class MatchLineupSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('نزّل تشكيلة الفريقين', style: AppText.h(15)),
+        Row(
+          children: [
+            Expanded(child: Text('الملعب', style: AppText.h(15))),
+            _format(5, 'خماسي'),
+            const SizedBox(width: 6),
+            _format(6, 'سداسي'),
+          ],
+        ),
         const SizedBox(height: 4),
         Text(
-          'كل فريق: ٤ لاعيبة + حارس أساسيين + ٢ احتياطي. لما تخلص اضغط «احفظ التشكيلة».',
+          'كل فريق: ${state.format} أساسيين (حارس + ${state.format - 1}) والاحتياطي اختياري — الفريق آخره ٧.',
           style: AppText.body(11, color: AppColors.neutral700),
         ),
         const SizedBox(height: 12),
-        ..._team(context, match.teamA),
+        _team(context, match.teamA),
         const SizedBox(height: 18),
-        ..._team(context, match.teamB),
+        _team(context, match.teamB),
         const SizedBox(height: 20),
         _button('💾 احفظ التشكيلة', filled: true, onTap: () => _run(context, cubit.saveLineup)),
         const SizedBox(height: 10),
@@ -50,87 +59,126 @@ class MatchLineupSection extends StatelessWidget {
     );
   }
 
-  List<Widget> _team(BuildContext context, String team) {
-    final players = state.players.where((p) => p.team == team).toList();
-    final ids = players.map((p) => p.id).toSet();
-    int count(String st) => state.lineup.entries.where((e) => e.value == st && ids.contains(e.key)).length;
-    return [
-      Row(
-        children: [
-          Expanded(
-            child: Text(team, style: AppText.h(14, color: AppColors.accent)),
-          ),
-          Text(
-            'أساسي ${count('starting')}/5 · احتياطي ${count('bench')}/2',
-            style: AppText.body(10, color: AppColors.neutral700),
-          ),
-          const SizedBox(width: 8),
-          Pressable(
-            onTap: () async {
-              final r = await showAddTeamPlayerSheet(context, team);
-              if (r != null) await cubit.addPlayerToTeam(r.name, team, r.position);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.md,
-                border: Border.all(color: AppColors.line, width: 1.2),
-              ),
-              child: Text('+ ضيف لاعب', style: AppText.h(11)),
-            ),
-          ),
-        ],
-      ),
-      if (players.isEmpty)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Text('لسه مفيش لاعيبة — اضغط "+ ضيف لاعب"', style: AppText.body(11, color: AppColors.neutral600)),
+  Widget _format(int f, String label) {
+    final on = state.format == f;
+    return Pressable(
+      onTap: () => cubit.setFormat(f),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: on ? AppColors.accent : AppColors.card,
+          borderRadius: AppRadius.md,
+          border: Border.all(color: on ? AppColors.accent : AppColors.line),
         ),
-      for (final p in players) _row(context, p),
-    ];
+        child: Text('$label $f', style: AppText.h(12, color: on ? AppColors.white : AppColors.ink)),
+      ),
+    );
   }
 
-  Widget _row(BuildContext context, Player p) {
-    final status = state.lineup[p.id] ?? 'out';
-    Widget opt(String label, String value) => Pressable(
-      onTap: () {
-        final err = cubit.setLineup(p.id, value);
-        if (err != null) _snack(context, err);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: AppRadius.md,
-          color: status == value ? AppColors.accent : null,
-          border: Border.all(color: status == value ? AppColors.accent : AppColors.divider, width: 2),
-        ),
-        child: Text(label, style: AppText.h(10, color: status == value ? AppColors.white : AppColors.ink)),
-      ),
+  Widget _team(BuildContext context, String team) {
+    List<Player> inStatus(String st) => [
+      for (final p in state.players)
+        if (p.team == team && state.lineup[p.id] == st) p,
+    ];
+    return TeamLineupPitch(
+      team: team,
+      format: state.format,
+      starters: inStatus('starting'),
+      bench: inStatus('bench'),
+      onSlot: (kind) => _pick(context, team, kind),
+      onPlayer: (p) => _options(context, p),
     );
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(p.name, style: AppText.h(13)),
-                Text(p.positionAr, style: AppText.body(9, color: AppColors.neutral700)),
-              ],
+  }
+
+  /// مكان فاضي: اختار من لاعيبة الفريق اللي مش في التشكيلة (الحارس للحارس) أو ضيف لاعب جديد.
+  Future<void> _pick(BuildContext context, String team, String kind) async {
+    final free = [
+      for (final p in state.players)
+        if (p.team == team &&
+            !state.lineup.containsKey(p.id) &&
+            (kind == 'bench' || (kind == 'gk') == (p.position == 'GK')))
+          p,
+    ];
+    final chosen = await showModalBottomSheet<Object>(
+      context: context,
+      backgroundColor: AppColors.bg,
+      builder: (c) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                kind == 'gk' ? 'الحارس — $team' : (kind == 'bench' ? 'احتياطي — $team' : 'في الملعب — $team'),
+                style: AppText.h(15),
+              ),
             ),
-          ),
-          opt('أساسي', 'starting'),
-          const SizedBox(width: 5),
-          opt('احتياطي', 'bench'),
-          const SizedBox(width: 5),
-          opt('بره', 'out'),
-        ],
+            for (final p in free)
+              ListTile(
+                title: Text(p.name, style: AppText.h(14)),
+                subtitle: Text(p.positionAr, style: AppText.body(11)),
+                onTap: () => Navigator.pop(c, p),
+              ),
+            ListTile(
+              leading: Icon(Icons.person_add_alt, color: AppColors.accent),
+              title: Text('+ ضيف لاعب جديد للفريق', style: AppText.h(13, color: AppColors.accent)),
+              onTap: () => Navigator.pop(c, 'new'),
+            ),
+          ],
+        ),
       ),
     );
+    if (!context.mounted || chosen == null) return;
+    if (chosen == 'new') {
+      final r = await showAddTeamPlayerSheet(context, team);
+      if (r != null) await cubit.addPlayerToTeam(r.name, team, r.position);
+      return;
+    }
+    final err = cubit.setLineup((chosen as Player).id, kind == 'bench' ? 'bench' : 'starting');
+    if (err != null && context.mounted) _snack(context, err);
+  }
+
+  /// لاعب في التشكيلة: احتياطي ⇄ أساسي · شيله من التشكيلة · احذفه من الفريق خالص.
+  Future<void> _options(BuildContext context, Player p) async {
+    final starting = state.lineup[p.id] == 'starting';
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.bg,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('${p.name} · ${p.positionAr}', style: AppText.h(15)),
+            ),
+            ListTile(
+              title: Text(starting ? 'حطه احتياطي' : 'حطه أساسي', style: AppText.h(14)),
+              onTap: () => Navigator.pop(c, starting ? 'bench' : 'starting'),
+            ),
+            ListTile(
+              title: Text('شيله من التشكيلة', style: AppText.h(14)),
+              onTap: () => Navigator.pop(c, 'out'),
+            ),
+            ListTile(
+              title: Text('احذف اللاعب من الفريق', style: AppText.h(14, color: AppColors.danger)),
+              onTap: () => Navigator.pop(c, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!context.mounted || action == null) return;
+    if (action == 'delete') {
+      final ok = await confirmBulk(context, 'حذف ${p.name}', 'هيتشال من الفريق خالص (لو لسه ملعبش ماتشات).');
+      if (!ok || !context.mounted) return;
+      final err = await cubit.deletePlayer(p.id);
+      if (context.mounted) _snack(context, err ?? 'اتحذف ${p.name} ✓');
+      return;
+    }
+    final err = cubit.setLineup(p.id, action);
+    if (err != null && context.mounted) _snack(context, err);
   }
 
   Widget _button(String text, {bool filled = false, required VoidCallback onTap}) => Pressable(

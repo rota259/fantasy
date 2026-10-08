@@ -11,6 +11,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../../leagues/data/leagues_repository.dart';
 import '../../leagues/data/models/league.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير) كل دوريات اليوزرز: مين عمله وكام عضو — واحذف أي دوري مخالف (مراهنات مثلًا).
 class ManagerLeaguesScreen extends StatefulWidget {
@@ -107,7 +108,7 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final list = snap.data!
                     .where((l) => _q.isEmpty || l.name.contains(_q) || (l.ownerName ?? '').contains(_q))
                     .toList();
@@ -142,10 +143,8 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
   }
 
   Widget _row(League l) => Container(
-    padding: const EdgeInsets.symmetric(vertical: 11),
-    decoration: BoxDecoration(
-      border: Border(top: BorderSide(color: AppColors.divider)),
-    ),
+    padding: const EdgeInsets.symmetric(vertical: 14),
+    decoration: AppDecor.softDivider,
     child: Row(
       children: [
         Expanded(

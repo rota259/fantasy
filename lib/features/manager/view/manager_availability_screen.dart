@@ -12,6 +12,7 @@ import '../../players/data/players_repository.dart';
 import '../../players/widgets/availability_badge.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// شاشة المدير: حالة اللاعيبة (جاهز/مصاب/…) وسببها.
 class ManagerAvailabilityScreen extends StatelessWidget {
@@ -33,7 +34,7 @@ class ManagerAvailabilityScreen extends StatelessWidget {
               child: BlocBuilder<ManagerPlayersCubit, ManagerPlayersState>(
                 builder: (context, s) {
                   if (s.isLoading) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                    return const SkeletonList();
                   }
                   if (s.players.isEmpty) {
                     return Center(
@@ -42,7 +43,7 @@ class ManagerAvailabilityScreen extends StatelessWidget {
                   }
                   final cubit = context.read<ManagerPlayersCubit>();
                   return ListView(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.only(top: 14, bottom: 24),
                     children: [for (final p in s.players) _row(context, cubit, p)],
                   );
                 },
@@ -59,10 +60,9 @@ class ManagerAvailabilityScreen extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () => _editSheet(context, cubit, p),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider)),
-        ),
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: AppDecor.tile,
         child: Row(
           children: [
             AvailabilityBadge(p.availability, size: 22),

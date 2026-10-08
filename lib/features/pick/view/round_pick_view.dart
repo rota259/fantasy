@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../matches/cubit/live_teams_cubit.dart';
+import '../../matches/data/matches_repository.dart';
+import '../../points/widgets/player_round_sheet.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../chips/cubit/chips_cubit.dart';
@@ -16,6 +20,7 @@ import '../data/picks_repository.dart';
 import '../widgets/pick_pitch.dart';
 import '../widgets/pick_sheets.dart';
 import '../widgets/round_pick_bars.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// تشكيلة الجولة: ٧ من أي فرق في منطقتك + الكروت. بتتقفل السبت ٣ العصر (والوايلد كارد لحد ٤ العصر).
 class RoundPickView extends StatelessWidget {
@@ -41,15 +46,25 @@ class RoundPickView extends StatelessWidget {
           )..load(),
         ),
         BlocProvider(create: (c) => ChipsCubit(c.read<ChipsRepository>(), window.cutoff)..load()),
+        BlocProvider(create: (c) => LiveTeamsCubit(c.read<MatchesRepository>(), window)..load()),
       ],
       child: _View(window: window),
     );
   }
 }
 
-class _View extends StatelessWidget {
+class _View extends StatefulWidget {
   const _View({required this.window});
   final WeekWindow window;
+
+  @override
+  State<_View> createState() => _ViewState();
+}
+
+class _ViewState extends State<_View> {
+  int? _entry; // بعد الحفظ: اللاعيبة يدخلوا الملعب واحد ورا التاني
+
+  WeekWindow get window => widget.window;
 
   /// التعديل مسموح قبل الديدلاين، أو بالوايلد كارد لحد ما الجولة تبدأ.
   /// (في وضع التجربة الديدلاين = نهاية الجولة، فالتشكيلة مفتوحة حتى والجولة شغّالة)
@@ -66,7 +81,11 @@ class _View extends StatelessWidget {
         duration: Duration(milliseconds: err == null ? 2200 : 4000),
       ),
     );
-    if (err == null) chips.load(); // الكروت بتحتاج تشكيلة محفوظة
+    if (err == null) {
+      chips.load(); // الكروت بتحتاج تشكيلة محفوظة
+      HapticFeedback.mediumImpact();
+      if (mounted) setState(() => _entry = DateTime.now().millisecondsSinceEpoch);
+    }
   }
 
   @override
@@ -89,7 +108,7 @@ class _View extends StatelessWidget {
   Widget _body(BuildContext context, bool editable) {
     return BlocBuilder<RoundPickCubit, RoundPickState>(
       builder: (context, s) {
-        if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+        if (s.isLoading) return const SkeletonList();
         if (s.players.isEmpty) {
           return _note('لسه مفيش لاعيبة في منطقتك — المديرين بينزّلوا فرقهم وماتشاتهم قبل السبت ٣ العصر');
         }
@@ -104,15 +123,26 @@ class _View extends StatelessWidget {
                 color: AppColors.info,
               ),
             if (!s.saved && !editable) PickBanner(text: 'معملتش تشكيلة للجولة دي', color: AppColors.neutral600),
-            PickPitch(
-              state: s,
-              onSlotTap: editable ? (kind) => showAddPlayerSheet(context, cubit, s, kind) : (_) {},
-              onPlayerTap: editable ? (p) => showPlayerOptionsSheet(context, cubit, s, p) : (_) {},
+            BlocBuilder<LiveTeamsCubit, Set<String>>(
+              builder: (context, live) => PickPitch(
+                state: s,
+                liveTeams: live,
+                entryKey: _entry,
+                // السحب والإفلات: لاعب على لاعب = تبديل، على مكان فاضي = ينتقل
+                onSwap: editable ? cubit.swap : null,
+                onMoveTo: editable ? (id, kind) => cubit.setStatus(id, kind == 'bench' ? 'bench' : 'starting') : null,
+                onSlotTap: editable ? (kind) => showAddPlayerSheet(context, cubit, s, kind) : (_) {},
+                // مقفولة: الضغط على لاعب = اللي عمله في الجولة
+                onPlayerTap: editable
+                    ? (p) => showPlayerOptionsSheet(context, cubit, s, p)
+                    : (p) => showPlayerRoundSheetFor(context, p, window),
+              ),
             ),
             const ChipsBar(),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
               child: Text(
+                'دوس مطوّل على لاعب واسحبه على لاعب تاني يتبدّلوا، أو على مكان فاضي ينتقل له.\n'
                 'القواعد: ٧ لاعيبة من أي فرق في منطقتك — ٥ أساسي (حارس واحد) + ٢ احتياطي.\n'
                 'لازم كابتن (×٢) وكابتن بديل (بياخد المضاعفة لو الكابتن ملعبش ولا ماتش في الجولة).\n'
                 'نقط كل لاعب = كل اللي عمله في ماتشات الجولة. الديدلاين ${arabicWeekday(window.deadline)} '

@@ -14,6 +14,12 @@ abstract interface class AdminRepository {
   /// مدير منطقة ↔ يوزر (user | organizer). الأدمن بيتضاف من Supabase بس.
   Future<void> setRole(String userId, String role);
 
+  /// (أدمن) مديرين منطقة → يوزرز عاديين بالجملة. بيرجّع كام اتغيّر.
+  Future<int> demoteOrganizers(List<String> userIds);
+
+  /// (أدمن) مسح حسابات خالص (الأدمنز وحسابك مش بيتمسحوا). بيرجّع كام اتمسح.
+  Future<int> deleteUsers(List<String> userIds);
+
   /// حظر / فك حظر (المحظور بيتفرّج بس).
   Future<void> setActive(String userId, bool active);
 

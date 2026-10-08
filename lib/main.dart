@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'core/app_navigator.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/supabase/supabase_service.dart';
@@ -44,6 +45,7 @@ class FantasyApp extends StatelessWidget {
         ],
         child: BlocBuilder<ThemeModeCubit, ThemeMode>(
           builder: (context, mode) => MaterialApp(
+            navigatorKey: appNavigatorKey,
             title: 'الخماسي',
             debugShowCheckedModeBanner: false,
             themeMode: mode,

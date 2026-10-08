@@ -11,6 +11,7 @@ import '../../integrity/widgets/note_dialog.dart';
 import '../data/team.dart';
 import '../data/teams_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير) فرقي: اللي بعملها بس هي اللي أقدر أعمل بيها ماتشات وأضيف ليها لاعيبة.
 class MyTeamsScreen extends StatefulWidget {
@@ -75,9 +76,9 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                     child: Text(dbMessage(snap.error!), style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 return ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.only(bottom: 24),
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -104,10 +105,9 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
   }
 
   Widget _row(Team t) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    decoration: BoxDecoration(
-      border: Border(top: BorderSide(color: AppColors.divider)),
-    ),
+    margin: AppDecor.tileMargin,
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    decoration: AppDecor.tile,
     child: Row(
       children: [
         Icon(Icons.shield_outlined, size: 20, color: AppColors.accent),

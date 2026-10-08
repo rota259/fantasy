@@ -33,10 +33,20 @@ class SupabaseEventsRepository implements EventsRepository {
   }
 
   @override
-  Future<void> addEvent({required String matchId, required String playerId, required String type, int? minute}) async {
-    await SupabaseService.table(
-      _table,
-    ).insert({'match_id': matchId, 'player_id': playerId, 'type': type, 'minute': minute});
+  Future<void> addEvent({
+    required String matchId,
+    required String playerId,
+    required String type,
+    int? minute,
+    String? otherPlayerId,
+  }) async {
+    await SupabaseService.table(_table).insert({
+      'match_id': matchId,
+      'player_id': playerId,
+      'type': type,
+      'minute': minute,
+      if (otherPlayerId != null) 'other_player_id': otherPlayerId,
+    });
   }
 
   @override

@@ -29,6 +29,7 @@ import 'manager_seasons_screen.dart';
 import 'manager_users_screen.dart';
 import 'manager_venues_screen.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// لوحة الأدمن: إحصائيات سريعة + كل أدوات الإدارة.
 class ManagerHubScreen extends StatelessWidget {
@@ -45,7 +46,7 @@ class ManagerHubScreen extends StatelessWidget {
           Masthead(title: 'لوحة الأدمن', subtitle: 'ADMIN', onBack: () => Navigator.pop(context)),
           Expanded(
             child: ListView(
-              padding: EdgeInsets.zero,
+              padding: const EdgeInsets.only(bottom: 24),
               children: [
                 const ManagerDashboard(),
                 _group('النزاهة'),
@@ -196,10 +197,9 @@ class ManagerHubScreen extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => screen)),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider)),
-        ),
+        margin: AppDecor.tileMargin,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        decoration: AppDecor.tile,
         child: Row(
           children: [
             Icon(icon, size: 22, color: AppColors.accent),

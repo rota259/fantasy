@@ -14,6 +14,7 @@ import 'venue_form_screen.dart';
 import 'venue_requests_screen.dart';
 import '../../../core/widgets/net_image.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// ملاعبي: أي يوزر يضيف ملعبه (لحد ٥)، يعدّله، ويوافق على طلبات الحجز.
 class MyVenuesScreen extends StatefulWidget {
@@ -101,10 +102,10 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
                     child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
                   );
                 }
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final list = snap.data!;
                 return ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.only(top: 14, bottom: 24),
                   children: [
                     if (list.isEmpty)
                       Padding(
@@ -145,10 +146,9 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
     behavior: HitTestBehavior.opaque,
     onTap: () => _open(v),
     child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider)),
-      ),
+      margin: AppDecor.tileMargin,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: AppDecor.tile,
       child: Row(
         children: [
           SizedBox(

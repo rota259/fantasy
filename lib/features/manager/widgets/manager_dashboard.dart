@@ -7,6 +7,7 @@ import '../../../core/theme/app_text.dart';
 import '../../auth/data/models/app_user.dart';
 import '../../week/data/week_window.dart';
 import '../data/admin_repository.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 typedef _Stats = ({AdminCounts counts, List<AppUser> top, int nextPicks, int managersActive});
 
@@ -38,10 +39,7 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Padding(
-            padding: EdgeInsets.all(20),
-            child: Center(child: CircularProgressIndicator(color: AppColors.accent)),
-          );
+          return Padding(padding: EdgeInsets.all(20), child: const SkeletonList());
         }
         final s = snap.data!;
         return Container(

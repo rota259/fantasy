@@ -8,6 +8,7 @@ import '../../../core/theme/app_text.dart';
 import '../../auth/data/models/app_user.dart';
 import '../../manager/data/admin_repository.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (أدمن) صاحب الملعب: بحث في السيرفر بالاسم/الموبايل (مش قايمة بكل اليوزرز).
 class OwnerPicker extends StatefulWidget {
@@ -110,7 +111,7 @@ class _SearchState extends State<_Search> {
               future: _results,
               builder: (context, snap) {
                 if (_results == null) return const SizedBox.shrink();
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 return ListView(
                   children: [
                     for (final u in snap.data!)

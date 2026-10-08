@@ -20,6 +20,7 @@ class PentagonPitch extends StatelessWidget {
     this.background,
     this.stripe,
     this.line = const Color(0x8C4FCA85), // rgba(79,202,133,.55)
+    this.shape = pentagon,
   });
 
   final double height;
@@ -31,13 +32,26 @@ class PentagonPitch extends StatelessWidget {
   final Color? stripe; // الافتراضي nightStripe
   final Color line;
 
+  /// رؤوس المضلّع المرسوم (نِسَب 0..1): خماسي (الافتراضي) أو سداسي.
+  final List<Offset> shape;
+
   /// رؤوس المضلّع (نِسَب 0..1) — مطابقة للـ handoff.
-  static const List<Offset> _pentagon = [
+  static const List<Offset> pentagon = [
     Offset(0.50, 0.86),
     Offset(0.84, 0.60),
     Offset(0.71, 0.20),
     Offset(0.29, 0.20),
     Offset(0.16, 0.60),
+  ];
+
+  /// ملعب سداسي: الحارس تحت + ٥.
+  static const List<Offset> hexagon = [
+    Offset(0.50, 0.88),
+    Offset(0.85, 0.68),
+    Offset(0.85, 0.30),
+    Offset(0.50, 0.12),
+    Offset(0.15, 0.30),
+    Offset(0.15, 0.68),
   ];
 
   @override
@@ -48,7 +62,7 @@ class PentagonPitch extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: Stack(
         children: [
-          Positioned.fill(child: CustomPaint(painter: _PitchPainter(stripe ?? AppColors.nightStripe, line))),
+          Positioned.fill(child: CustomPaint(painter: _PitchPainter(stripe ?? AppColors.nightStripe, line, shape))),
           for (final t in tokens) Align(alignment: Alignment(t.leftPct / 50 - 1, t.topPct / 50 - 1), child: t.child),
         ],
       ),
@@ -57,9 +71,10 @@ class PentagonPitch extends StatelessWidget {
 }
 
 class _PitchPainter extends CustomPainter {
-  _PitchPainter(this.stripeColor, this.lineColor);
+  _PitchPainter(this.stripeColor, this.lineColor, this.shape);
   final Color stripeColor;
   final Color lineColor;
+  final List<Offset> shape;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -71,8 +86,8 @@ class _PitchPainter extends CustomPainter {
     }
     // مضلّع الأرض
     final path = Path();
-    for (var i = 0; i < PentagonPitch._pentagon.length; i++) {
-      final p = PentagonPitch._pentagon[i];
+    for (var i = 0; i < shape.length; i++) {
+      final p = shape[i];
       final o = Offset(p.dx * size.width, p.dy * size.height);
       i == 0 ? path.moveTo(o.dx, o.dy) : path.lineTo(o.dx, o.dy);
     }
@@ -87,5 +102,6 @@ class _PitchPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _PitchPainter old) => old.stripeColor != stripeColor || old.lineColor != lineColor;
+  bool shouldRepaint(covariant _PitchPainter old) =>
+      old.stripeColor != stripeColor || old.lineColor != lineColor || old.shape != shape;
 }

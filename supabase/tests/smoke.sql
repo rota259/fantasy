@@ -27,6 +27,17 @@ create function t.as_user(u uuid) returns void language sql as $$
 $$;
 grant execute on function t.as_user(uuid) to anon, authenticated;
 
+-- تشكيلة الجولة: كام حارس وكام لاعب من المرشّحين
+create function t.totw_pick(gks int, others int) returns uuid[] language sql as $$
+  select array(
+    (select (c->>'id')::uuid from public.admin_totw_candidates(public.fn_week_cutoff(now()) - interval '7 days') a,
+            jsonb_array_elements(a.candidates) c where c->>'position' = 'GK' limit gks)
+    union all
+    (select (c->>'id')::uuid from public.admin_totw_candidates(public.fn_week_cutoff(now()) - interval '7 days') a,
+            jsonb_array_elements(a.candidates) c where c->>'position' <> 'GK' limit others));
+$$;
+grant execute on function t.totw_pick(int, int) to authenticated;
+
 -- ── اليوزرز (البروفايل بيتعمل من trigger التسجيل) ──
 insert into auth.users (id, email, raw_user_meta_data) values
  ('00000000-0000-0000-0000-00000000000a', 'admin@t.co', jsonb_build_object('name', 'أدمن', 'phone', '0100', 'zone_id', (select id from public.zones where name = 'بدر'))),
@@ -157,15 +168,16 @@ select t.check('account deleted with profile', (select count(*) = 0 from public.
 -- ── تشكيلة الجولة بموافقة الأدمن ──
 insert into public.events (match_id, player_id, type)
 select (select id from public.matches limit 1), id, 'assist' from public.players where name in ('ح١', 'د١', 'و١', 'ه٣', 'د٢');
-update public.matches set date_time = now() - interval '8 days';   -- الجولة بتاعته خلصت
+-- الجولة اللي فاتت (خلصت): الماتش ليلة الجمعة ٦ الصبح قبل نهايتها — ميعاد ثابت مش بيقع في فاصل السبت
+update public.matches set date_time = public.fn_week_cutoff(now()) - interval '7 days 2 hours';
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 set role authenticated;
 select t.check('admin sees zone candidates',
-  (select count(*) >= 1 from public.admin_totw_candidates(public.fn_week_cutoff(now() - interval '8 days'))));
-select public.publish_totw(public.fn_week_cutoff(now() - interval '8 days'),
-  (select id from public.zones where name = 'بدر'),
-  array(select (c->>'id')::uuid from public.admin_totw_candidates(public.fn_week_cutoff(now() - interval '8 days')) a,
-        jsonb_array_elements(a.candidates) c limit 5));
+  (select count(*) >= 1 from public.admin_totw_candidates((public.fn_week_cutoff(now()) - interval '7 days'))));
+select t.expect_fail('totw with two goalkeepers', $q$select public.publish_totw(public.fn_week_cutoff(now()) - interval '7 days',
+  (select id from public.zones where name = 'بدر'), t.totw_pick(2, 3))$q$);
+select public.publish_totw((public.fn_week_cutoff(now()) - interval '7 days'),
+  (select id from public.zones where name = 'بدر'), t.totw_pick(1, 4));
 reset role;
 select t.check('totw published for the zone', (select count(*) = 1 from public.team_of_week));
 select t.check('totw star = GK (clean sheet 8 + assist 3)', (select (players->0->>'name') = 'ح١' from public.team_of_week));
@@ -252,7 +264,11 @@ set role authenticated;
 insert into public.predictions (user_id, match_id, score_a, score_b) values (auth.uid(), t.ch(), 3, 1);
 select t.check('own zone sees team of the week', (select count(*) = 1 from public.team_of_week));
 reset role;
-update public.matches set status = 'finished', score_a = 2, score_b = 0 where id = t.ch();
+-- النتيجة من الأهداف: جولين لنسور بدر (الفريق الأول)
+insert into public.events (match_id, player_id, type) select t.ch(), id, 'goal' from public.players where name in ('ه١', 'و١');
+select t.check('score follows goals live', (select score_a = 2 and score_b = 0 and status = 'upcoming' from public.matches where id = t.ch()));
+update public.matches set status = 'finished', score_a = 9, score_b = 9 where id = t.ch();   -- النتيجة اليدوي بتتجاهل
+select t.check('manual score ignored', (select score_a = 2 and score_b = 0 from public.matches where id = t.ch()));
 update public.matches set review_status = 'approved' where id = t.ch();   -- الاعتماد
 select t.check('goal difference right (3-1 vs 2-0) = +5', public.fn_user_bonus('00000000-0000-0000-0000-000000000001') = 5);
 select t.check('challenge summary counts goal difference', (select correct = 1 from public.challenge_summary(t.ch())));
@@ -265,3 +281,56 @@ select t.as_user('00000000-0000-0000-0000-000000000004');
 set role authenticated;
 select t.check('other zone does not see who is injured', (select count(*) = 0 from public.notifications where title like 'مصاب%'));
 reset role;
+
+-- ── الكروت والتبديل ──
+select t.check('yellow -1 · red -2', public.fn_score_points('MID', 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 1, 1) = -3);
+insert into public.lineups (match_id, player_id, status) select t.ch(), id, 'bench' from public.players where name = 'ه٢'
+  on conflict (match_id, player_id) do update set status = 'bench';
+insert into public.lineups (match_id, player_id, status) select t.ch(), id, 'starting' from public.players where name = 'ه١'
+  on conflict (match_id, player_id) do update set status = 'starting';
+insert into public.events (match_id, player_id, other_player_id, type)
+select t.ch(), (select id from public.players where name = 'ه٢'), (select id from public.players where name = 'ه١'), 'sub';
+select t.check('sub recorded with 0 points', (select count(*) = 1 from public.events where type = 'sub'));
+select t.expect_fail('sub across teams', $q$insert into public.events (match_id, player_id, other_player_id, type)
+  select t.ch(), (select id from public.players where name = 'ه٢'), (select id from public.players where name = 'ه٣'), 'sub'$q$);
+insert into public.events (match_id, player_id, type) select t.ch(), id, 'ownGoal' from public.players where name = 'و١';
+select t.check('own goal adds to the other team', (select score_a = 2 and score_b = 1 from public.matches where id = t.ch()));
+
+-- ── الإشعار بيفتح صفحته ──
+select t.check('goal notification opens the match',
+  (select bool_and(link = 'match:' || match_id) from public.notifications where kind = 'event'));
+select t.check('challenge notification opens the challenge', (select bool_and(link = 'challenge') from public.notifications where kind = 'challenge'));
+select t.check('player status opens the player', (select bool_and(link like 'player:%') from public.notifications where title like 'مصاب%'));
+select t.check('confirm sheet opens the review', (select bool_and(link like 'review:%') from public.notifications where title like '📋%'));
+select t.check('late match request opens admin screen', (select bool_and(link = 'admin:late') from public.notifications where title like '⏰%'));
+
+-- ── حذف بالجملة · اللاعب عمل إيه ──
+select t.check('player round matches: GK got his clean sheet match',
+  (select count(*) >= 1 and bool_or(points > 0) from public.player_round_matches(
+     (select id from public.players where name = 'ح١'), public.fn_week_cutoff(now()) - interval '7 days')));
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.expect_fail('user deletes players', $q$select public.delete_players(array(select id from public.players))$q$);
+select t.expect_fail('user deletes accounts', $q$select public.admin_delete_users(array['00000000-0000-0000-0000-000000000002'::uuid])$q$);
+reset role;
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+select t.check('organizer cannot delete players who played', public.delete_players(array(select id from public.players where name = 'ه١')) = 0);
+insert into public.players (name, team, position) values ('جديد', 'نسور بدر', 'DEF');
+select t.check('organizer deletes own unused player', public.delete_players(array(select id from public.players where name = 'جديد')) = 1);
+reset role;
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select t.check('admin never deletes admins or himself',
+  public.admin_delete_users(array['00000000-0000-0000-0000-00000000000a'::uuid]) = 0);
+select t.check('admin deletes an account', public.admin_delete_users(array['00000000-0000-0000-0000-000000000004'::uuid]) = 1);
+reset role;
+select t.check('deleted account is gone', (select count(*) = 0 from public.profiles where id = '00000000-0000-0000-0000-000000000004'));
+
+-- ── حذف لاعب طلع تبديل (كان بيكسر الحذف) + حذف الكل ──
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select t.check('admin deletes a subbed-out player', public.delete_players(array(select id from public.players where name = 'ه١')) = 1);
+select t.check('admin deletes all players', public.delete_players(array(select id from public.players)) > 0);
+reset role;
+select t.check('no players left', (select count(*) = 0 from public.players));

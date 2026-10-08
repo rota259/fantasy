@@ -18,15 +18,18 @@ import '../cubit/live_round_cubit.dart';
 import '../data/points_repository.dart';
 import '../widgets/round_pager.dart';
 import '../widgets/round_points_body.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// من الهوم: تابين —
 ///   • نقط الجولة اللي بتتلعب: كل لاعب جاب كام، ومين لعب ومين بيلعب ومين لسه.
 ///   • تشكيلة الجولة الجاية: تعملها وتغيّرها براحتك لحد الديدلاين (قبل الجولة بساعة).
+/// [ownerName] = تشكيلة يوزر تاني (من الدوري) — للفرجة بس: نقط الجولة من غير تاب التعديل.
 class LiveRoundScreen extends StatefulWidget {
-  const LiveRoundScreen({super.key, required this.userId, this.startOnNext = false});
+  const LiveRoundScreen({super.key, required this.userId, this.startOnNext = false, this.ownerName});
 
   final String userId;
   final bool startOnNext;
+  final String? ownerName;
 
   @override
   State<LiveRoundScreen> createState() => _LiveRoundScreenState();
@@ -52,20 +55,25 @@ class _LiveRoundScreenState extends State<LiveRoundScreen> {
         body: Column(
           children: [
             const StatusArea(),
-            Masthead(title: 'جولتي', subtitle: 'MY ROUND', onBack: () => Navigator.pop(context)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                children: [
-                  _tab('نقط الجولة', !_next, () => setState(() => _next = false)),
-                  const SizedBox(width: 6),
-                  _tab('تشكيلة الجولة الجاية', _next, () => setState(() => _next = true)),
-                ],
-              ),
+            Masthead(
+              title: widget.ownerName == null ? 'جولتي' : 'تشكيلة ${widget.ownerName}',
+              subtitle: widget.ownerName == null ? 'MY ROUND' : 'للفرجة بس',
+              onBack: () => Navigator.pop(context),
             ),
+            if (widget.ownerName == null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Row(
+                  children: [
+                    _tab('نقط الجولة', !_next, () => setState(() => _next = false)),
+                    const SizedBox(width: 6),
+                    _tab('تشكيلة الجولة الجاية', _next, () => setState(() => _next = true)),
+                  ],
+                ),
+              ),
             Expanded(
               child: SoftSwitcher(
-                child: _next
+                child: _next && widget.ownerName == null
                     ? Column(
                         key: const ValueKey('next'),
                         children: [
@@ -116,7 +124,7 @@ class _LivePoints extends StatelessWidget {
     return BlocBuilder<LiveRoundCubit, LiveRoundState>(
       builder: (context, s) {
         if (s.status == LiveRoundStatus.loading) {
-          return Center(child: CircularProgressIndicator(color: AppColors.accent));
+          return const SkeletonList();
         }
         if (s.status == LiveRoundStatus.error) {
           return Center(
@@ -140,7 +148,7 @@ class _LivePoints extends StatelessWidget {
           padding: EdgeInsets.zero,
           children: [
             RoundPager(entry: e),
-            RoundPointsBody(entry: e, players: s.players, statusFor: s.statusFor),
+            RoundPointsBody(entry: e, players: s.players, statusFor: s.statusFor, liveTeams: s.liveTeams),
           ],
         );
       },

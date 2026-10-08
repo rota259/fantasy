@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/app_navigator.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/supabase/live_hub.dart';
 import '../../../core/zone/zone_scope.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/view/login_screen.dart';
 import '../../auth/view/register_screen.dart';
+import '../../notifications/notification_router.dart';
 import '../../onboarding/view/onboarding_screen.dart';
 import '../../splash/view/splash_screen.dart';
 import '../../squad/data/profile_repository.dart';
@@ -44,6 +46,14 @@ class AppRoot extends StatelessWidget {
         NotificationService.registerToken(s.user!.id, context.read<ProfileRepository>());
       }
       nav.login();
+      // الضغط على push بيفتح صفحته (بعد ما الشاشة الرئيسية تتبني)
+      NotificationService.listenTaps(
+        (data) => WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = appNavigatorKey.currentContext;
+          if (ctx == null) return;
+          NotificationRouter.open(ctx, link: data['link']?.toString(), matchId: data['match_id']?.toString());
+        }),
+      );
     } else if (s.status == AuthStatus.unauthenticated && nav.state.route == AppRoute.app) {
       NotificationService.unregister();
       LiveHub.disconnect();

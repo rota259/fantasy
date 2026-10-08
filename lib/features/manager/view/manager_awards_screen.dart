@@ -16,6 +16,7 @@ import '../../week/data/week_window.dart';
 import '../widgets/award_candidate_field.dart';
 import '../widgets/manager_poll_results.dart';
 import '../../../core/widgets/motion.dart';
+import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير) هدف/تصدّي الجولة: المرشّحين بلينكات الفيديو + النتايج + تصويت الموسم.
 class ManagerAwardsScreen extends StatefulWidget {
@@ -111,7 +112,7 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
             child: FutureBuilder<List<Player>>(
               future: _players,
               builder: (context, snap) {
-                if (!snap.hasData) return Center(child: CircularProgressIndicator(color: AppColors.accent));
+                if (!snap.hasData) return const SkeletonList();
                 final players = snap.data!;
                 return ListView(
                   padding: const EdgeInsets.all(16),
