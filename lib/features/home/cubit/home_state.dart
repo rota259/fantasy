@@ -17,6 +17,7 @@ class HomeState extends Equatable {
     this.toReview = const [],
     this.openRound,
     this.roundSaved = true,
+    this.highlights,
   });
 
   final HomeStatus status;
@@ -32,6 +33,7 @@ class HomeState extends Equatable {
   final List<PendingReview> toReview; // ماتشات لعبت فيها ومستنية تأكيدي
   final WeekWindow? openRound; // الجولة اللي التشكيلات مفتوحة ليها
   final bool roundSaved; // حفظت تشكيلتها
+  final RoundHighlights? highlights; // متوسط المنطقة + الأعلى وصاحبه
 
   bool get isLoading => status == HomeStatus.loading;
 
@@ -50,5 +52,6 @@ class HomeState extends Equatable {
     toReview,
     openRound,
     roundSaved,
+    highlights,
   ];
 }

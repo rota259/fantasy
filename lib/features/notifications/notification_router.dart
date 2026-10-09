@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../fairplay/view/admin_betting_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../auth/cubit/auth_cubit.dart';
@@ -74,6 +75,7 @@ abstract final class NotificationRouter {
             'organizers' => const AdminOrganizersScreen(),
             'late' => const AdminLateMatchesScreen(),
             'claims' => const ManagerClaimsScreen(),
+            'betting' => const AdminBettingScreen(),
             _ => const AdminReviewScreen(),
           });
       }

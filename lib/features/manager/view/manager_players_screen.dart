@@ -7,13 +7,15 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/selection_bar.dart';
 import '../../../core/widgets/status_bar.dart';
+import '../../players/data/models/player.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../widgets/player_edit_sheet.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
-const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
+/// في الخماسي مفيش غير حارس ولاعب (اللاعب بيتخزّن FWD).
+const _positions = [('FWD', 'لاعب'), ('GK', 'حارس')];
 
 /// إدارة اللاعيبة: الأدمن (إضافة · تعديل · حذف أي لاعب) أو مدير المنطقة ([teams] = فرقه: حذف لاعيبته
 /// اللي لسه ملعبوش). الحذف واحد واحد، أو تحديد كذا لاعب، أو الكل.
@@ -139,28 +141,81 @@ class _ViewState extends State<_View> {
                           style: AppText.body(12, color: AppColors.neutral600),
                         ),
                       ),
-                    for (final p in s.players)
-                      if (_sel != null)
-                        CheckboxListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          value: _sel!.contains(p.id),
-                          onChanged: (on) => setState(() => on == true ? _sel!.add(p.id) : _sel!.remove(p.id)),
-                          title: Text(p.name, style: AppText.h(13)),
-                          subtitle: Text('${p.team} · ${p.positionAr}', style: AppText.body(10)),
-                        )
-                      else
-                        _playerRow(
-                          p.name,
-                          '${p.team} · ${p.positionAr}',
-                          onEdit: widget.organizer ? null : () => showPlayerEditSheet(context, cubit, p),
-                          onDelete: () => _confirmDelete(cubit, p.id, p.name),
-                        ),
+                    // كل فريق لوحده وتحته لاعيبته (الحارس الأول)
+                    for (final team in _byTeam(s.players).entries) ...[
+                      _teamHeader(team.key, team.value),
+                      for (final p in team.value)
+                        if (_sel != null)
+                          CheckboxListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsetsDirectional.only(start: 12),
+                            value: _sel!.contains(p.id),
+                            onChanged: (on) => setState(() => on == true ? _sel!.add(p.id) : _sel!.remove(p.id)),
+                            title: Text(p.name, style: AppText.h(13)),
+                            subtitle: Text(p.positionAr, style: AppText.body(10)),
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(start: 12),
+                            child: _playerRow(
+                              '${p.name}${p.position == 'GK' ? ' 🧤' : ''}',
+                              p.positionAr,
+                              onEdit: widget.organizer ? null : () => showPlayerEditSheet(context, cubit, p),
+                              onDelete: () => _confirmDelete(cubit, p.id, p.name),
+                            ),
+                          ),
+                    ],
                   ],
                 );
               },
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// اللاعيبة متقسّمين بالفريق (الفرق بالأبجدية، والحارس أول واحد في فريقه).
+  static Map<String, List<Player>> _byTeam(List<Player> players) {
+    final map = <String, List<Player>>{};
+    for (final p in players) {
+      map.putIfAbsent(p.team.trim().isEmpty ? 'من غير فريق' : p.team, () => []).add(p);
+    }
+    for (final l in map.values) {
+      l.sort((a, b) {
+        final g = (a.position == 'GK' ? 0 : 1).compareTo(b.position == 'GK' ? 0 : 1);
+        return g != 0 ? g : a.name.compareTo(b.name);
+      });
+    }
+    return Map.fromEntries(map.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
+  }
+
+  /// عنوان الفريق: اسمه + عدد لاعيبته — ووقت التحديد بيحدّد/يلغي الفريق كله.
+  Widget _teamHeader(String team, List<Player> players) {
+    final sel = _sel;
+    final all = sel != null && players.every((p) => sel.contains(p.id));
+    return Container(
+      margin: const EdgeInsets.only(top: 14, bottom: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(color: AppColors.accent100, borderRadius: AppRadius.md),
+      child: Row(
+        children: [
+          Icon(Icons.shield_outlined, size: 18, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(team, style: AppText.h(14, color: AppColors.accent700)),
+          ),
+          Text('${players.length} لاعب', style: AppText.body(11, color: AppColors.accent700)),
+          if (sel != null)
+            Checkbox(
+              value: all,
+              visualDensity: VisualDensity.compact,
+              onChanged: (on) => setState(() {
+                for (final p in players) {
+                  on == true ? sel.add(p.id) : sel.remove(p.id);
+                }
+              }),
+            ),
         ],
       ),
     );

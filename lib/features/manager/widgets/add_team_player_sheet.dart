@@ -6,7 +6,8 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/box_field.dart';
 import '../../../core/widgets/motion.dart';
 
-const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
+/// في الخماسي مفيش غير حارس ولاعب (اللاعب بيتخزّن FWD).
+const _positions = [('FWD', 'لاعب'), ('GK', 'حارس')];
 
 /// (مدير) شيت "ضيف لاعب" لفريق في الماتش — بيرجّع (الاسم، المركز).
 Future<({String name, String position})?> showAddTeamPlayerSheet(BuildContext context, String team) {

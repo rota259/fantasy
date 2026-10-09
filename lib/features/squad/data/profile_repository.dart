@@ -2,6 +2,9 @@ import 'dart:typed_data';
 
 import '../../auth/data/models/app_user.dart';
 
+/// كارت الرئيسية: المتوسط · الأعلى وصاحبه.
+typedef RoundHighlights = ({int avg, int? top, String? topUserId, String? topName});
+
 /// عقد بيانات البروفايل.
 abstract interface class ProfileRepository {
   /// بروفايلي أنا كامل (null لو مش مسجّل).
@@ -15,6 +18,9 @@ abstract interface class ProfileRepository {
 
   /// نقطي في جولة واحدة (المباشر — بتبدأ من صفر كل جولة).
   Future<int> roundPoints(String userId, DateTime roundEnd);
+
+  /// الجولة في منطقتي: متوسط النقط + أعلى نقط وصاحبها (null لو محدش عامل تشكيلة).
+  Future<RoundHighlights> roundHighlights(DateTime roundEnd);
 
   /// حفظ توكن الإشعارات (FCM) للمستخدم.
   Future<void> saveFcmToken(String userId, String token);

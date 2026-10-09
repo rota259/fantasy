@@ -136,6 +136,39 @@ update public.matches set status = 'finished', score_a = 1, score_b = 0;
 reset role;
 select t.check('match pending review', (select review_status = 'pending' from public.matches limit 1));
 select t.check('new organizer flagged', (select 'new_organizer' = any(flags) from public.matches limit 1));
+
+-- ── الماتش خلص: المنظّم ميقدرش يعدّل حاجة ──
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+select t.expect_fail('organizer adds event after finish',
+  $q$insert into public.events (match_id, player_id, type, minute)
+     select (select id from public.matches limit 1), id, 'goal', 20 from public.players where name = 'ه١'$q$);
+update public.matches set score_a = 5;
+select t.check('organizer cannot edit finished match', (select score_a = 1 from public.matches limit 1));
+
+-- ── هدف وتصدّي الجولة: المدير يرشّح من ماتشه اللي خلص ──
+select t.check('organizer nominates a goal', public.nominate_award('goal', (select id from public.matches limit 1),
+  (select id from public.players where name = 'ه١'), 'https://youtu.be/abc123') is not null);
+select t.expect_fail('same nomination twice', $q$select public.nominate_award('goal', (select id from public.matches limit 1),
+  (select id from public.players where name = 'ه١'), 'https://youtu.be/abc123')$q$);
+select t.expect_fail('nomination needs a video link', $q$select public.nominate_award('save', (select id from public.matches limit 1),
+  (select id from public.players where name = 'ه١'), 'not a link')$q$);
+select t.check('my nominations listed', (select count(*) = 1 from public.my_award_nominations()));
+reset role;
+select t.check('zone goal poll opened + notified',
+  (select count(*) = 1 from public.polls where kind = 'goal_week' and zone_id is not null)
+  and (select count(*) = 1 from public.notifications where kind = 'vote' and audience = 'zone'));
+select t.as_user('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select t.expect_fail('user cannot nominate', $q$select public.nominate_award('goal', (select id from public.matches limit 1),
+  (select id from public.players where name = 'ه١'), 'https://youtu.be/x')$q$);
+
+-- ── بلاغ مراهنات → الأدمنز بيوصلهم إشعار ──
+select t.check('user reports betting', public.report_betting('مدير بدر', 'بيعمل رهان على نقط الدوري بفلوس') is not null);
+select t.expect_fail('user cannot list reports', $q$select * from public.admin_betting_reports()$q$);
+reset role;
+select t.check('admins notified of betting report',
+  (select count(*) >= 1 from public.notifications where link = 'admin:betting'));
 select t.as_user('00000000-0000-0000-0000-000000000001');
 set role authenticated;
 select public.review_match((select id from public.matches limit 1), true, null);
@@ -326,6 +359,13 @@ select t.check('admin never deletes admins or himself',
 select t.check('admin deletes an account', public.admin_delete_users(array['00000000-0000-0000-0000-000000000004'::uuid]) = 1);
 reset role;
 select t.check('deleted account is gone', (select count(*) = 0 from public.profiles where id = '00000000-0000-0000-0000-000000000004'));
+
+-- ── كارت الرئيسية + نقط اللاعب في كل جولة (كانت بتقع بالصلاحيات) ──
+select t.as_user('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select t.check('player_history runs as a user', (select count(*) >= 0 from public.player_history((select id from public.players where name = 'ه١'))));
+select t.check('round_highlights returns one row', (select count(*) = 1 from public.round_highlights(now())));
+reset role;
 
 -- ── حذف لاعب طلع تبديل (كان بيكسر الحذف) + حذف الكل ──
 select t.as_user('00000000-0000-0000-0000-00000000000a');

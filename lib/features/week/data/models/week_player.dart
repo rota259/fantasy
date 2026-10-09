@@ -20,7 +20,7 @@ class WeekPlayer extends Equatable {
   final String? imageUrl; // صورة اللاعب (أو صورة اليوزر اللي وثّقه)
   final bool verified;
 
-  String get positionAr => const {'GK': 'حارس', 'DEF': 'دفاع', 'MID': 'وسط', 'FWD': 'مهاجم'}[position] ?? position;
+  String get positionAr => position == 'GK' ? 'حارس' : 'لاعب'; // في الخماسي: حارس أو لاعب بس
 
   String get initials => name.trim().length >= 2 ? name.trim().substring(0, 2) : name;
 

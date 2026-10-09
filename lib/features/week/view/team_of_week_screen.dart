@@ -4,11 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../points/widgets/player_matches_sheet.dart';
 import '../data/week_window.dart';
+import '../../../core/widgets/jersey.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/fx/gold_shine.dart';
+import '../../../core/widgets/fx/skeleton.dart';
+import '../../../core/widgets/pentagon_pitch.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../polls/data/polls_repository.dart';
@@ -72,7 +75,7 @@ class _View extends StatelessWidget {
         builder: (context, s) {
           final cubit = context.read<TeamOfWeekCubit>();
           final (badge, badgeColor) = s.isPublished
-              ? ('معتمدة ✓', AppColors.info)
+              ? ('معتمدة ✓', PitchColors.grass)
               : s.isCurrent
               ? ('الجولة شغّالة', AppColors.neutral600)
               : ('مستنية اعتماد الإدارة', AppColors.bronze);
@@ -102,7 +105,7 @@ class _View extends StatelessWidget {
               ),
               Container(
                 width: double.infinity,
-                color: AppColors.navy,
+                color: PitchColors.forest,
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: Row(
                   children: [
@@ -113,7 +116,10 @@ class _View extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(s.window.label, style: AppText.body(10, color: AppColors.neutral400)),
+                      child: Text(
+                        s.window.label,
+                        style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.7)),
+                      ),
                     ),
                   ],
                 ),
@@ -127,7 +133,7 @@ class _View extends StatelessWidget {
   }
 
   Widget _body(BuildContext context, TeamOfWeekState s) {
-    if (s.isLoading) return Center(child: CircularProgressIndicator(color: AppColors.info));
+    if (s.isLoading) return const SkeletonList();
     final cubit = context.read<TeamOfWeekCubit>();
     if (!s.isPublished) {
       return ListView(
@@ -164,14 +170,12 @@ class _View extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Pressable(
             onTap: () => _reveal(context, s),
-            child: Container(
+            child: GoldShine(
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
               padding: const EdgeInsets.all(12),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF7A5A12), Color(0xFFF2C14E)]),
-                borderRadius: AppRadius.md,
+              child: Center(
+                child: Text('🎴 اكشف التشكيلة وشيّرها', style: AppText.h(14, color: const Color(0xFF3A2600))),
               ),
-              child: Text('🎴 اكشف التشكيلة وشيّرها', style: AppText.h(14, color: AppColors.black)),
             ),
           ),
         ),
@@ -186,7 +190,7 @@ class _View extends StatelessWidget {
             child: Pressable(
               behavior: HitTestBehavior.opaque,
               onTap: () => _open(context, s.ranking[i], s.window),
-              child: _row(i + 1, s.ranking[i]),
+              child: _row(i + 1, s.ranking[i], s.spots.any((x) => x?.id == s.ranking[i].id)),
             ),
           ),
         const SizedBox(height: 16),
@@ -198,23 +202,23 @@ class _View extends StatelessWidget {
   void _open(BuildContext context, WeekPlayer p, WeekWindow w) =>
       showPlayerMatchesSheet(context, playerId: p.id, name: p.name, team: p.team, window: w);
 
-  Widget _row(int rank, WeekPlayer p) => Container(
+  /// صف في الترتيب: اللي دخلوا التشكيلة بدهب بيلمع، والباقي بالأخضر.
+  Widget _row(int rank, WeekPlayer p, bool inTeam) => Container(
     margin: AppDecor.tileMargin,
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-    decoration: AppDecor.tile,
+    decoration: inTeam
+        ? AppDecor.tile.copyWith(border: Border.all(color: const Color(0xFFC9971C), width: 1.4))
+        : AppDecor.tile,
     child: Row(
       children: [
         SizedBox(
           width: 24,
-          child: Text('$rank', style: AppText.h(13, color: AppColors.info)),
+          child: Text('$rank', style: AppText.h(13, color: PitchColors.grass)),
         ),
-        PentagonAvatar(
-          initials: p.initials,
-          photoUrl: p.imageUrl,
-          size: 34,
-          background: AppColors.info,
-          verified: p.verified,
-        ),
+        if (inTeam)
+          GoldAvatar(player: p, size: 32)
+        else
+          Jersey(label: p.initials, size: 34, phase: (p.id.hashCode % 100) / 100),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -225,7 +229,7 @@ class _View extends StatelessWidget {
             ],
           ),
         ),
-        Text('${p.points}', style: AppText.h(20)),
+        Text('${p.points}', style: AppText.h(20, color: inTeam ? const Color(0xFF9C7412) : null)),
       ],
     ),
   );

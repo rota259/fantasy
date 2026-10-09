@@ -39,7 +39,7 @@ class Player extends Equatable {
   bool get isVerified => userId != null;
 
   /// المركز بالعربي للعرض.
-  String get positionAr => const {'GK': 'حارس', 'DEF': 'دفاع', 'MID': 'وسط', 'FWD': 'مهاجم'}[position] ?? position;
+  String get positionAr => position == 'GK' ? 'حارس' : 'لاعب'; // في الخماسي: حارس أو لاعب بس
 
   /// أول حرفين من الاسم (بديل الصورة).
   String get initials => name.trim().length >= 2 ? name.trim().substring(0, 2) : name;

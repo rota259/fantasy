@@ -9,27 +9,44 @@ import '../../week/data/week_window.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
 /// إحصائيات اللاعب في الجولة (نقاط/امتلاك/دخول/خروج) + نقاطه في كل جولة.
-class PlayerStatsSection extends StatelessWidget {
+/// التحميل مرة واحدة بس، ولو حاجة وقعت بتظهر الباقي فاضي بدل ما تفضل تحمّل على طول.
+class PlayerStatsSection extends StatefulWidget {
   const PlayerStatsSection({super.key, required this.playerId});
 
   final String playerId;
 
-  Future<(WeekWindow, PlayerGwStat?, List<({int gw, int points})>)> _load(StatsRepository repo) async {
+  @override
+  State<PlayerStatsSection> createState() => _PlayerStatsSectionState();
+}
+
+class _PlayerStatsSectionState extends State<PlayerStatsSection> {
+  late Future<(WeekWindow, PlayerGwStat?, List<({int gw, int points})>)> _future = _load();
+
+  @override
+  void didUpdateWidget(PlayerStatsSection old) {
+    super.didUpdateWidget(old);
+    if (old.playerId != widget.playerId) _future = _load();
+  }
+
+  Future<(WeekWindow, PlayerGwStat?, List<({int gw, int points})>)> _load() async {
+    final repo = context.read<StatsRepository>();
     final week = WeekWindow.current();
-    final stats = await repo.windowStats(week);
-    final hist = await repo.history(playerId);
-    return (week, stats[playerId], hist);
+    final (stats, hist) = await (
+      repo.windowStats(week).catchError((_) => const <String, PlayerGwStat>{}),
+      repo.history(widget.playerId).catchError((_) => const <({int gw, int points})>[]),
+    ).wait;
+    return (week, stats[widget.playerId], hist);
   }
 
   @override
   Widget build(BuildContext context) {
-    final repo = context.read<StatsRepository>();
     return FutureBuilder(
-      future: _load(repo),
+      future: _future,
       builder: (context, snap) {
-        if (!snap.hasData) {
-          return Padding(padding: EdgeInsets.all(24), child: const SkeletonList());
+        if (snap.connectionState != ConnectionState.done) {
+          return const Padding(padding: EdgeInsets.all(24), child: SkeletonList(rows: 2));
         }
+        if (!snap.hasData) return const SizedBox.shrink();
         final (week, s, hist) = snap.data!;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +132,7 @@ class PlayerStatsSection extends StatelessWidget {
                       color: h == last.last ? AppColors.accent : AppColors.neutral400,
                     ),
                     const SizedBox(height: 4),
-                    Text('GW${h.gw}', style: AppText.body(9, color: AppColors.neutral700)),
+                    Text('ج${h.gw}', style: AppText.body(9, color: AppColors.neutral700)),
                   ],
                 ),
               ),

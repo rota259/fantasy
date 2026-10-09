@@ -124,3 +124,6 @@ class PollView extends Equatable {
 
 /// اختيار جديد بيضيفه المدير (مرشّح هدف/تصدّي).
 typedef NewPollOption = ({String label, String? playerId, String? videoUrl, String? matchId});
+
+/// ترشيح مدير لهدف/تصدّي الجولة (من ماتشاته) + أصواته.
+typedef AwardNomination = ({String optionId, String kind, String label, String? videoUrl, int votes, bool open});

@@ -33,7 +33,11 @@ class _MatchResultSectionState extends State<MatchResultSection> {
       builder: (c) => AlertDialog(
         backgroundColor: AppColors.bg,
         title: Text('إنهاء الماتش؟', style: AppText.h(16)),
-        content: Text('النتيجة هتتسجّل زي ما هي من الأهداف واليوزرز هيوصلهم إشعار.', style: AppText.body(13)),
+        content: Text(
+          'النتيجة هتتسجّل زي ما هي من الأهداف واليوزرز هيوصلهم إشعار.'
+          '${widget.isAdmin ? '' : '\n\n⚠️ بعد ما الماتش يخلص مش هتقدر تعدّل أي حاجة فيه (لا تشكيلة ولا أحداث) — اتأكد إن كل حاجة صح.'}',
+          style: AppText.body(13),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('لسه')),
           TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('أنهيه')),
@@ -53,6 +57,8 @@ class _MatchResultSectionState extends State<MatchResultSection> {
           ),
         ),
       );
+      // المنظّم: الماتش اتقفل — نرجع بره الإدارة
+      if (!widget.isAdmin) Navigator.of(context).pop();
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(dbMessage(e, fallback: 'فشل الحفظ'))));
     } finally {

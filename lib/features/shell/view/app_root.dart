@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../fairplay/view/fair_play_gate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/app_navigator.dart';
@@ -88,7 +89,11 @@ class _ZoneGate extends StatelessWidget {
         if (user != null && user.zoneId == null) return const ZoneRequiredScreen();
         // مدير المنطقة ليه أبلكيشن شغل لوحده (منطقتي + حسابي)
         final shell = (user?.isOrganizer ?? false) ? const OrganizerShell() : const AppShell();
-        return KeyedSubtree(key: ValueKey((user?.zoneId, user?.role)), child: shell);
+        // أول مرة: «لا للمراهنات» لازم يوافق عليها
+        return KeyedSubtree(
+          key: ValueKey((user?.zoneId, user?.role)),
+          child: FairPlayGate(child: shell),
+        );
       },
     );
   }

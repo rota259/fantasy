@@ -1,4 +1,6 @@
 import 'package:flutter/widgets.dart';
+import '../../fairplay/data/fairplay_repository.dart';
+import '../../fairplay/data/supabase_fairplay_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../auth/data/auth_repository.dart';
@@ -97,6 +99,7 @@ class AppRepositories extends StatelessWidget {
         RepositoryProvider<TeamsRepository>(create: (_) => SupabaseTeamsRepository()),
         RepositoryProvider<PointsRepository>(create: (_) => SupabasePointsRepository()),
         RepositoryProvider<TournamentsRepository>(create: (_) => SupabaseTournamentsRepository()),
+        RepositoryProvider<FairPlayRepository>(create: (_) => SupabaseFairPlayRepository()),
       ],
       child: child,
     );

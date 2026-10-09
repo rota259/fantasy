@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/fx/gold_shine.dart';
+
 import '../theme/app_text.dart';
 
 /// إطار كارت الشير بمقاس Instagram story (٩:١٦): خلفية متدرّجة + اسم الأبلكيشن فوق + كود الدعوة تحت.
@@ -69,7 +71,7 @@ class StoryPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gold = const Color(0xFFF2C14E);
+    const gold = Color(0xFFFFE7A0);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -84,8 +86,12 @@ class StoryPlayer extends StatelessWidget {
         Container(
           margin: const EdgeInsets.only(top: 3),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(color: star ? gold : Colors.white24, borderRadius: BorderRadius.circular(8)),
-          child: Text('$points', style: AppText.h(12, color: star ? Colors.black : Colors.white)),
+          decoration: BoxDecoration(
+            color: star ? null : Colors.white24,
+            gradient: star ? GoldShine.gradient : null,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text('$points', style: AppText.h(12, color: star ? const Color(0xFF3A2600) : Colors.white)),
         ),
       ],
     );

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/jersey.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/pentagon_pitch.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../polls/data/models/poll.dart';
 import '../data/models/week_player.dart';
@@ -32,13 +33,13 @@ class TotwTieSection extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       decoration: BoxDecoration(
         borderRadius: AppRadius.md,
-        border: Border.all(color: AppColors.info, width: 2),
+        border: Border.all(color: PitchColors.forest, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            decoration: BoxDecoration(color: AppColors.info, borderRadius: AppRadius.md),
+            decoration: BoxDecoration(color: PitchColors.forest, borderRadius: AppRadius.md),
             padding: const EdgeInsets.all(10),
             child: Text('⚖️ $header', style: AppText.h(12, color: AppColors.white)),
           ),
@@ -60,7 +61,7 @@ class TotwTieSection extends StatelessWidget {
       ),
       child: Row(
         children: [
-          PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 32, background: AppColors.info),
+          Jersey(label: p.initials, size: 32),
           const SizedBox(width: 10),
           Expanded(child: Text('${p.name} · ${p.points} نقطة', style: AppText.h(13))),
           if (opt != null && (v!.iVoted || !open)) Text('${opt.votes} صوت  ', style: AppText.h(11)),
@@ -70,7 +71,7 @@ class TotwTieSection extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: opt.mine ? AppColors.accent : AppColors.info,
+                  color: opt.mine ? const Color(0xFFC9971C) : PitchColors.grass,
                   borderRadius: AppRadius.md,
                 ),
                 child: Text(opt.mine ? 'صوتك ✓' : 'صوّت', style: AppText.h(11, color: AppColors.white)),

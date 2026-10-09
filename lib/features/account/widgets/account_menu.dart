@@ -12,6 +12,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../view/delete_account_screen.dart';
 import '../../auth/data/models/app_user.dart';
 import '../../claims/view/player_fan_screen.dart';
+import '../../fairplay/view/fair_play_screen.dart';
 import '../../integrity/view/organizer_request_screen.dart';
 import '../../manager/view/manager_hub_screen.dart';
 import '../../pitch/view/my_bookings_screen.dart';
@@ -67,6 +68,7 @@ class AccountMenu extends StatelessWidget {
             context.read<ThemeModeCubit>().cycle,
           ),
         ),
+        _row(Icons.block_outlined, 'لا للمراهنات · بلّغ', () => _push(context, const FairPlayScreen())),
         _row(Icons.privacy_tip_outlined, 'سياسة الخصوصية', () => Launchers.url(AppLinks.privacy)),
         if (u != null)
           _row(

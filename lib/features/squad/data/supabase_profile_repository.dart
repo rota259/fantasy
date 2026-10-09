@@ -41,6 +41,20 @@ class SupabaseProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<RoundHighlights> roundHighlights(DateTime roundEnd) async {
+    final rows =
+        await SupabaseService.client.rpc('round_highlights', params: {'p_round': roundEnd.toUtc().toIso8601String()})
+            as List;
+    final r = rows.isEmpty ? const <String, dynamic>{} : rows.first as Map<String, dynamic>;
+    return (
+      avg: (r['avg_points'] as int?) ?? 0,
+      top: r['top_points'] as int?,
+      topUserId: r['top_user'] as String?,
+      topName: r['top_name'] as String?,
+    );
+  }
+
+  @override
   Future<void> saveFcmToken(String userId, String token) async {
     await SupabaseService.table(_table).update({'fcm_token': token}).eq('id', userId);
   }

@@ -79,7 +79,7 @@ class HomeCubit extends Cubit<HomeState> {
       // كل الطلبات مع بعض (مش ورا بعض) — الوقت = أبطأ طلب بس
       final open = WeekWindow.open();
       final live = WeekWindow.live();
-      final (points, upcoming, finished, team, tie, reviews, myRound) = await (
+      final (points, upcoming, finished, team, tie, reviews, myRound, highlights) = await (
         // نقط الجولة اللي بتتلعب بس (كل جولة من صفر — الإجمالي في البروفايل)
         _profiles.roundPoints(userId, live.cutoff),
         _matches.fetchUpcoming(),
@@ -90,6 +90,7 @@ class HomeCubit extends Cubit<HomeState> {
         _polls.tieFor(win.previous.cutoff, userId),
         _integrity.myPendingReviews().catchError((_) => const <PendingReview>[]),
         _picks.fetchRound(userId, open.cutoff).catchError((_) => const <Pick>[]),
+        _profiles.roundHighlights(live.cutoff).then<RoundHighlights?>((h) => h).catchError((_) => null),
       ).wait;
       final star = TeamOfWeek.starOf(team?.team ?? const []);
       if (isClosed) return;
@@ -108,6 +109,7 @@ class HomeCubit extends Cubit<HomeState> {
           toReview: reviews,
           openRound: open,
           roundSaved: myRound.isNotEmpty,
+          highlights: highlights,
         ),
       );
     } catch (_) {

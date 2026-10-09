@@ -9,7 +9,8 @@ import '../../players/data/models/player.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../../../core/widgets/motion.dart';
 
-const _positions = [('GK', 'حارس'), ('DEF', 'دفاع'), ('MID', 'وسط'), ('FWD', 'مهاجم')];
+/// في الخماسي مفيش غير حارس ولاعب (اللاعب بيتخزّن FWD).
+const _positions = [('FWD', 'لاعب'), ('GK', 'حارس')];
 
 /// (مدير) شيت تعديل صورة/اسم/نادي/مركز لاعب.
 Future<void> showPlayerEditSheet(BuildContext context, ManagerPlayersCubit cubit, Player p) {
@@ -33,7 +34,7 @@ class _EditSheet extends StatefulWidget {
 class _EditSheetState extends State<_EditSheet> {
   late final _name = TextEditingController(text: widget.player.name);
   late final _team = TextEditingController(text: widget.player.team);
-  late String _pos = widget.player.position;
+  late String _pos = widget.player.position == 'GK' ? 'GK' : 'FWD';
   late String? _photo = widget.player.imageUrl;
   bool _uploading = false;
 

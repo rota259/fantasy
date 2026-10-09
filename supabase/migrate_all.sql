@@ -1,4 +1,4 @@
--- ═══════════════════════════════════════════════════════════════
+ -- ═══════════════════════════════════════════════════════════════
 -- الخماسي — كل الـ migrations في ملف واحد (شغّله مرة واحدة، وتقدر تعيده)
 -- Supabase Dashboard → SQL Editor → New query → الصق الكل → Run
 --
@@ -5211,6 +5211,195 @@ grant execute on function public.predict_champion(uuid, text) to authenticated;
 grant execute on function public.tournament_standings(uuid) to authenticated;
 grant execute on function public.tournament_awards(uuid) to authenticated;
 grant execute on function public.fn_runs_tournament(uuid) to authenticated;
+
+-- ═══ 37. كارت نقط الجولة في الرئيسية ═══
+-- متوسط نقط الجولة في منطقتي (اللي عاملين تشكيلة بس) + أعلى نقط وصاحبها (الضغط عليه = تشكيلته).
+create or replace function public.round_highlights(p_round timestamptz)
+returns table(avg_points int, top_points int, top_user uuid, top_name text)
+language sql stable security definer set search_path = public as $$
+  with r as (
+    select u.user_id, u.points, p.name
+    from public.user_round_points u join public.profiles p on p.id = u.user_id
+    where u.round_end = p_round and p.role <> 'organizer' and p.is_active
+      and p.zone_id is not distinct from (select pr.zone_id from public.profiles pr where pr.id = auth.uid())
+  )
+  select coalesce(round((select avg(points) from r))::int, 0),
+         (select r.points from r order by r.points desc, r.name limit 1),
+         (select r.user_id from r order by r.points desc, r.name limit 1),
+         (select r.name from r order by r.points desc, r.name limit 1);
+$$;
+revoke all on function public.round_highlights(timestamptz) from public, anon;
+grant execute on function public.round_highlights(timestamptz) to authenticated;
+
+-- نقط اللاعب في كل جولة (صفحة اللاعب): كانت بتقع (صلاحيات fn_pmp) فالويدجت كانت بتفضل تحمّل.
+-- دلوقتي security definer وبالجولة الحقيقية (مش رقم الأسبوع القديم).
+create or replace function public.player_history(p uuid)
+returns table(gw int, points bigint)
+language sql stable security definer set search_path = public as $$
+  select (row_number() over (order by t.r))::int, t.pts
+  from (select public.fn_week_cutoff(m.date_time) as r, coalesce(sum(x.points), 0)::bigint as pts
+        from public.fn_pmp('-infinity', 'infinity', p) x
+        join public.matches m on m.id = x.match_id
+        group by 1) t
+  order by t.r;
+$$;
+grant execute on function public.player_history(uuid) to authenticated;
+
+-- ═══ 38. المراكز: في الخماسي حارس أو لاعب بس ═══
+-- أي مركز قديم (دفاع · وسط · هجوم) بيبقى «لاعب» (FWD) — الحسبة كلها أصلًا حارس ولا لا.
+update public.players set position = 'FWD' where position is distinct from 'GK' and position is distinct from 'FWD';
+
+-- ═══ 39. الماتش اللي خلص بيتقفل على المنظّم ═══
+-- بعد ما الماتش يخلص المنظّم بيشوف بس: لا تشكيلة ولا أحداث ولا تعديل (الأدمن بس يقدر يصلّح).
+create or replace function public.fn_organizes(p_match uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists(select 1 from public.matches m join public.profiles p on p.id = auth.uid()
+                where m.id = p_match and m.organizer_id = auth.uid() and p.role = 'organizer'
+                  and m.status <> 'finished'
+                  and m.review_status in ('open', 'pending'));
+$$;
+grant execute on function public.fn_organizes(uuid) to authenticated;
+
+-- ═══ 40. هدف وتصدّي الجولة من المديرين ═══
+-- كل مدير منطقة بيرشّح الأهداف والتصديات من ماتشاته اللي خلصت (لينك فيديو) → كلهم بيتجمعوا في تصويت
+-- واحد للجولة في المنطقة → أهل المنطقة بيصوّتوا. أول ترشيح بيفتح التصويت ويبعت إشعار للمنطقة.
+alter table public.poll_options add column if not exists added_by uuid references public.profiles(id) on delete set null;
+
+create or replace function public.nominate_award(p_kind text, p_match uuid, p_player uuid, p_video text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare m public.matches; pl public.players; v_kind text; v_poll uuid; v_round timestamptz; v_opt uuid;
+begin
+  if p_kind not in ('goal', 'save') then raise exception 'النوع لازم يبقى هدف أو تصدّي'; end if;
+  select * into m from public.matches where id = p_match;
+  if m.id is null then raise exception 'الماتش مش موجود'; end if;
+  if not (public.is_manager() or (public.is_organizer() and m.organizer_id = auth.uid())) then
+    raise exception 'ترشّح من ماتشاتك بس';
+  end if;
+  if m.status <> 'finished' then raise exception 'رشّح بعد ما الماتش يخلص'; end if;
+  if m.review_status = 'void' then raise exception 'الماتش ده اتلغى'; end if;
+  if p_video is null or p_video !~* '^https?://\S+$' or length(p_video) > 500 then
+    raise exception 'حط لينك فيديو صحيح';
+  end if;
+  select * into pl from public.players where id = p_player;
+  if pl.id is null or not exists (select 1 from public.lineups l where l.match_id = p_match and l.player_id = p_player) then
+    raise exception 'اللاعب مش في تشكيلة الماتش';
+  end if;
+  v_kind := p_kind || '_week';
+  v_round := public.fn_week_cutoff(m.date_time);
+  select id into v_poll from public.polls
+  where kind = v_kind and window_end = v_round and zone_id is not distinct from m.zone_id
+  order by created_at desc limit 1;
+  if v_poll is null then
+    insert into public.polls (kind, question, active, window_end, closes_at, zone_id)
+    values (v_kind, case when p_kind = 'goal' then 'هدف الجولة ⚽' else 'تصدّي الجولة 🧤' end, true, v_round,
+            case when public.fn_test_mode() then null else v_round + interval '2 days' end, m.zone_id)
+    returning id into v_poll;
+    if m.zone_id is not null then
+      insert into public.notifications (title, body, kind, audience, zone_id)
+      values (case when p_kind = 'goal' then '⚽ تصويت هدف الجولة فتح' else '🧤 تصويت تصدّي الجولة فتح' end,
+              'اتفرّج على المرشّحين وصوّت لأحلى ' || case when p_kind = 'goal' then 'هدف' else 'تصدّي' end,
+              'vote', 'zone', m.zone_id);
+    end if;
+  elsif not exists (select 1 from public.polls where id = v_poll and active
+                    and (closes_at is null or closes_at > now())) then
+    raise exception 'تصويت الجولة دي اتقفل';
+  end if;
+  if exists (select 1 from public.poll_options where poll_id = v_poll and player_id = p_player and match_id = p_match) then
+    raise exception 'اللاعب ده مترشّح من الماتش ده قبل كده';
+  end if;
+  insert into public.poll_options (poll_id, label, player_id, video_url, match_id, added_by)
+  values (v_poll, pl.name || ' · ' || pl.team, p_player, p_video, p_match, auth.uid())
+  returning id into v_opt;
+  return v_opt;
+end $$;
+
+-- المدير يشيل ترشيحه (والأدمن أي ترشيح) — الأصوات اللي عليه بتتمسح معاه.
+create or replace function public.remove_award_nomination(p_option uuid)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  delete from public.poll_options o
+  where o.id = p_option
+    and (public.is_manager() or (o.added_by = auth.uid() and public.is_organizer()))
+    and exists (select 1 from public.polls p where p.id = o.poll_id and p.kind in ('goal_week', 'save_week'));
+  if not found then raise exception 'مينفعش تشيل الترشيح ده'; end if;
+end $$;
+
+-- ترشيحاتي (المدير) في آخر ٣٠ يوم
+create or replace function public.my_award_nominations()
+returns table(option_id uuid, kind text, label text, video_url text, match_id uuid, votes bigint, open boolean)
+language sql stable security definer set search_path = public as $$
+  select o.id, p.kind, o.label, o.video_url, o.match_id,
+         (select count(*) from public.poll_votes v where v.option_id = o.id),
+         p.active and (p.closes_at is null or p.closes_at > now())
+  from public.poll_options o join public.polls p on p.id = o.poll_id
+  where o.added_by = auth.uid() and p.kind in ('goal_week', 'save_week')
+    and p.created_at > now() - interval '30 days'
+  order by p.created_at desc, o.label;
+$$;
+revoke all on function public.nominate_award(text, uuid, uuid, text) from public, anon;
+revoke all on function public.remove_award_nomination(uuid) from public, anon;
+revoke all on function public.my_award_nominations() from public, anon;
+grant execute on function public.nominate_award(text, uuid, uuid, text) to authenticated;
+grant execute on function public.remove_award_nomination(uuid) to authenticated;
+grant execute on function public.my_award_nominations() to authenticated;
+
+-- ═══ 41. منع المراهنات ═══
+-- أي حد يعرف إن مدير أو حد في منطقة بيستخدم الأبلكيشن في مراهنات يبلّغ → الأدمنز بيوصلهم إشعار
+-- ويحققوا → لو اتثبت: بان نهائي.
+create table if not exists public.betting_reports (
+  id         uuid primary key default gen_random_uuid(),
+  reporter   uuid references public.profiles(id) on delete set null default auth.uid(),
+  zone_id    int references public.zones(id),
+  suspect    text not null check (char_length(trim(suspect)) between 2 and 120),
+  details    text not null check (char_length(trim(details)) between 10 and 1000),
+  status     text not null default 'open' check (status in ('open', 'investigating', 'proven', 'dismissed')),
+  created_at timestamptz not null default now()
+);
+create index if not exists betting_reports_status on public.betting_reports(status, created_at desc);
+alter table public.betting_reports enable row level security;
+drop policy if exists "betting reports read" on public.betting_reports;
+create policy "betting reports read" on public.betting_reports for select to authenticated
+  using (reporter = auth.uid() or public.is_manager());
+drop policy if exists "betting reports admin update" on public.betting_reports;
+create policy "betting reports admin update" on public.betting_reports for update to authenticated
+  using (public.is_manager()) with check (public.is_manager());
+
+create or replace function public.report_betting(p_suspect text, p_details text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare rid uuid;
+begin
+  if auth.uid() is null then raise exception 'سجّل دخول الأول'; end if;
+  if (select count(*) from public.betting_reports
+      where reporter = auth.uid() and created_at > now() - interval '1 day') >= 5 then
+    raise exception 'بعتّ بلاغات كتير النهارده — الإدارة بتراجعهم';
+  end if;
+  insert into public.betting_reports (reporter, zone_id, suspect, details)
+  values (auth.uid(), (select zone_id from public.profiles where id = auth.uid()), trim(p_suspect), trim(p_details))
+  returning id into rid;
+  insert into public.notifications (title, body, kind, user_id, link)
+  select '🚫 بلاغ مراهنات', trim(p_suspect) || ' — ' || left(trim(p_details), 100), 'admin', pr.id, 'admin:betting'
+  from public.profiles pr where pr.role = 'manager';
+  return rid;
+end $$;
+revoke all on function public.report_betting(text, text) from public, anon;
+grant execute on function public.report_betting(text, text) to authenticated;
+
+-- (أدمن) البلاغات بأسماء اللي بلّغوا ومناطقهم
+create or replace function public.admin_betting_reports()
+returns table(id uuid, reporter_name text, zone text, suspect text, details text, status text, created_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  return query
+  select r.id, coalesce(p.name, '—'), coalesce(z.name, '—'), r.suspect, r.details, r.status, r.created_at
+  from public.betting_reports r
+  left join public.profiles p on p.id = r.reporter
+  left join public.zones z on z.id = r.zone_id
+  order by (r.status in ('open', 'investigating')) desc, r.created_at desc
+  limit 200;
+end $$;
+revoke all on function public.admin_betting_reports() from public, anon;
+grant execute on function public.admin_betting_reports() to authenticated;
 
 -- ═══════════════════════════════════════════════════════════════
 -- خلصنا. (اختياري) خلّي نفسك مدير — بدّل الإيميل بإيميلك:

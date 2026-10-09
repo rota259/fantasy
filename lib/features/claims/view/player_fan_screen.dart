@@ -121,7 +121,7 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  '#${s.posRank} في ${p.positionAr} من ${s.posTotal}',
+                  '#${s.posRank} بين ${p.position == 'GK' ? 'الحراس' : 'اللاعيبة'} من ${s.posTotal}',
                   style: AppText.h(14, color: AppColors.white),
                 ),
               ),

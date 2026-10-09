@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../fairplay/view/admin_betting_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -70,6 +71,13 @@ class ManagerHubScreen extends StatelessWidget {
                   'ماتشات بعد الديدلاين',
                   'طلبات المديرين يضيفوا ماتش بعد قفل الجولة',
                   const AdminLateMatchesScreen(),
+                ),
+                _tile(
+                  context,
+                  Icons.block_outlined,
+                  'بلاغات المراهنات',
+                  'حقّق في البلاغات — اللي يتثبت عليه بان نهائي',
+                  const AdminBettingScreen(),
                 ),
                 _tile(context, Icons.history, 'سجل العمليات', 'مين من الأدمنز عمل إيه وإمتى', const AdminLogScreen()),
                 _group('الماتشات واللاعيبة'),

@@ -28,6 +28,7 @@ class ManagerMatchesScreen extends StatefulWidget {
     required this.eventsRepo,
     required this.lineupRepo,
     this.organizerId,
+    this.finished,
   });
 
   final MatchesRepository matchesRepo;
@@ -35,6 +36,9 @@ class ManagerMatchesScreen extends StatefulWidget {
   final EventsRepository eventsRepo;
   final LineupRepository lineupRepo;
   final String? organizerId;
+
+  /// فلتر من لوحة الأدمن: true = اللي خلصت · false = الجاية · null = الكل.
+  final bool? finished;
 
   @override
   State<ManagerMatchesScreen> createState() => _ManagerMatchesScreenState();
@@ -124,7 +128,8 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
                 if (!snap.hasData) {
                   return const SkeletonList();
                 }
-                final matches = snap.data!;
+                final f = widget.finished;
+                final matches = f == null ? snap.data! : snap.data!.where((m) => m.isFinished == f).toList();
                 if (matches.isEmpty) {
                   return Center(
                     child: Text('مفيش ماتشات — اضغط "+ ماتش"', style: AppText.body(13, color: AppColors.neutral600)),

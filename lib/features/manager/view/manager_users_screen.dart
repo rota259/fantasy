@@ -22,7 +22,10 @@ import '../../../core/widgets/fx/skeleton.dart';
 /// تحديد كذا حد (أو الكل) → رجّع المديرين يوزرز أو امسح الحسابات خالص.
 /// الأدمن الجديد بيتضاف من Supabase بس (مش من هنا)، والأدمنز مبيتمسحوش.
 class ManagerUsersScreen extends StatefulWidget {
-  const ManagerUsersScreen({super.key});
+  const ManagerUsersScreen({super.key, this.role});
+
+  /// فلتر البداية (من لوحة الأدمن): user · organizer · null = الكل.
+  final String? role;
 
   @override
   State<ManagerUsersScreen> createState() => _ManagerUsersScreenState();
@@ -32,7 +35,7 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
   late final AdminRepository _repo = context.read<AdminRepository>();
   late Future<(List<AppUser>, Map<int, Zone>, AdminCounts)> _future = _load();
   String _q = '';
-  String? _role; // null = الكل · user · organizer
+  late String? _role = widget.role; // null = الكل · user · organizer
   Set<String>? _sel; // null = مش في وضع التحديد
 
   /// البحث في السيرفر (أول ١٠٠ نتيجة) — مش بنحمّل كل اليوزرز.

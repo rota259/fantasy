@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../core/share/story_frame.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/pentagon_pitch.dart';
 import '../data/models/week_player.dart';
 import '../data/team_of_week.dart';
+import 'totw_pitch.dart';
 
 /// كارت story لتشكيلة الجولة: النجم كبير فوق والأربعة + الحارس تحته.
 class TotwStoryCard extends StatelessWidget {
@@ -21,12 +22,12 @@ class TotwStoryCard extends StatelessWidget {
       name: p.name,
       points: p.points,
       star: big,
-      photo: PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: big ? 96 : 54, verified: p.verified),
+      photo: GoldAvatar(player: p, size: big ? 96 : 54),
     );
     return StoryFrame(
       kicker: label,
       refCode: refCode,
-      colors: const [Color(0xFF16305A), Color(0xFF0B1426)],
+      colors: const [PitchColors.grass, PitchColors.forest],
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

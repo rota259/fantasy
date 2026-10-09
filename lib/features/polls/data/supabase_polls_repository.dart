@@ -7,9 +7,12 @@ import 'polls_repository.dart';
 class SupabasePollsRepository implements PollsRepository {
   @override
   Future<PollView?> latestPoll(String kind, String userId) async {
-    final polls = await SupabaseService.table(
-      'polls',
-    ).select().eq('kind', kind).order('created_at', ascending: false).limit(1);
+    // تصويت منطقتي (اللي المديرين رشّحوا فيه) أو العام بتاع الأدمن — الأحدث
+    final zone = ZoneScope.current;
+    final q = SupabaseService.table('polls').select().eq('kind', kind);
+    final polls = await (zone == null ? q : q.or('zone_id.eq.$zone,zone_id.is.null'))
+        .order('created_at', ascending: false)
+        .limit(1);
     if (polls.isEmpty) return null;
     return _view(Poll.fromMap(polls.first), userId);
   }
@@ -58,8 +61,10 @@ class SupabasePollsRepository implements PollsRepository {
 
   @override
   Future<String> createAward(String kind, String question, List<NewPollOption> options, DateTime? closesAt) async {
-    // تصويت واحد مفتوح من كل نوع — القديم بيتقفل
-    await SupabaseService.table('polls').update({'active': false}).eq('kind', kind).eq('active', true);
+    // تصويت عام واحد مفتوح من كل نوع — القديم العام بيتقفل (تصويتات المناطق بتاعة المديرين مش بتتلمس)
+    await SupabaseService.table(
+      'polls',
+    ).update({'active': false}).eq('kind', kind).eq('active', true).isFilter('zone_id', null);
     final rows = await SupabaseService.table('polls')
         .insert({
           'kind': kind,
@@ -74,6 +79,35 @@ class SupabasePollsRepository implements PollsRepository {
         {'poll_id': pollId, 'label': o.label, 'player_id': o.playerId, 'video_url': o.videoUrl, 'match_id': o.matchId},
     ]);
     return pollId;
+  }
+
+  @override
+  Future<void> nominate(String kind, String matchId, String playerId, String videoUrl) async {
+    await SupabaseService.client.rpc(
+      'nominate_award',
+      params: {'p_kind': kind, 'p_match': matchId, 'p_player': playerId, 'p_video': videoUrl.trim()},
+    );
+  }
+
+  @override
+  Future<void> removeNomination(String optionId) async {
+    await SupabaseService.client.rpc('remove_award_nomination', params: {'p_option': optionId});
+  }
+
+  @override
+  Future<List<AwardNomination>> myNominations() async {
+    final rows = await SupabaseService.client.rpc('my_award_nominations') as List;
+    return [
+      for (final r in rows.cast<Map<String, dynamic>>())
+        (
+          optionId: r['option_id'].toString(),
+          kind: r['kind'] as String,
+          label: r['label'] as String,
+          videoUrl: r['video_url'] as String?,
+          votes: (r['votes'] as num?)?.toInt() ?? 0,
+          open: r['open'] == true,
+        ),
+    ];
   }
 
   @override

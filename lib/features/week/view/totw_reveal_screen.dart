@@ -7,10 +7,12 @@ import '../../../core/share/share_card.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/fx/confetti.dart';
+import '../../../core/widgets/fx/gold_shine.dart';
 import '../../../core/widgets/motion.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/pentagon_pitch.dart';
 import '../data/models/week_player.dart';
 import '../data/team_of_week.dart';
+import '../widgets/totw_pitch.dart';
 import '../widgets/totw_story_card.dart';
 
 /// كشف تشكيلة الجولة زي فتح الباكات: الشاشة تضلم والكروت تنزل واحد واحد (الحارس الأول وبعدين من الأقل
@@ -127,25 +129,26 @@ class _TotwRevealScreenState extends State<TotwRevealScreen> {
   }
 
   Widget _bigCard(WeekPlayer p, {bool star = false}) {
-    const gold = Color(0xFFF2C14E);
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(18),
+    // نفس ألوان الملعب: فريم أخضر غامق (النجم فريمه دهب معدني بيلمع) · خط أبيض · نجيلة خضرا · اللاعب بالدهب
+    const shape = RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(18)));
+    final inner = Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: PitchColors.line, width: 2),
+        gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: star ? [const Color(0xFF7A5A12), gold] : [AppColors.navy, AppColors.night],
+          colors: [PitchColors.grassStripe, PitchColors.grass, PitchColors.grassStripe, PitchColors.grass],
+          stops: [0, 0.35, 0.65, 1],
         ),
-        boxShadow: [BoxShadow(color: (star ? gold : AppColors.info).withValues(alpha: 0.6), blurRadius: 30)],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(p.positionAr, style: AppText.kicker(color: Colors.white70)),
+          Text(p.positionAr, style: AppText.kicker(color: Colors.white)),
           const SizedBox(height: 10),
-          PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 96, verified: p.verified),
+          GoldAvatar(player: p, size: 92),
           const SizedBox(height: 10),
           Text(
             p.name,
@@ -154,10 +157,31 @@ class _TotwRevealScreenState extends State<TotwRevealScreen> {
           ),
           Text(p.team, style: AppText.body(11, color: Colors.white70)),
           const SizedBox(height: 8),
-          Text('${p.points}', style: AppText.h(36, color: star ? Colors.black : gold)),
-          if (star) Text('⭐ نجم الجولة', style: AppText.h(14, color: Colors.black)),
+          GoldShine(
+            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+            child: Text('${p.points}', style: AppText.h(32, color: const Color(0xFF3A2600))),
+          ),
+          if (star) ...[
+            const SizedBox(height: 6),
+            Text('⭐ نجم الجولة', style: AppText.h(14, color: const Color(0xFFFFE7A0))),
+          ],
         ],
       ),
+    );
+    return Container(
+      width: 210,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(color: const Color(0xFFC9971C).withValues(alpha: star ? 0.7 : 0.3), blurRadius: 30)],
+      ),
+      child: star
+          ? GoldShine(shape: shape, padding: const EdgeInsets.all(7), child: inner)
+          : Container(
+              padding: const EdgeInsets.all(7),
+              decoration: ShapeDecoration(color: PitchColors.forest, shape: shape),
+              child: inner,
+            ),
     );
   }
 

@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/jersey.dart';
 import '../../../core/widgets/pentagon_pitch.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/round_pick_cubit.dart';
@@ -83,7 +83,7 @@ class PickPitch extends StatelessWidget {
     final bench = _bench;
     return Column(
       children: [
-        PentagonPitch(height: 360, tokens: tokens),
+        PentagonPitch(height: 370, tokens: tokens, framed: true),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
           child: Row(
@@ -148,12 +148,8 @@ class PickPitch extends StatelessWidget {
 
   Widget _plus(VoidCallback onTap) => Pressable(
     onTap: onTap,
-    child: PentagonIcon(
-      size: 48,
-      fill: AppColors.night2,
-      stroke: AppColors.white.withValues(alpha: 0.5),
-      child: Text('+', style: AppText.h(22, color: AppColors.white)),
-    ),
+    // مكان فاضي: تيشيرت شفاف عليه +
+    child: const Jersey(label: '+', style: _ghost, size: 50),
   );
 
   Widget _filled(Player p, VoidCallback onTap) {
@@ -164,10 +160,7 @@ class PickPitch extends StatelessWidget {
       onDragStarted: HapticFeedback.mediumImpact,
       feedback: Material(
         type: MaterialType.transparency,
-        child: Transform.scale(
-          scale: 1.15,
-          child: PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 52, verified: p.isVerified),
-        ),
+        child: Transform.scale(scale: 1.15, child: _shirt(p, state.captainId == p.id)),
       ),
       childWhenDragging: Opacity(opacity: 0.3, child: body),
       child: body,
@@ -177,11 +170,7 @@ class PickPitch extends StatelessWidget {
   Widget _player(Player p, VoidCallback onTap) {
     final badge = state.captainId == p.id ? 'C' : (state.viceId == p.id ? 'V' : null);
     final live = liveTeams.contains(p.team);
-    final avatar = PulseGlow(
-      enabled: live,
-      color: AppColors.danger,
-      child: PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 48, verified: p.isVerified),
-    );
+    final avatar = PulseGlow(enabled: live, color: AppColors.danger, child: _shirt(p, badge == 'C'));
     return Pressable(
       onTap: onTap,
       child: SizedBox(
@@ -192,7 +181,7 @@ class PickPitch extends StatelessWidget {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                badge == 'C' ? SpinRing(size: 48, child: avatar) : avatar,
+                avatar,
                 Positioned(
                   top: -6,
                   right: -6,
@@ -218,12 +207,21 @@ class PickPitch extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 3),
-            Text(
-              p.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppText.h(10, color: AppColors.white),
+            const SizedBox(height: 4),
+            // اسم اللاعب على شريحة بيضا ناعمة والكلام بالأسود
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, 2))],
+              ),
+              child: Text(
+                p.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.h(10, color: Colors.black),
+              ),
             ),
             if (liveTeams.contains(p.team)) _live(),
             if (pointsFor != null) PointsPop(value: pointsFor![p.id] ?? 0),
@@ -232,6 +230,24 @@ class PickPitch extends StatelessWidget {
       ),
     );
   }
+
+  static const _ghost = JerseyStyle(
+    body: [Color(0x55FFFFFF), Color(0x26FFFFFF)],
+    trim: Color(0x99FFFFFF),
+    ink: Colors.white,
+    shine: 0,
+  );
+
+  /// تيشيرت اللاعب: أبيض · الحارس فحمي · الكابتن دهب بيلمع.
+  static Widget _shirt(Player p, bool captain, [double size = 52]) => Jersey(
+    label: p.initials,
+    size: size,
+    style: captain ? JerseyStyle.gold : (p.position == 'GK' ? JerseyStyle.keeper : JerseyStyle.white),
+    phase: (p.id.hashCode % 100) / 100,
+  );
+
+  /// الاحتياطي وهو بيتسحب.
+  static Widget _avatar(Player p, double size) => _shirt(p, false, size);
 
   /// شارة "بيلعب دلوقتي".
   Widget _live() => Container(
@@ -248,10 +264,7 @@ class PickPitch extends StatelessWidget {
       slot = LongPressDraggable<String>(
         data: p.id,
         onDragStarted: HapticFeedback.mediumImpact,
-        feedback: Material(
-          type: MaterialType.transparency,
-          child: PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 48),
-        ),
+        feedback: Material(type: MaterialType.transparency, child: _avatar(p, 48)),
         childWhenDragging: Opacity(opacity: 0.3, child: slot),
         child: slot,
       );
@@ -288,13 +301,7 @@ class PickPitch extends StatelessWidget {
         ),
         child: Row(
           children: [
-            PentagonAvatar(
-              initials: p.initials,
-              photoUrl: p.imageUrl,
-              size: 30,
-              background: AppColors.neutral200,
-              color: AppColors.ink,
-            ),
+            _shirt(p, false, 30),
             const SizedBox(width: 8),
             Expanded(
               child: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppText.h(12)),

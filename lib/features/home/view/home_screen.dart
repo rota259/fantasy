@@ -144,7 +144,7 @@ class _HomeView extends StatelessWidget {
               if (s.isLoading) return const SkeletonList();
               // الأقسام بتدخل واحدة ورا التانية (ظهور + طلوع خفيف)
               final sections = [
-                _pointsHero(context, s.points),
+                _pointsHero(context, s),
                 if (userId != null) _wrappedButton(context),
                 HomeAlerts(alerts: _alerts(context, s)),
                 _nextMatch(context, s.nextMatch, s.openRound),
@@ -177,47 +177,83 @@ class _HomeView extends StatelessWidget {
     );
   }
 
-  /// نقط الجولة اللي بتتلعب — الضغط بيفتح تفصيلها (مين لعب ومين لسه) + تشكيلة الجولة الجاية.
-  Widget _pointsHero(BuildContext context, int points) {
-    return Pressable(
-      onTap: userId == null ? null : () => _push(context, LiveRoundScreen(userId: userId!)),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [AppColors.black, AppColors.night],
+  /// نقط الجولة اللي بتتلعب: المتوسط (شمال) · نقطي (النص) · الأعلى (يمين).
+  /// نقطي = تفصيلها (مين لعب ومين لسه) + الجولة الجاية · الأعلى = تشكيلة صاحبها · المتوسط للمعلومة بس.
+  Widget _pointsHero(BuildContext context, HomeState s) {
+    final h = s.highlights;
+    final top = h?.topUserId;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [AppColors.black, AppColors.night],
+        ),
+        borderRadius: AppRadius.lg,
+        boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 16, offset: const Offset(0, 6))],
+      ),
+      child: Column(
+        children: [
+          Text(
+            'نقط الجولة · ${WeekWindow.live().label}',
+            style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6)),
           ),
-          borderRadius: AppRadius.lg,
-          boxShadow: [BoxShadow(color: AppColors.shadow, blurRadius: 16, offset: const Offset(0, 6))],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'نقط الجولة · ${WeekWindow.live().label}',
-                    style: AppText.kicker(color: AppColors.white.withValues(alpha: 0.6)),
+          const SizedBox(height: 8),
+          Row(
+            textDirection: TextDirection.ltr, // المتوسط شمال والأعلى يمين مهما كانت اللغة
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: _side('المتوسط', h?.avg ?? 0)),
+              Expanded(
+                flex: 2,
+                child: Pressable(
+                  onTap: userId == null ? null : () => _push(context, LiveRoundScreen(userId: userId!)),
+                  child: Column(
+                    children: [
+                      CountUp(
+                        value: s.points,
+                        style: AppText.h(64, color: AppColors.white, spacingEm: -0.04, height: 0.95),
+                      ),
+                      Text('نقطك ›', style: AppText.h(12, color: AppColors.accent400)),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  CountUp(
-                    value: points,
-                    style: AppText.h(72, color: AppColors.white, spacingEm: -0.04, height: 0.9),
-                  ),
-                ],
+                ),
               ),
-            ),
-            Text('التفاصيل ›', style: AppText.h(12, color: AppColors.accent400)),
-          ],
-        ),
+              Expanded(
+                child: Pressable(
+                  onTap: top == null
+                      ? null
+                      : () =>
+                            _push(context, LiveRoundScreen(userId: top, ownerName: top == userId ? null : h!.topName)),
+                  child: _side('الأعلى ›', h?.top ?? 0, sub: h?.topName, color: const Color(0xFFF2C14E)),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+  Widget _side(String label, int value, {String? sub, Color? color}) => Column(
+    children: [
+      CountUp(
+        value: value,
+        style: AppText.h(26, color: color ?? AppColors.white, height: 1),
+      ),
+      const SizedBox(height: 2),
+      Text(label, style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.6))),
+      if (sub != null)
+        Text(
+          sub,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.45)),
+        ),
+    ],
+  );
 
   /// «جولتك في ٥ سلايدز» للجولة اللي بتتلعب.
   Widget _wrappedButton(BuildContext context) => Padding(

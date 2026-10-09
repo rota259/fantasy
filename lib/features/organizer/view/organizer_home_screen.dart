@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'organizer_awards_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -83,6 +84,13 @@ class OrganizerHomeScreen extends StatelessWidget {
                   'البطولات',
                   'اعمل بطولة لمنطقتك — القرعة والجدول والشجرة لوحدهم',
                   () => _push(context, const TournamentsScreen()),
+                ),
+                _tile(
+                  context,
+                  Icons.play_circle_outline,
+                  'هدف وتصدّي الجولة',
+                  'رشّح أحلى الأهداف والتصديات من ماتشاتك وأهل منطقتك يصوّتوا',
+                  () => _push(context, OrganizerAwardsScreen(organizerId: user.id)),
                 ),
                 _tile(
                   context,

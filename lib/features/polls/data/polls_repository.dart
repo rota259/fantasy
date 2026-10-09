@@ -17,6 +17,15 @@ abstract interface class PollsRepository {
   /// (مدير) تصويت هدف/تصدّي الجولة بمرشّحين + لينكات فيديو.
   Future<String> createAward(String kind, String question, List<NewPollOption> options, DateTime? closesAt);
 
+  /// (مدير منطقة) يرشّح هدف/تصدّي من ماتش ليه خلص — بيتجمع في تصويت الجولة لمنطقته. kind = goal | save.
+  Future<void> nominate(String kind, String matchId, String playerId, String videoUrl);
+
+  /// (مدير منطقة) يشيل ترشيحه.
+  Future<void> removeNomination(String optionId);
+
+  /// (مدير منطقة) ترشيحاتي في آخر ٣٠ يوم.
+  Future<List<AwardNomination>> myNominations();
+
   /// (مدير) هدف/تصدّي الموسم من فايزين الجولات. kind = goal | save.
   Future<String> createSeasonAward(String kind);
 }

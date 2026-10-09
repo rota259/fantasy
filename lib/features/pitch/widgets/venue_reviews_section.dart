@@ -77,26 +77,40 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                children: [
-                  Text('التقييمات', style: AppText.h(15)),
-                  const SizedBox(width: 8),
-                  if (list.isNotEmpty)
-                    Text('★ ${avg.toStringAsFixed(1)} (${list.length})', style: AppText.h(13, color: AppColors.gold)),
-                  const Spacer(),
-                  if (!_isOwner)
-                    Pressable(
-                      onTap: () => _review(mine),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          borderRadius: AppRadius.md,
-                          border: Border.all(color: AppColors.line, width: 1.2),
+              Text('التقييمات والتعليقات', style: AppText.h(15)),
+              const SizedBox(height: 8),
+              // ملخّص: المتوسط بالنجوم + توزيع ٥..١ + زرار التقييم
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: AppDecor.tile,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Column(
+                          children: [
+                            Text(list.isEmpty ? '—' : avg.toStringAsFixed(1), style: AppText.h(34, height: 1)),
+                            _stars(avg.round(), 14),
+                            Text('${list.length} تقييم', style: AppText.body(11, color: AppColors.neutral700)),
+                          ],
                         ),
-                        child: Text(mine == null ? '★ قيّم' : 'عدّل تقييمك', style: AppText.h(11)),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(child: Column(children: [for (var n = 5; n >= 1; n--) _bar(n, list)])),
+                      ],
                     ),
-                ],
+                    if (!_isOwner) ...[
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: () => _review(mine),
+                          icon: const Icon(Icons.star_rate_rounded),
+                          label: Text(mine == null ? 'قيّم الملعب واكتب تعليق' : 'عدّل تقييمك'),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 6),
               if (!snap.hasData)
@@ -109,6 +123,44 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
           ),
         );
       },
+    );
+  }
+
+  Widget _stars(int n, double size) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      for (var i = 1; i <= 5; i++)
+        Icon(i <= n ? Icons.star_rounded : Icons.star_outline_rounded, size: size, color: AppColors.gold),
+    ],
+  );
+
+  /// شريط توزيع: كام واحد إدّى [n] نجوم.
+  Widget _bar(int n, List<VenueReview> list) {
+    final c = list.where((r) => r.stars == n).length;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          SizedBox(width: 14, child: Text('$n', style: AppText.body(11))),
+          Icon(Icons.star_rounded, size: 12, color: AppColors.gold),
+          const SizedBox(width: 6),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: list.isEmpty ? 0 : c / list.length,
+                minHeight: 6,
+                backgroundColor: AppColors.neutral200,
+                color: AppColors.gold,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 24,
+            child: Text('$c', textAlign: TextAlign.end, style: AppText.body(11)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -131,7 +183,7 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
               Row(
                 children: [
                   Expanded(child: Text(r.name.isEmpty ? 'يوزر' : r.name, style: AppText.h(12))),
-                  Text('★' * r.stars, style: AppText.h(12, color: AppColors.gold)),
+                  _stars(r.stars, 13),
                   if (_isAdmin && r.userId != widget.userId)
                     Pressable(
                       onTap: () => _remove(r),

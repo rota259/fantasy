@@ -10,6 +10,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../events/data/events_repository.dart';
 import '../../integrity/data/integrity_repository.dart';
 import '../../matches/data/models/game_match.dart';
+import '../../matches/view/match_center_screen.dart';
 import '../../players/data/players_repository.dart';
 import '../cubit/manager_match_cubit.dart';
 import '../data/lineup_repository.dart';
@@ -45,6 +46,9 @@ class ManagerMatchScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // الماتش خلص: المنظّم بيشوف اللي حصل بس (صفحة الماتش) — مفيش إدارة ولا تعديل. الأدمن بس يقدر يصلّح.
+    final isAdmin = context.read<AuthCubit>().state.user?.isManager ?? false;
+    if (match.isFinished && !isAdmin) return MatchCenterScreen(match: match);
     return BlocProvider(
       create: (c) =>
           ManagerMatchCubit(playersRepo, eventsRepo, lineupRepo, c.read<IntegrityRepository>(), match)..load(),

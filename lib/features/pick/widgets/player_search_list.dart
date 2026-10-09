@@ -49,9 +49,43 @@ class _PlayerSearchListState extends State<PlayerSearchList> {
             padding: const EdgeInsets.all(24),
             child: Text('مفيش لاعيبة متاحة', style: AppText.body(13, color: AppColors.neutral600)),
           ),
-        Flexible(child: ListView(shrinkWrap: true, children: [for (final p in list) _row(p)])),
+        // كل فريق لوحده وتحته لاعيبته (الأعلى نقط الأول)
+        Flexible(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              for (final e in _byTeam(list).entries) ...[
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(color: AppColors.accent100, borderRadius: AppRadius.md),
+                  child: Row(
+                    children: [
+                      Icon(Icons.shield_outlined, size: 16, color: AppColors.accent),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(e.key, style: AppText.h(13, color: AppColors.accent700)),
+                      ),
+                      Text('${e.value.length}', style: AppText.body(11, color: AppColors.accent700)),
+                    ],
+                  ),
+                ),
+                for (final p in e.value) _row(p),
+              ],
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  /// الفرق بالأبجدية، واللاعيبة جوه كل فريق بترتيب القايمة (النقط).
+  static Map<String, List<Player>> _byTeam(List<Player> list) {
+    final map = <String, List<Player>>{};
+    for (final p in list) {
+      map.putIfAbsent(p.team.trim().isEmpty ? 'من غير فريق' : p.team, () => []).add(p);
+    }
+    return Map.fromEntries(map.entries.toList()..sort((a, b) => a.key.compareTo(b.key)));
   }
 
   Widget _row(Player p) => Pressable(
