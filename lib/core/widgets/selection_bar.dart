@@ -37,7 +37,7 @@ class SelectionBar extends StatelessWidget {
       return Row(
         children: [
           Expanded(child: Text(title, style: AppText.h(15))),
-          if (total > 0) _chip('☑ تحديد', AppColors.ink, onStart, outlined: true),
+          if (total > 0) _chip('تحديد', AppColors.ink, onStart, outlined: true),
         ],
       );
     }

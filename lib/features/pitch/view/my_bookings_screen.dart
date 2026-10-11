@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -96,7 +97,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
-                    child: Text('لسه محجزتش أي ملعب', style: AppText.body(13, color: AppColors.neutral600)),
+                    child: EmptyState(
+                      icon: Icons.event_available_outlined,
+                      title: 'لسه محجزتش أي ملعب',
+                      hint: 'احجز من «احجز ملعب» في الرئيسية',
+                    ),
                   );
                 }
                 return ListView(

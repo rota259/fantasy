@@ -7,10 +7,12 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/motion.dart';
 import '../../matches/widgets/match_format.dart';
 import '../cubit/challenge_cubit.dart';
-import '../data/models/prediction.dart';
+import '../data/models/challenge_extras.dart';
+import 'challenge_sections.dart';
 import 'score_picker.dart';
 
-/// كارت تحدّي واحد: توقّع النتيجة (المهم فرق الأهداف) قبل الماتش بساعة، وبعده صح ولا لأ.
+/// كارت تحدّي واحد بالأنواع اللي المدير اختارها (فرق الأهداف · مين فيهم؟ · ٣ أسئلة · المعكوس):
+/// جاوب قبل الماتش بساعة، وبعده كل قسم بيقول صح ولا لأ وكسبت كام.
 class ChallengeCard extends StatefulWidget {
   const ChallengeCard({super.key, required this.item});
 
@@ -21,23 +23,30 @@ class ChallengeCard extends StatefulWidget {
 }
 
 class _ChallengeCardState extends State<ChallengeCard> {
-  int? _a, _b; // المختار قبل الحفظ
+  int? _a, _b; // فرق الأهداف: المختار قبل الحفظ
+  ChallengeAnswers? _ans; // باقي الأنواع قبل الحفظ
   bool _saving = false;
 
+  /// حفظ كل اللي اتجاوب: فرق الأهداف (لو موجود) + باقي الأنواع.
   Future<void> _save() async {
-    final m = widget.item.match;
+    final it = widget.item;
+    final m = it.match;
+    final x = it.extras;
     final messenger = ScaffoldMessenger.of(context);
+    final cubit = context.read<ChallengeCubit>();
     setState(() => _saving = true);
-    final err = await context.read<ChallengeCubit>().predict(
-      m,
-      _a ?? widget.item.mine?.scoreA ?? 0,
-      _b ?? widget.item.mine?.scoreB ?? 0,
-    );
+    String? err;
+    if (x.has(ChallengeMode.diff)) {
+      err = await cubit.predict(m, _a ?? it.mine?.scoreA ?? 0, _b ?? it.mine?.scoreB ?? 0);
+    }
+    if (err == null && x.modes.any((k) => k != ChallengeMode.diff)) {
+      err = await cubit.answer(m, _ans ?? x.mine);
+    }
     if (!mounted) return;
     setState(() => _saving = false);
     messenger.showSnackBar(
       SnackBar(
-        content: Text(err ?? 'اتسجّل توقّعك ✓ — تقدر تغيّره لحد ${arabicTime(m.deadline)}'),
+        content: Text(err ?? 'اتسجّلت إجاباتك ✓ — تقدر تغيّرها لحد ${arabicTime(m.deadline)}'),
         backgroundColor: err == null ? AppColors.accent : AppColors.danger,
       ),
     );
@@ -47,9 +56,12 @@ class _ChallengeCardState extends State<ChallengeCard> {
   Widget build(BuildContext context) {
     final it = widget.item;
     final m = it.match;
+    final x = it.extras;
     final a = _a ?? it.mine?.scoreA ?? 0;
     final b = _b ?? it.mine?.scoreB ?? 0;
     final open = !m.isLocked && !m.isFinished;
+    final answered = it.mine != null || x.mine != const ChallengeAnswers();
+    final streak = context.select<ChallengeCubit, int>((c) => c.state.streak);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       decoration: BoxDecoration(
@@ -64,28 +76,47 @@ class _ChallengeCardState extends State<ChallengeCard> {
           Container(
             color: AppColors.black,
             padding: const EdgeInsets.all(14),
-            child: Text(
-              open
-                  ? 'توقّع قبل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)} — لو جبت فرق الأهداف صح +${Prediction.bonus} 🎯'
-                  : (m.isFinished
-                        ? 'الماتش خلص: ${m.teamA} ${m.scoreText} ${m.teamB}'
-                        : 'التوقّع اتقفل — استنى النتيجة'),
-              style: AppText.h(12, color: AppColors.white),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 18, 12, 6),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ScorePicker(team: m.teamA, value: a, onChanged: open ? (v) => setState(() => _a = v) : null),
-                ),
-                Text('-', style: AppText.h(30)),
-                Expanded(
-                  child: ScorePicker(team: m.teamB, value: b, onChanged: open ? (v) => setState(() => _b = v) : null),
+                Text('${m.teamA} ضد ${m.teamB}', style: AppText.h(16, color: AppColors.white)),
+                const SizedBox(height: 2),
+                Text(
+                  open
+                      ? 'جاوب قبل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)}'
+                      : (m.isFinished
+                            ? 'الماتش خلص: ${m.scoreText}${x.total > 0 ? ' · كسبت +${x.total}' : ''}'
+                            : 'التوقّع اتقفل — استنى النتيجة'),
+                  style: AppText.body(12, color: AppColors.white.withValues(alpha: 0.75)),
                 ),
               ],
             ),
+          ),
+          if (x.has(ChallengeMode.diff))
+            ChallengeSection(
+              mode: ChallengeMode.diff,
+              points: m.isFinished && it.mine != null ? (x.points[ChallengeMode.diff] ?? (it.won ? 5 : 0)) : null,
+              note: open && streak > 0
+                  ? 'سلسلتك $streak ورا بعض — لو جبتها صح المرة دي +${streak == 1 ? 7 : 10}'
+                  : (m.isFinished && x.streak >= 2 ? 'صح $streak مرات ورا بعض' : null),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ScorePicker(team: m.teamA, value: a, onChanged: open ? (v) => setState(() => _a = v) : null),
+                  ),
+                  Text('-', style: AppText.h(30)),
+                  Expanded(
+                    child: ScorePicker(team: m.teamB, value: b, onChanged: open ? (v) => setState(() => _b = v) : null),
+                  ),
+                ],
+              ),
+            ),
+          ChallengeSections(
+            match: m,
+            extras: x,
+            answers: _ans ?? x.mine,
+            open: open,
+            onChanged: (v) => setState(() => _ans = v),
           ),
           if (open)
             Padding(
@@ -99,22 +130,16 @@ class _ChallengeCardState extends State<ChallengeCard> {
                   ),
                   padding: const EdgeInsets.all(12),
                   alignment: Alignment.center,
-                  child: Text(
-                    it.mine == null ? 'سجّل توقّعي' : 'غيّر توقّعي',
-                    style: AppText.h(14, color: AppColors.white),
-                  ),
+                  child: Text(answered ? 'غيّر إجاباتي' : 'سجّل إجاباتي', style: AppText.h(14, color: AppColors.white)),
                 ),
               ),
             )
-          else if (it.mine == null)
-            _note('مالحقتش تتوقّع في الماتش ده')
-          else if (m.isFinished)
-            _note(
-              it.won
-                  ? '🎉 فرق الأهداف صح! خدت +${Prediction.bonus} نقط'
-                  : 'توقّعك ${it.mine!.scoreA} - ${it.mine!.scoreB} ماجاش المرة دي',
-            ),
-          if (it.summary != null) _note('${it.summary!.correct} من ${it.summary!.total} جابوا فرق الأهداف صح'),
+          else if (!answered)
+            _note('مالحقتش تجاوب في التحدّي ده')
+          else
+            const SizedBox(height: 12),
+          if (it.summary != null && x.has(ChallengeMode.diff))
+            _note('${it.summary!.correct} من ${it.summary!.total} جابوا فرق الأهداف صح'),
         ],
       ),
     );

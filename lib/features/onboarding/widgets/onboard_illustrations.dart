@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../../../core/widgets/player_token.dart';
 
 /// رسمة الشريحة 1: أرض خماسية بتوكنات أرقام فقط.
@@ -12,7 +12,7 @@ class OnboardPitchArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PentagonPitch(
+    return FormationPitch(
       height: 230,
       border: AppBorders.solid,
       tokens: const [

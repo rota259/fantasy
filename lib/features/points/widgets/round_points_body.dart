@@ -99,7 +99,7 @@ class RoundPointsBody extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
             child: Text(
-              'المعتمد لحد دلوقتي ${entry.finalPoints.total} — الباقي بيتعتمد لما الماتشات تتأكد ⏳',
+              'المعتمد لحد دلوقتي ${entry.finalPoints.total} — الباقي بيتعتمد لما الماتشات تتأكد',
               style: AppText.body(11, color: AppColors.neutral700),
             ),
           ),

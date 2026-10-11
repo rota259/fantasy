@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../leagues/view/zone_league_screen.dart';
 import '../../../core/notifications/sound_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -82,6 +83,11 @@ class _HomeView extends StatelessWidget {
       (icon: Icons.calendar_today_outlined, label: 'الماتشات', onTap: () => nav.openOverlay(AppOverlayView.fixtures)),
       (icon: Icons.location_on_outlined, label: 'احجز ملعب', onTap: () => nav.openOverlay(AppOverlayView.pitch)),
       (icon: Icons.auto_awesome, label: 'المدرّب', onTap: () => nav.openOverlay(AppOverlayView.coach)),
+      (
+        icon: Icons.location_city_outlined,
+        label: 'دوري المناطق',
+        onTap: () => _push(context, const ZoneLeagueScreen()),
+      ),
     ];
   }
 
@@ -98,25 +104,29 @@ class _HomeView extends StatelessWidget {
     return [
       if (open != null && !s.roundSaved)
         (
-          text: '⚠️ لسه معملتش تشكيلة الجولة — بتقفل ${arabicWeekday(open.deadline)} ${arabicTime(open.deadline)}',
+          icon: Icons.warning_amber_rounded,
+          text: 'لسه معملتش تشكيلة الجولة — بتقفل ${arabicWeekday(open.deadline)} ${arabicTime(open.deadline)}',
           color: AppColors.danger,
           onTap: () => context.read<AppNavCubit>().setTab(AppTab.team),
         ),
       for (final r in s.toReview)
         (
-          text: '📋 أكّد ورقة ماتش ${r.match.teamA} ضد ${r.match.teamB} — النتيجة والأهداف صح؟',
+          icon: Icons.fact_check_outlined,
+          text: 'أكّد ورقة ماتش ${r.match.teamA} ضد ${r.match.teamB} — النتيجة والأهداف صح؟',
           color: AppColors.black,
           onTap: () => _review(context, r.match),
         ),
       if (s.tieOpen)
         (
-          text: '⚖️ تعادل في تشكيلة الجولة — صوّت مين يدخل',
+          icon: Icons.how_to_vote_outlined,
+          text: 'تعادل في تشكيلة الجولة — صوّت مين يدخل',
           color: AppColors.info,
           onTap: () => _push(context, const TeamOfWeekScreen()),
         ),
       for (final m in s.toRate)
         (
-          text: '⭐ قيّم لاعيبة ${m.teamA} ضد ${m.teamB} — واختار رجل المباراة',
+          icon: Icons.star_outline_rounded,
+          text: 'قيّم لاعيبة ${m.teamA} ضد ${m.teamB} — واختار رجل المباراة',
           color: AppColors.accent,
           onTap: () => _push(context, MatchRatingsScreen(match: m, userId: uid)),
         ),
@@ -145,7 +155,6 @@ class _HomeView extends StatelessWidget {
               // الأقسام بتدخل واحدة ورا التانية (ظهور + طلوع خفيف)
               final sections = [
                 _pointsHero(context, s),
-                if (userId != null) _wrappedButton(context),
                 HomeAlerts(alerts: _alerts(context, s)),
                 _nextMatch(context, s.nextMatch, s.openRound),
                 HomeShortcuts(items: _shortcuts(context)),
@@ -159,7 +168,7 @@ class _HomeView extends StatelessWidget {
                       : () => showPlayerMatchesSheet(
                           context,
                           playerId: s.star!.id,
-                          name: '⭐ ${s.star!.name}',
+                          name: s.star!.name,
                           team: s.star!.team,
                           window: s.starRound!,
                         ),
@@ -232,6 +241,29 @@ class _HomeView extends StatelessWidget {
               ),
             ],
           ),
+          if (userId != null) ...[
+            const SizedBox(height: 12),
+            // «جولتك في ٥ سلايدز» — شريحة صغيرة جوه الكارت بدل زرار عريض لوحده
+            Pressable(
+              onTap: () => RoundWrappedScreen.open(context, WeekWindow.live()),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.white.withValues(alpha: 0.18)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.play_circle_outline, size: 16, color: AppColors.accent400),
+                    const SizedBox(width: 6),
+                    Text('جولتك في ٥ سلايدز', style: AppText.h(12, color: AppColors.white)),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -255,54 +287,36 @@ class _HomeView extends StatelessWidget {
     ],
   );
 
-  /// «جولتك في ٥ سلايدز» للجولة اللي بتتلعب.
-  Widget _wrappedButton(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-    child: Pressable(
-      onTap: () => RoundWrappedScreen.open(context, WeekWindow.live()),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [AppColors.accent700, AppColors.accent500]),
-          borderRadius: AppRadius.md,
-        ),
-        child: Row(
-          children: [
-            Text('🎬', style: AppText.h(18)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text('جولتك في ٥ سلايدز — وشيّرها', style: AppText.h(14, color: AppColors.white)),
-            ),
-            Text('›', style: AppText.h(18, color: AppColors.white)),
-          ],
-        ),
-      ),
-    ),
-  );
-
   /// الماتش الجاي في منطقتك — الضغط بيفتح تشكيلة الجولة.
   Widget _nextMatch(BuildContext context, GameMatch? m, WeekWindow? open) {
     if (m == null) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('مفيش ماتش قادم في منطقتك دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: AppDecor.tile,
+        child: Row(
+          children: [
+            Icon(Icons.event_busy_outlined, size: 20, color: AppColors.neutral500),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text('مفيش ماتش قادم في منطقتك دلوقتي', style: AppText.body(13, color: AppColors.neutral700)),
+            ),
+          ],
+        ),
       );
     }
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       child: Pressable(
         onTap: () => context.read<AppNavCubit>().setTab(AppTab.team),
         child: Container(
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.md,
-            border: Border.all(color: AppColors.line, width: 1.2),
-          ),
+          decoration: AppDecor.tile,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'الماتش القادم${m.isChallenge ? ' · 🎯 تحدّي الجولة' : ''}',
+                'الماتش القادم${m.isChallenge ? ' · تحدّي الجولة' : ''}',
                 style: AppText.kicker(color: AppColors.accent),
               ),
               const SizedBox(height: 6),

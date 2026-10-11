@@ -94,7 +94,7 @@ class _NewLeagueDialogState extends State<_NewLeagueDialog> {
                   decoration: BoxDecoration(
                     borderRadius: AppRadius.md,
                     color: _type == t.$1 ? AppColors.accent : null,
-                    border: Border.all(color: _type == t.$1 ? AppColors.accent : AppColors.black, width: 2),
+                    border: Border.all(color: _type == t.$1 ? AppColors.accent : AppColors.line, width: 1.4),
                   ),
                   child: Text(t.$2, style: AppText.h(12, color: _type == t.$1 ? AppColors.white : AppColors.ink)),
                 ),

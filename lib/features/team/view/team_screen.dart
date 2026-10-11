@@ -38,7 +38,7 @@ class _TeamScreenState extends State<TeamScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Row(
-              children: [_tab('الجولة الجاية 🔒', _upcoming), const SizedBox(width: 6), _tab('اللي بعدها', _open)],
+              children: [_tab('الجولة الجاية', _upcoming), const SizedBox(width: 6), _tab('اللي بعدها', _open)],
             ),
           ),
         Expanded(
@@ -61,7 +61,7 @@ class _TeamScreenState extends State<TeamScreen> {
           decoration: BoxDecoration(
             borderRadius: AppRadius.md,
             color: on ? AppColors.accent : null,
-            border: Border.all(color: on ? AppColors.accent : AppColors.black, width: 2),
+            border: Border.all(color: on ? AppColors.accent : AppColors.line, width: 1.4),
           ),
           child: Text(label, style: AppText.h(12, color: on ? AppColors.white : AppColors.ink)),
         ),

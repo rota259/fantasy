@@ -92,7 +92,7 @@ class _OrganizerRequestScreenState extends State<OrganizerRequestScreen> {
 
   Widget _status(OrganizerRequest? r) {
     if (r != null && r.isPending) {
-      return _box('طلبك مستني موافقة الإدارة ⏳', AppColors.bronze);
+      return _box('طلبك مستني موافقة الإدارة', AppColors.bronze);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

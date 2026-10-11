@@ -74,10 +74,7 @@ class _ConfirmSheetState extends State<_ConfirmSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'الحجز هيبقى معلّق ⏳ لحد ما صاحب الملعب يوافق.',
-                style: AppText.body(11, color: AppColors.neutral700),
-              ),
+              Text('الحجز هيبقى معلّق لحد ما صاحب الملعب يوافق.', style: AppText.body(11, color: AppColors.neutral700)),
               const SizedBox(height: 14),
               _btn('ابعت طلب الحجز', AppColors.accent, () => Navigator.pop(context, _note.text)),
             ],
@@ -115,7 +112,7 @@ Future<void> showBookingSentSheet(BuildContext context, Venue v, DateTime day, i
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Expanded(child: _btn('📞 اتصل بالملعب', AppColors.black, () => Launchers.call(phone))),
+                  Expanded(child: _btn('اتصل بالملعب', AppColors.black, () => Launchers.call(phone))),
                   const SizedBox(width: 8),
                   Expanded(child: _btn('واتساب', const Color(0xFF16A34A), () => Launchers.whatsapp(phone, msg))),
                 ],

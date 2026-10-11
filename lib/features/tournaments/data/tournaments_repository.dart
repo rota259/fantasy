@@ -35,4 +35,13 @@ abstract interface class TournamentsRepository {
   Future<void> startKnockout(String id);
   Future<void> setWinner(String matchId, String team);
   Future<void> predict(String id, String team);
+
+  /// (منظّم البطولة) تحديد أو تغيير ميعاد ماتش — قبل ما يبدأ.
+  Future<void> setMatchTime(String matchId, DateTime time);
+
+  /// فانتازي البطولة: لاعيبة فرقها ونقطهم · تشكيلتي · نقطي وترتيبي · الترتيب.
+  Future<TournamentFantasy> fantasy(String id);
+
+  /// حفظ تشكيلتي في البطولة: ٥ لاعيبة (حارس + ٤ · ٢ بحد أقصى من الفريق) وكابتن.
+  Future<void> saveFantasy(String id, List<String> players, String captain);
 }

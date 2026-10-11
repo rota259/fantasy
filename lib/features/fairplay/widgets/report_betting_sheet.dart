@@ -6,9 +6,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/fairplay_repository.dart';
 
-/// بلاغ مراهنات: على مين (اسم المدير/اليوزر/الفريق) + اللي حصل — بيروح للأدمنز يحققوا.
-Future<void> showReportBettingSheet(BuildContext context) {
-  final suspect = TextEditingController();
+/// بلاغ مراهنات: على مين + اللي حصل — بيروح للأدمنز يحققوا.
+/// من صفحة يوزر: [userId] و[userName] بيتبعتوا مع البلاغ (والاسم ثابت). من «حسابي»: يكتب الاسم بنفسه.
+Future<void> showReportBettingSheet(BuildContext context, {String? userId, String? userName}) {
+  final suspect = TextEditingController(text: userName ?? '');
   final details = TextEditingController();
   return showModalBottomSheet(
     context: context,
@@ -20,7 +21,7 @@ Future<void> showReportBettingSheet(BuildContext context) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('🚫 بلّغ عن مراهنات', style: AppText.h(18)),
+          Text('بلّغ عن مراهنات', style: AppText.h(18)),
           const SizedBox(height: 4),
           Text(
             'البلاغ بيروح للإدارة بس، واسمك مش بيظهر لحد. الإدارة هتحقق، ولو اتثبت = بان نهائي.',
@@ -29,6 +30,7 @@ Future<void> showReportBettingSheet(BuildContext context) {
           const SizedBox(height: 12),
           TextField(
             controller: suspect,
+            readOnly: userId != null,
             maxLength: 120,
             decoration: const InputDecoration(hintText: 'على مين؟ (اسم المدير · اليوزر · الفريق · المنطقة)'),
           ),
@@ -50,7 +52,7 @@ Future<void> showReportBettingSheet(BuildContext context) {
                 return;
               }
               try {
-                await c.read<FairPlayRepository>().report(suspect.text, details.text);
+                await c.read<FairPlayRepository>().report(suspect.text, details.text, userId: userId);
                 messenger.showSnackBar(
                   const SnackBar(content: Text('وصل البلاغ للإدارة ✓ — شكرًا إنك بتحافظ على اللعبة')),
                 );

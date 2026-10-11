@@ -98,7 +98,7 @@ class _ViewState extends State<_View> {
           open
               ? '${closes != null ? 'التصويت بيقفل ${arabicWeekday(closes)} ${arabicTime(closes)} · ' : ''}'
                     'دوس على الفيديو تتفرّج، وبعدين صوّت'
-              : (winners.isEmpty ? 'التصويت خلص من غير أصوات' : '🏆 الفايز: ${winners.first.label}'),
+              : (winners.isEmpty ? 'التصويت خلص من غير أصوات' : 'الفايز: ${winners.first.label}'),
           style: AppText.body(11, color: AppColors.neutral700),
         ),
       ),

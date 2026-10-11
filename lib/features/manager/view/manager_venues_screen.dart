@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -107,7 +108,7 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
                 if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
-                    child: Text('لسه مفيش ملاعب — اضغط "+ ملعب"', style: AppText.body(13, color: AppColors.neutral600)),
+                    child: EmptyState(icon: Icons.stadium_outlined, title: 'لسه مفيش ملاعب', hint: 'اضغط «+ ملعب» فوق'),
                   );
                 }
                 return ListView(
@@ -151,7 +152,7 @@ class _ManagerVenuesScreenState extends State<ManagerVenuesScreen> {
                   ),
                   Text(
                     [
-                      if (!v.hasAnyLocation) '⚠️ من غير موقع' else if (!v.hasLocation) 'لينك بس (مش ظاهر على الخريطة)',
+                      if (!v.hasAnyLocation) 'من غير موقع' else if (!v.hasLocation) 'لينك بس (مش ظاهر على الخريطة)',
                       v.ownerId == null ? 'الإدارة بيأكّد الحجز' : 'ليه صاحب',
                     ].join(' · '),
                     style: AppText.body(10, color: v.hasAnyLocation ? AppColors.neutral600 : AppColors.danger),

@@ -9,11 +9,10 @@ import '../../overlays/widgets/overlay_shell.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../cubit/challenge_cubit.dart';
 import '../data/challenge_repository.dart';
-import '../data/models/prediction.dart';
 import '../widgets/challenge_card.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
-/// تحدّي الجولة: كل مدير في منطقتي بيختار ماتش من ماتشاته — توقّع، واللي يجيب فرق الأهداف صح ياخد +٥.
+/// تحدّي الجولة: كل مدير في منطقتي بيختار ماتش من ماتشاته وأنواع التحدّي عليه — جاوب صح واكسب نقط.
 class ChallengeOverlay extends StatelessWidget {
   const ChallengeOverlay({super.key});
 
@@ -25,7 +24,7 @@ class ChallengeOverlay extends StatelessWidget {
       child: BlocBuilder<ChallengeCubit, ChallengeState>(
         builder: (context, s) => OverlayShell(
           title: 'تحدّي الجولة',
-          subtitle: 'PREDICT & WIN +${Prediction.bonus}',
+          subtitle: 'PREDICT & WIN',
           onBack: context.read<AppNavCubit>().back,
           children: s.loading
               ? [Padding(padding: const EdgeInsets.all(40), child: const SkeletonList())]

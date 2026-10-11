@@ -5,7 +5,7 @@ import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../data/models/venue.dart';
 import '../data/models/venue_review.dart';
@@ -170,7 +170,7 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        PentagonAvatar(
+        AppAvatar(
           initials: r.name.trim().length >= 2 ? r.name.trim().substring(0, 2) : '؟',
           photoUrl: r.photoUrl,
           size: 30,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
@@ -81,7 +82,9 @@ class _AdminTotwScreenState extends State<AdminTotwScreen> {
                 }
                 if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
-                  return Center(child: Text('مفيش ماتشات في الجولة دي', style: AppText.body(13)));
+                  return Center(
+                    child: EmptyState(icon: Icons.event_busy_outlined, title: 'مفيش ماتشات في الجولة دي'),
+                  );
                 }
                 return ListView(padding: const EdgeInsets.all(12), children: [for (final z in snap.data!) _zone(z)]);
               },
@@ -142,7 +145,7 @@ class _AdminTotwScreenState extends State<AdminTotwScreen> {
               }),
               title: Text('${p.name} · ${p.points} نقطة', style: AppText.h(13)),
               subtitle: Text(
-                '${p.team}${z.tieWinners.contains(p.id) ? ' · 🗳 كسب التصويت' : ''}',
+                '${p.team}${z.tieWinners.contains(p.id) ? ' · كسب التصويت' : ''}',
                 style: AppText.body(10),
               ),
             ),

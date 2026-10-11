@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -72,10 +73,10 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
                       if (list.isEmpty)
                         Padding(
                           padding: const EdgeInsets.all(30),
-                          child: Text(
-                            'مفيش بطولات في منطقتك لسه 🏆',
-                            textAlign: TextAlign.center,
-                            style: AppText.body(13, color: AppColors.neutral600),
+                          child: EmptyState(
+                            icon: Icons.emoji_events_outlined,
+                            title: 'مفيش بطولات في منطقتك لسه',
+                            hint: 'مدير منطقتك يقدر يعمل بطولة — والفرق تسجّل فيها',
                           ),
                         ),
                       for (final (i, t) in list.indexed) FadeSlideIn(index: i, child: _card(t)),
@@ -101,7 +102,11 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
       decoration: AppDecor.tile,
       child: Row(
         children: [
-          Text(t.isFinished ? '🏆' : '⚽', style: AppText.h(28)),
+          Icon(
+            t.isFinished ? Icons.emoji_events : Icons.sports_soccer,
+            size: 30,
+            color: t.isFinished ? AppColors.gold : AppColors.accent,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -115,7 +120,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
                 if (t.isFinished && t.champion != null)
                   Text('البطل: ${t.champion}', style: AppText.h(12, color: AppColors.accent))
                 else if (t.prize != null)
-                  Text('🎁 ${t.prize}', style: AppText.h(12, color: AppColors.bronze)),
+                  Text('${t.prize}', style: AppText.h(12, color: AppColors.bronze)),
               ],
             ),
           ),

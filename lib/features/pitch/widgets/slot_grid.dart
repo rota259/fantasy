@@ -115,8 +115,8 @@ class SlotGrid extends StatelessWidget {
         : b == null
         ? (AppColors.accent, 'متاح')
         : b.isConfirmed
-        ? (AppColors.danger, mine ? 'حجزك ✅' : 'محجوز')
-        : (const Color(0xFFCA8A04), mine ? 'طلبك ⏳' : 'معلّق');
+        ? (AppColors.danger, mine ? 'حجزك' : 'محجوز')
+        : (const Color(0xFFCA8A04), mine ? 'طلبك' : 'معلّق');
 
     return Pressable(
       onTap: (past || b != null) ? null : () => onPick(h),

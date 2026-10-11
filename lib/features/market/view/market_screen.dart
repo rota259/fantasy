@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -71,7 +72,11 @@ class _PlayersViewState extends State<_PlayersView> {
               final players = [...s.players]..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
               if (players.isEmpty) {
                 return Center(
-                  child: Text('لسه مفيش لاعيبة', style: AppText.body(13, color: AppColors.neutral600)),
+                  child: EmptyState(
+                    icon: Icons.groups_outlined,
+                    title: 'لسه مفيش لاعيبة',
+                    hint: 'اللاعيبة بيظهروا لما مديرين منطقتك يضيفوا فرقهم',
+                  ),
                 );
               }
               return ListView(

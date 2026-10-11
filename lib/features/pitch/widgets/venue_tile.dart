@@ -53,7 +53,7 @@ class VenueTile extends StatelessWidget {
                         Text(
                           rating == null
                               ? 'لسه محدش قيّمه'
-                              : '★ ${rating!.avg.toStringAsFixed(1)} (${rating!.count} تقييم)',
+                              : '${rating!.avg.toStringAsFixed(1)} (${rating!.count} تقييم)',
                           style: AppText.h(11, color: rating == null ? AppColors.neutral500 : AppColors.gold),
                         ),
                         const SizedBox(height: 2),

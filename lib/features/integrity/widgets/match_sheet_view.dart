@@ -39,7 +39,7 @@ class MatchSheetView extends StatelessWidget {
             margin: const EdgeInsets.only(top: 6),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(color: AppColors.bronze, borderRadius: AppRadius.md),
-            child: Text('⚠️ ${MatchFlags.label(f)}', style: AppText.h(12, color: AppColors.white)),
+            child: Text(MatchFlags.label(f), style: AppText.h(12, color: AppColors.white)),
           ),
         for (final t in m.teams) ...[
           Padding(

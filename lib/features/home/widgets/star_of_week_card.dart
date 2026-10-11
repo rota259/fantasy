@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../week/widgets/totw_pitch.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../week/data/models/week_player.dart';
 
 /// نجم الجولة: أعلى لاعب نقط في منطقتي في آخر تشكيلة جولة اعتمدتها الإدارة (بيفضل لحد اللي بعدها).
@@ -38,7 +39,7 @@ class StarOfWeekCard extends StatelessWidget {
           child: p == null
               ? Row(
                   children: [
-                    PentagonIcon(
+                    IconTile(
                       size: 64,
                       fill: AppColors.night,
                       stroke: AppColors.neutral600,
@@ -55,7 +56,7 @@ class StarOfWeekCard extends StatelessWidget {
                 )
               : Row(
                   children: [
-                    PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 92, verified: p.verified),
+                    GoldAvatar(player: p, size: 92, card: true),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
@@ -63,7 +64,7 @@ class StarOfWeekCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text('⭐ نجم الجولة', style: AppText.kicker(color: AppColors.accent400)),
+                              Text('نجم الجولة', style: AppText.kicker(color: AppColors.accent400)),
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),

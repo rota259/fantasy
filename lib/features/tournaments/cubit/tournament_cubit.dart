@@ -113,6 +113,7 @@ class TournamentCubit extends Cubit<TournamentState> {
   Future<String?> startKnockout() => _run(() => _repo.startKnockout(id));
   Future<String?> setWinner(String matchId, String team) => _run(() => _repo.setWinner(matchId, team));
   Future<String?> predict(String team) => _run(() => _repo.predict(id, team));
+  Future<String?> setMatchTime(String matchId, DateTime time) => _run(() => _repo.setMatchTime(matchId, time));
 
   @override
   Future<void> close() {

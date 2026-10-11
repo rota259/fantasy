@@ -143,7 +143,7 @@ class _StatusSheetState extends State<_StatusSheet> {
                         decoration: BoxDecoration(
                           borderRadius: AppRadius.md,
                           color: _status == a ? AppColors.accent : null,
-                          border: Border.all(color: _status == a ? AppColors.accent : AppColors.black, width: 2),
+                          border: Border.all(color: _status == a ? AppColors.accent : AppColors.line, width: 1.4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,

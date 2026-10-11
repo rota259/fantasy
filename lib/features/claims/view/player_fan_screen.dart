@@ -6,7 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/data/models/player.dart';
 import '../../week/data/week_window.dart';
@@ -99,7 +99,7 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 110, verified: true),
+            AppAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 110, verified: true),
             const SizedBox(height: 10),
             Text(p.name, style: AppText.h(26, color: AppColors.white)),
             Text('${p.team} · ${p.positionAr}', style: AppText.body(12, color: AppColors.neutral400)),

@@ -2,6 +2,7 @@ import '../../../core/supabase/supabase_service.dart';
 import '../../../core/zone/zone_scope.dart';
 import '../../matches/data/models/game_match.dart';
 import 'challenge_repository.dart';
+import 'models/challenge_extras.dart';
 import 'models/prediction.dart';
 
 /// تنفيذ ChallengeRepository فوق matches.is_challenge (منطقتي بس) + جدول predictions.
@@ -45,22 +46,51 @@ class SupabaseChallengeRepository implements ChallengeRepository {
   }
 
   @override
-  Future<List<GameMatch>> wonMatches(String userId) async {
-    final rows = await SupabaseService.table('predictions')
-        .select('score_a, score_b, matches!inner(*)')
-        .eq('user_id', userId)
-        .eq('matches.is_challenge', true)
-        .eq('matches.status', 'finished');
+  Future<List<ChallengeWin>> wonMatches() async {
+    final rows = await SupabaseService.client.rpc('my_challenge_wins') as List;
     return [
-      for (final r in rows)
-        if (GameMatch.fromMap(r['matches'] as Map<String, dynamic>) case final m
-            when Prediction.fromMap({...r, 'match_id': m.id}).matches(m.scoreA, m.scoreB))
-          m,
+      for (final r in rows.cast<Map<String, dynamic>>())
+        (match: GameMatch.fromMap(r), points: (r['bonus'] as num?)?.toInt() ?? 0),
     ];
   }
 
   @override
-  Future<void> setChallenge(String matchId) async {
-    await SupabaseService.client.rpc('set_challenge', params: {'p_match': matchId});
+  Future<({int streak, Map<String, ChallengeExtras> byMatch})> board() async {
+    final b = await SupabaseService.client.rpc('challenge_board') as Map<String, dynamic>;
+    return (
+      streak: (b['streak'] as num?)?.toInt() ?? 0,
+      byMatch: {
+        for (final it in ((b['items'] as List?) ?? const []).cast<Map<String, dynamic>>())
+          it['match_id'].toString(): ChallengeExtras.fromMap(it),
+      },
+    );
+  }
+
+  @override
+  Future<void> answer(String matchId, ChallengeAnswers a) async {
+    await SupabaseService.client.rpc(
+      'answer_challenge',
+      params: {
+        'p_match': matchId,
+        'p_duel': a.duel,
+        'p_winner': a.winner,
+        'p_over': a.over,
+        'p_first': a.first,
+        'p_lowest': a.lowest,
+      },
+    );
+  }
+
+  @override
+  Future<void> setChallenge(
+    String matchId, {
+    List<String> modes = const [ChallengeMode.diff],
+    String? duelA,
+    String? duelB,
+  }) async {
+    await SupabaseService.client.rpc(
+      'set_challenge',
+      params: {'p_match': matchId, 'p_modes': modes, 'p_duel_a': duelA, 'p_duel_b': duelB},
+    );
   }
 }

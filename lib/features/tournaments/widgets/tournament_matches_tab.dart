@@ -11,8 +11,8 @@ import '../../matches/view/match_center_screen.dart';
 import '../../matches/widgets/match_format.dart';
 import '../cubit/tournament_cubit.dart';
 
-/// ماتشات البطولة بالدور (مجموعة A · ربع النهائي …): الضغط = صفحة الماتش. المنظّم: إدارة الماتش،
-/// ولو تعادل في خروج المغلوب يختار الفايز (ضربات جزاء).
+/// ماتشات البطولة بالدور (مجموعة A · ربع النهائي …): الضغط = صفحة الماتش. المنظّم: يحدد ميعاد كل ماتش
+/// (القرعة بتعمل الماتشات من غير ميعاد) · إدارة الماتش · ولو تعادل في خروج المغلوب يختار الفايز (ضربات جزاء).
 class TournamentMatchesTab extends StatelessWidget {
   const TournamentMatchesTab({super.key, required this.state, required this.runs});
   final TournamentState state;
@@ -32,6 +32,17 @@ class TournamentMatchesTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.only(top: 8, bottom: 24),
       children: [
+        if (runs && state.matches.any((m) => !m.timeSet))
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: AppColors.accent100, borderRadius: AppRadius.md),
+            child: Text(
+              'القرعة اتعملت — حدّد ميعاد كل ماتش من زرار «حدّد الميعاد». الماتش مبيظهرش للناس ولا بيتلعب '
+              'غير لما ميعاده يتحدد، وبعدها تقدر تحط التشكيلة والأحداث عادي.',
+              style: AppText.body(12, color: AppColors.accent700),
+            ),
+          ),
         for (final e in byStage.entries) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
@@ -52,10 +63,11 @@ class TournamentMatchesTab extends StatelessWidget {
         m.stage != null &&
         !m.stage!.startsWith('مجموعة') &&
         m.stage != 'الدوري';
-    final live = m.hasStarted && !m.isFinished;
+    final live = m.timeSet && m.hasStarted && !m.isFinished;
+    final canSetTime = runs && !m.isFinished && !live;
     return Pressable(
       behavior: HitTestBehavior.opaque,
-      onTap: () => MatchCenterScreen.open(context, m),
+      onTap: m.timeSet ? () => MatchCenterScreen.open(context, m) : null,
       child: Container(
         margin: AppDecor.tileMargin,
         padding: const EdgeInsets.all(14),
@@ -80,7 +92,9 @@ class TournamentMatchesTab extends StatelessWidget {
                     borderRadius: AppRadius.md,
                   ),
                   child: Text(
-                    m.isFinished || live ? '${m.scoreA ?? 0} - ${m.scoreB ?? 0}' : arabicTime(m.dateTime),
+                    m.isFinished || live
+                        ? '${m.scoreA ?? 0} - ${m.scoreB ?? 0}'
+                        : (m.timeSet ? arabicTime(m.dateTime) : 'ضد'),
                     style: AppText.h(13, color: AppColors.white),
                   ),
                 ),
@@ -91,7 +105,9 @@ class TournamentMatchesTab extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${arabicWeekday(m.dateTime)} ${m.dateTime.day}/${m.dateTime.month}${m.winner != null && m.scoreA == m.scoreB ? ' · ${m.winner} كسب بضربات الجزاء' : ''}',
+              m.timeSet
+                  ? '${arabicWeekday(m.dateTime)} ${m.dateTime.day}/${m.dateTime.month}${m.winner != null && m.scoreA == m.scoreB ? ' · ${m.winner} كسب بضربات الجزاء' : ''}'
+                  : 'الميعاد لسه متحددش',
               textAlign: TextAlign.center,
               style: AppText.body(10, color: AppColors.neutral600),
             ),
@@ -119,18 +135,50 @@ class TournamentMatchesTab extends StatelessWidget {
                 ),
               ),
             if (runs && !m.isFinished)
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: TextButton.icon(
-                  onPressed: () =>
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => ManagerMatchScreen.of(context, m))),
-                  icon: const Icon(Icons.edit_note, size: 18),
-                  label: const Text('إدارة الماتش'),
-                ),
+              Wrap(
+                alignment: WrapAlignment.end,
+                children: [
+                  if (canSetTime)
+                    TextButton.icon(
+                      onPressed: () => _pickTime(context, m),
+                      icon: const Icon(Icons.schedule, size: 18),
+                      label: Text(m.timeSet ? 'غيّر الميعاد' : 'حدّد الميعاد'),
+                    ),
+                  if (m.timeSet)
+                    TextButton.icon(
+                      onPressed: () =>
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => ManagerMatchScreen.of(context, m))),
+                      icon: const Icon(Icons.edit_note, size: 18),
+                      label: const Text('إدارة الماتش'),
+                    ),
+                ],
               ),
           ],
         ),
       ),
+    );
+  }
+
+  /// المنظّم بيختار اليوم والساعة → الميعاد بيتحفظ وأهل المنطقة بيوصلهم إشعار.
+  Future<void> _pickTime(BuildContext context, GameMatch m) async {
+    final cubit = context.read<TournamentCubit>();
+    final messenger = ScaffoldMessenger.of(context);
+    final now = DateTime.now();
+    final start = m.timeSet && m.dateTime.isAfter(now) ? m.dateTime : now.add(const Duration(hours: 2));
+    final day = await showDatePicker(
+      context: context,
+      initialDate: start,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 180)),
+      helpText: '${m.teamA} ضد ${m.teamB}',
+    );
+    if (day == null || !context.mounted) return;
+    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(start));
+    if (time == null) return;
+    final at = DateTime(day.year, day.month, day.day, time.hour, time.minute);
+    final err = await cubit.setMatchTime(m.id, at);
+    messenger.showSnackBar(
+      SnackBar(content: Text(err ?? 'اتحدد الميعاد ✓ ${arabicWeekday(at)} ${at.day}/${at.month} ${arabicTime(at)}')),
     );
   }
 

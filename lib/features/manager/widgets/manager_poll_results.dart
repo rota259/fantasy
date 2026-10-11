@@ -33,7 +33,7 @@ class _ManagerPollResultsState extends State<ManagerPollResults> {
       await polls.closePoll(v.poll.id);
       final w = v.winner;
       await admin.notify(
-        title: '🏆 ${v.poll.question}',
+        title: v.poll.question,
         body: w == null ? 'التصويت انتهى من غير أصوات' : '${w.label} — ${w.votes} من ${v.totalVotes} صوت',
         kind: 'vote',
       );
@@ -96,7 +96,7 @@ class _ManagerPollResultsState extends State<ManagerPollResults> {
                     ),
                     padding: const EdgeInsets.all(11),
                     alignment: Alignment.center,
-                    child: Text('🏆 اقفل وأعلن الفايز', style: AppText.h(13, color: AppColors.white)),
+                    child: Text('اقفل وأعلن الفايز', style: AppText.h(13, color: AppColors.white)),
                   ),
                 ),
               ],

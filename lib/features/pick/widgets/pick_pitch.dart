@@ -4,8 +4,10 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/fx/gold_shine.dart';
 import '../../../core/widgets/jersey.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/round_pick_cubit.dart';
 import '../../../core/widgets/fx/effects.dart';
@@ -83,7 +85,7 @@ class PickPitch extends StatelessWidget {
     final bench = _bench;
     return Column(
       children: [
-        PentagonPitch(height: 370, tokens: tokens, framed: true),
+        FormationPitch(height: 370, tokens: tokens, framed: true),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
           child: Row(
@@ -238,13 +240,51 @@ class PickPitch extends StatelessWidget {
     shine: 0,
   );
 
-  /// تيشيرت اللاعب: أبيض · الحارس فحمي · الكابتن دهب بيلمع.
-  static Widget _shirt(Player p, bool captain, [double size = 52]) => Jersey(
-    label: p.initials,
-    size: size,
-    style: captain ? JerseyStyle.gold : (p.position == 'GK' ? JerseyStyle.keeper : JerseyStyle.white),
-    phase: (p.id.hashCode % 100) / 100,
-  );
+  /// اللاعب على الملعب: صورته لو ليه صورة (فريم أبيض · الحارس فحمي · الكابتن دهب بيلمع)،
+  /// ولو مالوش → تيشيرت بنفس الألوان.
+  static Widget _shirt(Player p, bool captain, [double size = 52]) {
+    final jersey = Jersey(
+      label: p.initials,
+      size: size,
+      style: captain ? JerseyStyle.gold : (p.position == 'GK' ? JerseyStyle.keeper : JerseyStyle.white),
+      phase: (p.id.hashCode % 100) / 100,
+    );
+    final url = p.imageUrl;
+    if (url == null || url.isEmpty) return jersey;
+    final ring = (size * 0.07).clamp(2.0, 4.0);
+    final inner = size - ring * 2;
+    final photo = ClipOval(
+      child: NetImage(
+        url,
+        width: inner,
+        height: inner,
+        fallback: SizedBox(width: inner, height: inner, child: jersey),
+      ),
+    );
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 3))],
+      ),
+      child: captain
+          ? GoldShine(
+              shape: const CircleBorder(),
+              padding: EdgeInsets.all(ring),
+              delay: (p.id.hashCode % 100) / 100,
+              child: photo,
+            )
+          : Container(
+              padding: EdgeInsets.all(ring),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: p.position == 'GK' ? const Color(0xFF2B2B2B) : Colors.white,
+              ),
+              child: photo,
+            ),
+    );
+  }
 
   /// الاحتياطي وهو بيتسحب.
   static Widget _avatar(Player p, double size) => _shirt(p, false, size);

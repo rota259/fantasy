@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../players/data/models/player.dart';
 import '../data/models/player_rating.dart';
 import '../../../core/widgets/motion.dart';
@@ -29,13 +29,13 @@ class RatingRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              PentagonAvatar(initials: player.initials, photoUrl: player.imageUrl, size: 36),
+              AppAvatar(initials: player.initials, photoUrl: player.imageUrl, size: 36),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${player.name}${leader ? '  ⭐' : ''}', style: AppText.h(14)),
+                    Text('${player.name}${leader ? '  ★' : ''}', style: AppText.h(14)),
                     Text('${player.team} · ${player.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
                   ],
                 ),

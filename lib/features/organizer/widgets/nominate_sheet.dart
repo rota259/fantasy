@@ -91,7 +91,7 @@ class _NominateSheetState extends State<_NominateSheet> {
               const SizedBox(height: 12),
               SegmentedButton<String>(
                 segments: const [
-                  ButtonSegment(value: 'goal', label: Text('هدف ⚽')),
+                  ButtonSegment(value: 'goal', label: Text('هدف')),
                   ButtonSegment(value: 'save', label: Text('تصدّي 🧤')),
                 ],
                 selected: {_kind},

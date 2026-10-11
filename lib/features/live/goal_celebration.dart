@@ -8,7 +8,7 @@ import '../../core/theme/app_text.dart';
 import '../../core/widgets/fx/confetti.dart';
 import '../../core/widgets/fx/effects.dart';
 import '../../core/widgets/motion.dart';
-import '../../core/widgets/pentagon_avatar.dart';
+import '../../core/widgets/app_avatar.dart';
 import '../players/data/models/player.dart';
 
 /// لحظة الجول: الشاشة تضلم وتتهز، صورة اللاعب تكبر في النص، confetti، والنقط بتعدّ (+١٠ لو كابتن).
@@ -85,12 +85,7 @@ class _GoalViewState extends State<_GoalView> {
                       builder: (_, s, c) => Transform.scale(scale: s, child: c),
                       child: PulseGlow(
                         color: const Color(0xFFF2C14E),
-                        child: PentagonAvatar(
-                          initials: p.initials,
-                          photoUrl: p.imageUrl,
-                          size: 150,
-                          verified: p.isVerified,
-                        ),
+                        child: AppAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 150, verified: p.isVerified),
                       ),
                     ),
                     const SizedBox(height: 18),

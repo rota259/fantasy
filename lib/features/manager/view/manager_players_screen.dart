@@ -120,12 +120,12 @@ class _ViewState extends State<_View> {
                       }),
                       actions: [
                         (
-                          label: '🗑 احذف المحدّد (${_sel?.length ?? 0})',
+                          label: 'احذف المحدّد (${_sel?.length ?? 0})',
                           color: AppColors.danger,
                           onTap: (_sel?.isEmpty ?? true) ? null : () => _bulkDelete(cubit, _sel!.toList(), all: false),
                         ),
                         (
-                          label: '🗑 احذف الكل (${s.players.length})',
+                          label: 'احذف الكل (${s.players.length})',
                           color: AppColors.black,
                           onTap: () => _bulkDelete(cubit, [for (final p in s.players) p.id], all: true),
                         ),
@@ -300,7 +300,7 @@ class _ViewState extends State<_View> {
               decoration: BoxDecoration(
                 borderRadius: AppRadius.md,
                 color: _pos == p.$1 ? AppColors.accent : null,
-                border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
+                border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.line, width: 1.4),
               ),
               child: Text(p.$2, style: AppText.h(12, color: _pos == p.$1 ? AppColors.white : AppColors.ink)),
             ),

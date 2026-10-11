@@ -29,7 +29,7 @@ class AvailabilityBadge extends StatelessWidget {
         // كارت أحمر: مستطيل أبيض صغير جوه المربّع الأحمر
         return Container(width: size * 0.3, height: size * 0.55, color: AppColors.white);
       default:
-        return Icon(Icons.bolt, size: s, color: AppColors.white); // جاهز ⚡
+        return Icon(Icons.bolt, size: s, color: AppColors.white); // جاهز
     }
   }
 }

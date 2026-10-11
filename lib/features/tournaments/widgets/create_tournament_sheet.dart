@@ -88,7 +88,7 @@ class _CreateSheetState extends State<_CreateSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('🏆 بطولة جديدة', style: AppText.h(18)),
+            Text('بطولة جديدة', style: AppText.h(18)),
             const SizedBox(height: 12),
             TextField(
               controller: _name,

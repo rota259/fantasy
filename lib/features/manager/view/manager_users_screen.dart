@@ -196,12 +196,12 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
                             onTap: picked.any((u) => u.isOrganizer) ? () => _bulk(picked, delete: false) : null,
                           ),
                           (
-                            label: '🗑 امسح المحدّد (${picked.length})',
+                            label: 'امسح المحدّد (${picked.length})',
                             color: AppColors.danger,
                             onTap: picked.isEmpty ? null : () => _bulk(picked, delete: true),
                           ),
                           (
-                            label: '🗑 امسح الكل (${users.length})',
+                            label: 'امسح الكل (${users.length})',
                             color: AppColors.black,
                             onTap: users.isEmpty ? null : () => _bulk(users, delete: true, all: true),
                           ),
@@ -274,7 +274,7 @@ class _ManagerUsersScreenState extends State<ManagerUsersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(u.isActive ? u.name : '${u.name} · محظور 🚫', style: AppText.h(14)),
+                  Text(u.isActive ? u.name : '${u.name} · محظور', style: AppText.h(14)),
                   Text(
                     '${zone?.label ?? 'من غير منطقة'} · ${u.phone ?? u.email}',
                     style: AppText.body(10, color: AppColors.neutral700),

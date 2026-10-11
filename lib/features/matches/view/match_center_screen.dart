@@ -59,7 +59,7 @@ class MatchCenterScreen extends StatelessWidget {
                       c,
                       card: MatchStoryCard(state: s, refCode: c.read<AuthCubit>().state.user?.refCode),
                       text:
-                          '${s.match.teamA} ${s.match.scoreA ?? 0} - ${s.match.scoreB ?? 0} ${s.match.teamB} ⚽ — تابع ماتشات منطقتك في الخماسي',
+                          '${s.match.teamA} ${s.match.scoreA ?? 0} - ${s.match.scoreB ?? 0} ${s.match.teamB} — تابع ماتشات منطقتك في الخماسي',
                     );
                   },
                 ),
@@ -106,7 +106,7 @@ class MatchCenterScreen extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
           child: Text(
-            m.ratingOpen ? '⭐ قيّم اللاعيبة واختار رجل المباراة' : '⭐ رجل المباراة والتقييمات',
+            m.ratingOpen ? 'قيّم اللاعيبة واختار رجل المباراة' : 'رجل المباراة والتقييمات',
             style: AppText.h(13, color: AppColors.white),
           ),
         ),

@@ -10,10 +10,10 @@ class PitchToken {
   final Widget child;
 }
 
-/// ألوان الملعب الكلاسيك: فريم نبيتي · خط أبيض · نجيلة خضرا بدرجتين · لاعيبة الجولة بالدهبي.
+/// ألوان الملعب الكلاسيك: فريم · خط أبيض · نجيلة خضرا بدرجتين · لاعيبة الجولة بالدهبي.
 abstract final class PitchColors {
   static const frame = Color(0xFF5E1520); // نبيتي غامق (ملعب تشكيلتك)
-  static const forest = Color(0xFF173F1B); // أخضر غابة غامق (تشكيلة الجولة — من غير نبيتي)
+  static const forest = Color(0xFF173F1B); // أخضر غابة غامق (تشكيلة الجولة)
   static const grass = Color(0xFF2E7D32);
   static const grassStripe = Color(0xFF388E3C);
   static const line = Color(0xE6FFFFFF);
@@ -21,10 +21,10 @@ abstract final class PitchColors {
   static const goldDeep = Color(0xFF8A6410);
 }
 
-/// أرض ملعب خماسية: خطوط نجيلة + مضلّع + توكنات اللاعيبة.
-/// [framed]: الستايل الكلاسيك — مستطيل بفريم ([frameColor] — نبيتي افتراضيًا)، جواه خط أبيض محدّد الملعب، والأرض خضرا.
-class PentagonPitch extends StatelessWidget {
-  const PentagonPitch({
+/// أرض ملعب بخطوطه الحقيقية (نص الملعب · دايرة السنتر · منطقة المرمى) + توكنات اللاعيبة في أماكنهم.
+/// [framed]: الستايل الكلاسيك — مستطيل بفريم ([frameColor])، جواه خط أبيض محدّد الملعب، والأرض خضرا.
+class FormationPitch extends StatelessWidget {
+  const FormationPitch({
     super.key,
     required this.height,
     required this.tokens,
@@ -32,7 +32,6 @@ class PentagonPitch extends StatelessWidget {
     this.background,
     this.stripe,
     this.line = const Color(0x8C4FCA85), // rgba(79,202,133,.55)
-    this.shape = pentagon,
     this.framed = false,
     this.frameColor = PitchColors.frame,
   });
@@ -45,14 +44,11 @@ class PentagonPitch extends StatelessWidget {
   final Color? background; // الافتراضي night
   final Color? stripe; // الافتراضي nightStripe
   final Color line;
-
-  /// رؤوس المضلّع المرسوم (نِسَب 0..1): خماسي (الافتراضي) أو سداسي.
-  final List<Offset> shape;
   final bool framed;
   final Color frameColor; // لون الفريم
 
-  /// رؤوس المضلّع (نِسَب 0..1) — مطابقة للـ handoff.
-  static const List<Offset> pentagon = [
+  /// أماكن الخماسي (نِسَب 0..1): الحارس تحت + ٤.
+  static const List<Offset> five = [
     Offset(0.50, 0.86),
     Offset(0.84, 0.60),
     Offset(0.71, 0.20),
@@ -60,8 +56,8 @@ class PentagonPitch extends StatelessWidget {
     Offset(0.16, 0.60),
   ];
 
-  /// ملعب سداسي: الحارس تحت + ٥.
-  static const List<Offset> hexagon = [
+  /// أماكن السداسي: الحارس تحت + ٥.
+  static const List<Offset> six = [
     Offset(0.50, 0.88),
     Offset(0.85, 0.68),
     Offset(0.85, 0.30),
@@ -77,8 +73,8 @@ class PentagonPitch extends StatelessWidget {
         Positioned.fill(
           child: CustomPaint(
             painter: framed
-                ? _PitchPainter(PitchColors.grassStripe, PitchColors.line, shape, boundary: true)
-                : _PitchPainter(stripe ?? AppColors.nightStripe, line, shape),
+                ? _PitchPainter(PitchColors.grassStripe, PitchColors.line, boundary: true)
+                : _PitchPainter(stripe ?? AppColors.nightStripe, line),
           ),
         ),
         for (final t in tokens) Align(alignment: Alignment(t.leftPct / 50 - 1, t.topPct / 50 - 1), child: t.child),
@@ -109,10 +105,9 @@ class PentagonPitch extends StatelessWidget {
 }
 
 class _PitchPainter extends CustomPainter {
-  _PitchPainter(this.stripeColor, this.lineColor, this.shape, {this.boundary = false});
+  _PitchPainter(this.stripeColor, this.lineColor, {this.boundary = false});
   final Color stripeColor;
   final Color lineColor;
-  final List<Offset> shape;
   final bool boundary; // خط أبيض محدّد الملعب جوه الفريم
 
   @override
@@ -123,24 +118,38 @@ class _PitchPainter extends CustomPainter {
     for (double y = band; y < size.height; y += band * 2) {
       canvas.drawRect(Rect.fromLTWH(0, y, size.width, band), stripe);
     }
+    final w = size.width, h = size.height;
+    final inset = boundary ? 8.0 : 0.0;
     final stroke = Paint()
       ..style = PaintingStyle.stroke
+      ..strokeWidth = boundary ? 2 : 1
       ..color = lineColor;
     if (boundary) {
-      canvas.drawRect(Rect.fromLTWH(8, 8, size.width - 16, size.height - 16), stroke..strokeWidth = 2.5);
+      canvas.drawRect(Rect.fromLTWH(inset, inset, w - inset * 2, h - inset * 2), stroke..strokeWidth = 2.5);
+      stroke.strokeWidth = 2;
     }
-    // مضلّع الأرض
-    final path = Path();
-    for (var i = 0; i < shape.length; i++) {
-      final p = shape[i];
-      final o = Offset(p.dx * size.width, p.dy * size.height);
-      i == 0 ? path.moveTo(o.dx, o.dy) : path.lineTo(o.dx, o.dy);
-    }
-    path.close();
-    canvas.drawPath(path, stroke..strokeWidth = boundary ? 2 : 1);
+    // خط النص ودايرة السنتر
+    final mid = h * 0.42;
+    canvas.drawLine(Offset(inset, mid), Offset(w - inset, mid), stroke);
+    canvas.drawCircle(Offset(w / 2, mid), w * 0.13, stroke);
+    canvas.drawCircle(Offset(w / 2, mid), 2.5, Paint()..color = lineColor);
+    // منطقة المرمى تحت (عند الحارس) + قوسها
+    final boxW = w * 0.46, boxH = h * 0.2;
+    final box = Rect.fromLTWH((w - boxW) / 2, h - inset - boxH, boxW, boxH);
+    canvas.drawRect(box, stroke);
+    canvas.drawArc(
+      Rect.fromCenter(center: Offset(w / 2, box.top), width: w * 0.2, height: w * 0.12),
+      3.14159,
+      3.14159,
+      false,
+      stroke,
+    );
+    // المرمى نفسه
+    final goalW = w * 0.2;
+    canvas.drawRect(Rect.fromLTWH((w - goalW) / 2, h - inset - 5, goalW, 5), Paint()..color = lineColor);
   }
 
   @override
   bool shouldRepaint(covariant _PitchPainter old) =>
-      old.stripeColor != stripeColor || old.lineColor != lineColor || old.shape != shape || old.boundary != boundary;
+      old.stripeColor != stripeColor || old.lineColor != lineColor || old.boundary != boundary;
 }

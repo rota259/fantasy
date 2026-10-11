@@ -119,6 +119,44 @@ select public.draw_tournament((select id from _t where k = 'league'));
 reset role;
 select t.check('league: 3 teams → 3 matches', (select count(*) = 3 from public.matches where tournament_id = (select id from _t where k = 'league')));
 select t.check('league matches belong to the organizer', (select bool_and(organizer_id = '00000000-0000-0000-0000-00000000000b') from public.matches where tournament_id = (select id from _t where k = 'league')));
+-- القرعة بتعمل الماتشات من غير ميعاد — المنظّم هو اللي يحدده
+select t.check('drawn matches have no time yet',
+  (select bool_and(not time_set) from public.matches where tournament_id = (select id from _t where k = 'league')));
+select t.expect_fail('match without a time cannot finish',
+  $q$update public.matches set status = 'finished' where tournament_id = (select id from _t where k = 'league')$q$);
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.expect_fail('user cannot set tournament match time', $q$select public.set_tournament_match_time(
+  (select id from public.matches where tournament_id = (select id from _t where k = 'league') limit 1), now() + interval '2 hours')$q$);
+reset role;
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+select public.set_tournament_match_time(m.id, now() + interval '2 hours')
+from public.matches m where m.tournament_id = (select id from _t where k = 'league');
+reset role;
+select t.check('organizer set the match times',
+  (select bool_and(time_set and date_time < now() + interval '1 day') from public.matches
+   where tournament_id = (select id from _t where k = 'league')));
+
+-- فانتازي البطولة: ٥ من فرق البطولة (حارس + ٤ · ٢ بحد أقصى من الفريق) وكابتن ×٢
+insert into public.players (name, team, position) values
+  ('ك١', 'أ', 'GK'), ('ك٢', 'ب', 'FWD'), ('ك٣', 'ب', 'FWD'), ('ك٤', 'ج', 'FWD'), ('ك٥', 'ج', 'FWD'), ('ك٦', 'ج', 'FWD');
+create function t.tp(variadic names text[]) returns uuid[] language sql as
+  $f$ select array_agg(id) from public.players where name = any(names) $f$;
+grant execute on function t.tp(text[]) to authenticated;
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.expect_fail('tournament picks: max 2 per team', $q$select public.save_tournament_picks(
+  (select id from _t where k = 'league'), t.tp('ك١', 'ك٤', 'ك٥', 'ك٦', 'ز'), (select id from public.players where name = 'ز'))$q$);
+select t.expect_fail('tournament picks: exactly one keeper', $q$select public.save_tournament_picks(
+  (select id from _t where k = 'league'), t.tp('ك٢', 'ك٣', 'ك٤', 'ك٥', 'ز'), (select id from public.players where name = 'ز'))$q$);
+select public.save_tournament_picks((select id from _t where k = 'league'), t.tp('ك١', 'ك٢', 'ك٣', 'ك٤', 'ز'),
+  (select id from public.players where name = 'ز'));
+select t.check('tournament lineup saved (5, one captain)',
+  (select count(*) = 5 and count(*) filter (where is_captain) = 1 from public.tournament_picks
+   where tournament_id = (select id from _t where k = 'league')));
+reset role;
+
 -- أ تكسب الكل
 insert into public.lineups (match_id, player_id, status)
 select m.id, p.id, 'bench' from public.matches m, public.players p
@@ -136,6 +174,16 @@ select t.check('league champion = top of table', (select champion = 'أ' and sta
 select t.check('standings: أ 6 pts', (select pts = 6 from public.tournament_standings((select id from _t where k = 'league')) where team = 'أ'));
 select t.check('champion prediction +10 in bonus', public.fn_user_bonus('00000000-0000-0000-0000-000000000001') >= 10);
 select t.check('awards: top scorer', (select name = 'ز' from public.tournament_awards((select id from _t where k = 'league')) where award = 'scorer'));
+-- ز كابتن وسجّل في ماتشين (٥ + ٥) ×٢ = ٢٠
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.check('tournament fantasy: captain goals ×2 = 20',
+  (select (b->>'my_points')::int = 20 and (b->>'my_rank')::int = 1 and jsonb_array_length(b->'standings') = 1
+          and jsonb_array_length(b->'players') >= 6
+   from public.tournament_fantasy_board((select id from _t where k = 'league')) b));
+select t.expect_fail('tournament finished: lineup locked', $q$select public.save_tournament_picks(
+  (select id from _t where k = 'league'), t.tp('ك١', 'ك٢', 'ك٣', 'ك٤', 'ز'), (select id from public.players where name = 'ك٢'))$q$);
+reset role;
 
 -- خروج المغلوب بـ ٣ فرق: فريق واخد راحة → النهائي بيتعمل لوحده → البطل
 select t.as_user('00000000-0000-0000-0000-00000000000b');
@@ -145,6 +193,7 @@ select public.add_tournament_team((select id from _t where k = 'ko'), x) from un
 select public.draw_tournament((select id from _t where k = 'ko'));
 reset role;
 select t.check('knockout: 1 semi + bye', (select count(*) = 1 from public.matches where tournament_id = (select id from _t where k = 'ko')));
+update public.matches set time_set = true where tournament_id = (select id from _t where k = 'ko');
 update public.matches set status = 'finished' where tournament_id = (select id from _t where k = 'ko') and stage = 'نص النهائي';
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
@@ -153,6 +202,7 @@ select public.set_match_winner((select id from public.matches where tournament_i
 reset role;
 select t.check('final created after the semi (draw decided by organizer)',
   (select count(*) = 1 from public.matches where tournament_id = (select id from _t where k = 'ko') and stage = 'النهائي'));
+update public.matches set time_set = true where tournament_id = (select id from _t where k = 'ko');
 update public.matches set status = 'finished' where tournament_id = (select id from _t where k = 'ko') and stage = 'النهائي';
 update public.matches set winner = teams[2] where tournament_id = (select id from _t where k = 'ko') and stage = 'النهائي';
 select t.check('knockout champion crowned', (select champion is not null and status = 'finished' from public.tournaments where id = (select id from _t where k = 'ko')));
@@ -165,6 +215,7 @@ select public.add_tournament_team((select id from _t where k = 'groups'), x) fro
 select public.draw_tournament((select id from _t where k = 'groups'));
 reset role;
 select t.check('groups: 2 group matches', (select count(*) = 2 from public.matches where tournament_id = (select id from _t where k = 'groups')));
+update public.matches set time_set = true where tournament_id = (select id from _t where k = 'groups');
 update public.matches set status = 'finished' where tournament_id = (select id from _t where k = 'groups');
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;

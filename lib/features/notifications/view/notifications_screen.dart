@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -38,7 +39,11 @@ class NotificationsScreen extends StatelessWidget {
                   }
                   if (s.items.isEmpty) {
                     return Center(
-                      child: Text('لسه مفيش إشعارات', style: AppText.body(13, color: AppColors.neutral600)),
+                      child: EmptyState(
+                        icon: Icons.notifications_none,
+                        title: 'لسه مفيش إشعارات',
+                        hint: 'أول ما يحصل حاجة في منطقتك هتلاقيها هنا',
+                      ),
                     );
                   }
                   return RefreshIndicator(

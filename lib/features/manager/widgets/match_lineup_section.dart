@@ -52,9 +52,9 @@ class MatchLineupSection extends StatelessWidget {
         const SizedBox(height: 18),
         _team(context, match.teamB),
         const SizedBox(height: 20),
-        _button('💾 احفظ التشكيلة', filled: true, onTap: () => _run(context, cubit.saveLineup)),
+        _button('احفظ التشكيلة', filled: true, onTap: () => _run(context, cubit.saveLineup)),
         const SizedBox(height: 10),
-        _button('🔔 أبلغ اليوزرز إن التشكيلة نزلت', onTap: () => _run(context, cubit.notifyUsers)),
+        _button('أبلغ اليوزرز إن التشكيلة نزلت', onTap: () => _run(context, cubit.notifyUsers)),
       ],
     );
   }
@@ -132,7 +132,9 @@ class MatchLineupSection extends StatelessWidget {
     if (!context.mounted || chosen == null) return;
     if (chosen == 'new') {
       final r = await showAddTeamPlayerSheet(context, team);
-      if (r != null) await cubit.addPlayerToTeam(r.name, team, r.position);
+      if (r != null) {
+        await cubit.addPlayerToTeam(r.name, team, r.position, photo: r.photo, photoExt: r.photoExt);
+      }
       return;
     }
     final err = cubit.setLineup((chosen as Player).id, kind == 'bench' ? 'bench' : 'starting');

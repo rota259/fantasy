@@ -101,15 +101,15 @@ class _AdminCaseScreenState extends State<AdminCaseScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Text(
-                          '${v.ok ? '✅' : '❌'} ${v.name} (${v.team})${v.note == null ? '' : ' — «${v.note}»'}',
+                          '${v.ok ? '✓' : '✗'} ${v.name} (${v.team})${v.note == null ? '' : ' — «${v.note}»'}',
                           style: AppText.body(13),
                         ),
                       ),
                     const SizedBox(height: 20),
-                    _button('✏️ عدّل الأحداث', AppColors.black, _editEvents),
+                    _button('عدّل الأحداث', AppColors.black, _editEvents),
                     _button('✓ اعتمد الماتش', AppColors.accent, () => _act('approve')),
                     _button('↺ مراجعة من الأول', AppColors.info, () => _act('reopen')),
-                    _button('🚫 الغي الماتش', AppColors.danger, () => _act('void')),
+                    _button('الغي الماتش', AppColors.danger, () => _act('void')),
                   ],
                 );
               },

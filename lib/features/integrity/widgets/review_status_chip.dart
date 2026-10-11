@@ -14,9 +14,9 @@ class ReviewStatusChip extends StatelessWidget {
   static (String, Color)? of(GameMatch m) {
     if (!m.isFinished) return null;
     return switch (m.reviewStatus) {
-      'pending' => ('مبدئي ⏳', AppColors.bronze),
-      'disputed' => ('اعتراض ⚠️', AppColors.danger),
-      'void' => ('اتلغى 🚫', AppColors.neutral600),
+      'pending' => ('مبدئي', AppColors.bronze),
+      'disputed' => ('اعتراض', AppColors.danger),
+      'void' => ('اتلغى', AppColors.neutral600),
       'approved' => ('معتمد ✓', AppColors.accent),
       _ => null,
     };

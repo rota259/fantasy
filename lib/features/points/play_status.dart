@@ -13,12 +13,12 @@ PlayStatus playStatus(String team, List<GameMatch> roundMatches, {required bool 
     ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
   if (mine.isEmpty) return (state: PlayState.noMatch, label: 'فريقه مالوش ماتش في الجولة');
   if (mine.any((m) => !m.isFinished && !m.dateTime.isAfter(n))) {
-    return (state: PlayState.live, label: '🔴 بيلعب دلوقتي');
+    return (state: PlayState.live, label: '● بيلعب دلوقتي');
   }
   final next = mine.where((m) => !m.isFinished).firstOrNull;
   if (next != null) {
     final when = '${arabicWeekday(next.dateTime)} ${arabicTime(next.dateTime)}';
-    return (state: PlayState.upcoming, label: played ? '✓ لعب · وليه ماتش كمان $when' : '⏳ لسه هيلعب · $when');
+    return (state: PlayState.upcoming, label: played ? '✓ لعب · وليه ماتش كمان $when' : 'لسه هيلعب · $when');
   }
   return played ? (state: PlayState.played, label: '✓ لعب') : (state: PlayState.didNotPlay, label: 'ملعبش');
 }

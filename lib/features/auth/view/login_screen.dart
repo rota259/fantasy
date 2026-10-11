@@ -7,6 +7,7 @@ import '../../../core/theme/app_text.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../cubit/auth_cubit.dart';
 import '../widgets/google_button.dart';
+import 'forgot_password_screen.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_header.dart';
 import '../../../core/widgets/motion.dart';
@@ -48,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('أهلاً بيك تاني 👋', style: AppText.h(22)),
+                  Text('أهلاً بيك تاني', style: AppText.h(22)),
                   const SizedBox(height: 4),
                   Text('سجّل دخولك وكمّل من حيث وقفت.', style: AppText.body(13, color: AppColors.neutral700)),
                   const SizedBox(height: 20),
@@ -58,7 +59,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('نسيت كلمة السر؟', style: AppText.h(11, color: AppColors.accent)),
+                    child: Pressable(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => ForgotPasswordScreen(initial: _id.text.trim())),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text('نسيت كلمة السر؟', style: AppText.h(12, color: AppColors.accent)),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   _errorText(),

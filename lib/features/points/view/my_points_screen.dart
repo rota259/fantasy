@@ -124,15 +124,15 @@ class _SeasonRoundsState extends State<_SeasonRounds> {
           ),
           RoundPointsBody(key: ValueKey(rounds[i].window.cutoff), entry: rounds[i], players: s.players),
         ],
-        for (final m in bonuses)
+        for (final (match: m, points: pts) in bonuses)
           Container(
             margin: AppDecor.tileMargin,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
             decoration: AppDecor.tile,
             child: Row(
               children: [
-                Expanded(child: Text('🎯 فرق أهداف ${m.teamA} ${m.scoreText} ${m.teamB} صح', style: AppText.h(13))),
-                Text('+${MyPointsState.predictionBonus}', style: AppText.h(18, color: AppColors.accent)),
+                Expanded(child: Text('تحدّي ${m.teamA} ${m.scoreText} ${m.teamB}', style: AppText.h(13))),
+                Text('+$pts', style: AppText.h(18, color: AppColors.accent)),
               ],
             ),
           ),

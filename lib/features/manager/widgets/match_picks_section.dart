@@ -85,7 +85,7 @@ class _MatchPicksSectionState extends State<MatchPicksSection> {
                   ),
                   padding: const EdgeInsets.all(12),
                   alignment: Alignment.center,
-                  child: Text('⏰ ذكّر أهل المنطقة بالتشكيلة', style: AppText.h(14, color: AppColors.white)),
+                  child: Text('ذكّر أهل المنطقة بالتشكيلة', style: AppText.h(14, color: AppColors.white)),
                 ),
               ),
           ],

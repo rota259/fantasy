@@ -35,7 +35,7 @@ class TournamentTableTab extends StatelessWidget {
                 messenger.showSnackBar(SnackBar(content: Text(err ?? 'المتأهلين اتعرفوا — شوف الشجرة ⚔️')));
               },
               icon: const Icon(Icons.account_tree_outlined),
-              label: const Text('⚔️ ابدأ خروج المغلوب'),
+              label: const Text('ابدأ خروج المغلوب'),
             ),
           ),
         for (final e in groups.entries)

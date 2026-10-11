@@ -6,12 +6,12 @@ import '../../../core/theme/app_text.dart';
 import '../widgets/report_betting_sheet.dart';
 
 /// «اللعب النضيف»: آية تحريم الميسر + إن الأبلكيشن للمتعة بس من غير أي فلوس، وإن أي مراهنة عليه
-/// بتتحقق فيها، ولو اتثبتت = بان نهائي. بتظهر أول ما تفتح الأبلكيشن ([onAccept] = لازم يوافق)،
-/// ومن «حسابي» للقراية والبلاغ.
+/// بتتحقق فيها، ولو اتثبتت = بان نهائي. تذكير بس (من غير تعهّد): بتظهر أول ما تفتح الأبلكيشن
+/// ([onAccept] = زرار «تمام»)، ومن «حسابي». البلاغ عن يوزر بيتعمل من صفحة تشكيلته.
 class FairPlayScreen extends StatelessWidget {
   const FairPlayScreen({super.key, this.onAccept});
 
-  /// موجود = أول مرة (زرار «أتعهّد»). مش موجود = فتحها من حسابي (زرار رجوع).
+  /// موجود = التذكير أول الأبلكيشن (زرار «تمام»). مش موجود = فتحها من حسابي (زرار رجوع).
   final VoidCallback? onAccept;
 
   @override
@@ -66,19 +66,19 @@ class FairPlayScreen extends StatelessWidget {
             ),
             _point(
               '🔍',
-              'لو عرفت إن مدير منطقة أو أي حد في منطقة بيستخدم الأبلكيشن في مراهنات بلّغنا — '
-                  'الإدارة هتحقق في الموضوع، ولو اتثبت هياخد بان من الأبلكيشن نهائي.',
+              'لو عرفت إن مدير منطقة أو أي حد في منطقة بيستخدم الأبلكيشن في مراهنات بلّغ عنه من صفحته '
+                  '(افتح تشكيلته من الدوري ودوس 🚩) — الإدارة هتحقق، ولو اتثبت هياخد بان من الأبلكيشن نهائي.',
             ),
             const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => showReportBettingSheet(context),
-              icon: const Icon(Icons.flag_outlined),
-              label: const Text('بلّغ عن مراهنات'),
-            ),
-            if (onAccept != null) ...[
-              const SizedBox(height: 10),
-              FilledButton(onPressed: onAccept, child: const Text('أتعهّد إني مش هراهن — يلا نلعب')),
-            ],
+            if (onAccept != null)
+              FilledButton(onPressed: onAccept, child: const Text('تمام — يلا نلعب'))
+            else
+              // من «حسابي»: بلاغ عام (مثلًا على مدير منطقة مالوش صفحة تشكيلة)
+              OutlinedButton.icon(
+                onPressed: () => showReportBettingSheet(context),
+                icon: const Icon(Icons.flag_outlined),
+                label: const Text('بلّغ عن مدير منطقة أو فريق'),
+              ),
           ],
         ),
       ),

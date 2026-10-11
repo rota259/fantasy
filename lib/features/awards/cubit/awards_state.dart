@@ -11,8 +11,8 @@ class AwardsState extends Equatable {
   List<(String, String)> get tabs => [
     (PollKind.goalWeek, 'هدف الجولة'),
     (PollKind.saveWeek, 'تصدّي الجولة'),
-    if (polls.containsKey(PollKind.goalSeason)) (PollKind.goalSeason, 'هدف الموسم 🏆'),
-    if (polls.containsKey(PollKind.saveSeason)) (PollKind.saveSeason, 'تصدّي الموسم 🏆'),
+    if (polls.containsKey(PollKind.goalSeason)) (PollKind.goalSeason, 'هدف الموسم'),
+    if (polls.containsKey(PollKind.saveSeason)) (PollKind.saveSeason, 'تصدّي الموسم'),
   ];
 
   AwardsState copyWith({Map<String, PollView>? polls, bool? busy}) =>

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../notifications/widgets/push_banner.dart';
+import '../../auth/view/verify_email_screen.dart';
 import '../../fairplay/view/fair_play_gate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -31,7 +33,17 @@ class AppRoot extends StatelessWidget {
       listener: _onAuthChanged,
       child: BlocBuilder<AppNavCubit, AppNavState>(
         buildWhen: (p, c) => p.route != c.route || p.onboardIndex != c.onboardIndex,
-        builder: (context, state) => _screen(state),
+        // الانتقال بين الشاشات الكبيرة (البداية ← الدخول ← الأبلكيشن) بظهور وتكبير ناعم
+        builder: (context, state) => AnimatedSwitcher(
+          duration: const Duration(milliseconds: 520),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, a) => FadeTransition(
+            opacity: a,
+            child: ScaleTransition(scale: Tween(begin: 1.04, end: 1.0).animate(a), child: child),
+          ),
+          child: KeyedSubtree(key: ValueKey(state.route), child: _screen(state)),
+        ),
       ),
     );
   }
@@ -55,6 +67,9 @@ class AppRoot extends StatelessWidget {
           NotificationRouter.open(ctx, link: data['link']?.toString(), matchId: data['match_id']?.toString());
         }),
       );
+    } else if (s.status == AuthStatus.verifyEmail && s.pendingEmail != null) {
+      // حساب جديد (أو دخول بإيميل لسه متأكّدش): الكود اللي اتبعت على الإيميل
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => VerifyEmailScreen(email: s.pendingEmail!)));
     } else if (s.status == AuthStatus.unauthenticated && nav.state.route == AppRoute.app) {
       NotificationService.unregister();
       LiveHub.disconnect();
@@ -92,7 +107,8 @@ class _ZoneGate extends StatelessWidget {
         // أول مرة: «لا للمراهنات» لازم يوافق عليها
         return KeyedSubtree(
           key: ValueKey((user?.zoneId, user?.role)),
-          child: FairPlayGate(child: shell),
+          // الإشعار والأبلكيشن مفتوح بيظهر كشريط من فوق
+          child: FairPlayGate(child: PushBannerHost(child: shell)),
         );
       },
     );

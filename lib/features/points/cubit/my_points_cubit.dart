@@ -9,7 +9,6 @@ import '../../../core/utils/perf.dart';
 import '../../challenge/data/challenge_repository.dart';
 import '../../chips/data/chip_type.dart';
 import '../../chips/data/chips_repository.dart';
-import '../../matches/data/models/game_match.dart';
 import '../../pick/data/models/pick.dart';
 import '../../pick/data/picks_repository.dart';
 import '../../players/data/models/player.dart';
@@ -60,7 +59,7 @@ class MyPointsCubit extends Cubit<MyPointsState> {
     try {
       final (byRound, won, chips, seasons) = await (
         _picks.fetchAllRounds(userId),
-        _challenge.wonMatches(userId),
+        _challenge.wonMatches().catchError((_) => const <ChallengeWin>[]),
         _chips.usedByRound(userId),
         _seasons.fetchAll().catchError((_) => const <Season>[]),
       ).wait;

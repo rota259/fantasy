@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/empty_state.dart';
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -132,7 +133,11 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
                 final matches = f == null ? snap.data! : snap.data!.where((m) => m.isFinished == f).toList();
                 if (matches.isEmpty) {
                   return Center(
-                    child: Text('مفيش ماتشات — اضغط "+ ماتش"', style: AppText.body(13, color: AppColors.neutral600)),
+                    child: EmptyState(
+                      icon: Icons.sports_soccer,
+                      title: 'مفيش ماتشات',
+                      hint: 'اضغط «+ ماتش» فوق عشان تعمل أول ماتش',
+                    ),
                   );
                 }
                 return ListView(
@@ -179,7 +184,9 @@ class _ManagerMatchesScreenState extends State<ManagerMatchesScreen> {
                     ],
                   ),
                   Text(
-                    'GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى ${m.scoreText}' : 'قادم'}',
+                    m.timeSet
+                        ? 'GW${m.week} · ${arabicWeekday(m.dateTime)} ${arabicTime(m.dateTime)} · ${m.isFinished ? 'انتهى ${m.scoreText}' : 'قادم'}'
+                        : '${m.stage ?? 'بطولة'} · الميعاد لسه متحددش — حدّده من صفحة البطولة',
                     style: AppText.body(10, color: AppColors.neutral700),
                   ),
                 ],

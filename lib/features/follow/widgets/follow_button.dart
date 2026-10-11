@@ -62,7 +62,7 @@ class _FollowButtonState extends State<FollowButton> {
         decoration: BoxDecoration(
           borderRadius: AppRadius.md,
           color: _on ? AppColors.accent : null,
-          border: Border.all(color: _on ? AppColors.accent : AppColors.black, width: 2),
+          border: Border.all(color: _on ? AppColors.accent : AppColors.line, width: 1.4),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../../../core/widgets/motion.dart';
@@ -91,7 +91,7 @@ class _EditSheetState extends State<_EditSheet> {
                 children: [
                   Pressable(
                     onTap: _uploading ? null : _pickPhoto,
-                    child: PentagonAvatar(initials: widget.player.initials, photoUrl: _photo, size: 56),
+                    child: AppAvatar(initials: widget.player.initials, photoUrl: _photo, size: 56),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -119,7 +119,7 @@ class _EditSheetState extends State<_EditSheet> {
                         decoration: BoxDecoration(
                           borderRadius: AppRadius.md,
                           color: _pos == p.$1 ? AppColors.accent : null,
-                          border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.black, width: 2),
+                          border: Border.all(color: _pos == p.$1 ? AppColors.accent : AppColors.line, width: 1.4),
                         ),
                         child: Text(p.$2, style: AppText.h(12, color: _pos == p.$1 ? AppColors.white : AppColors.ink)),
                       ),

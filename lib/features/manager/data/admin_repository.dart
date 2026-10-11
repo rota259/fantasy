@@ -44,4 +44,13 @@ abstract interface class AdminRepository {
     String? matchId,
     List<String>? userIds,
   });
+
+  /// فحص إشعارات الموبايل: pg_net · push_url · my_token · tokens · last (آخر ردود فانكشن push).
+  Future<Map<String, dynamic>> pushDiagnostics();
+
+  /// رابط فانكشن الإشعارات للمشروع ده (بيتحط مرة واحدة).
+  Future<void> setPushUrl(String url);
+
+  /// إشعار تجربة لنفسي.
+  Future<void> sendTestPush();
 }

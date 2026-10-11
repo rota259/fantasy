@@ -18,7 +18,7 @@ class RoundPager extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final w = entry.window;
-    final status = w.isFinal() ? 'خلصت' : (w.hasStarted() ? 'شغّالة ⚽' : 'لسه');
+    final status = w.isFinal() ? 'خلصت' : (w.hasStarted() ? 'شغّالة' : 'لسه');
     final chip = entry.chip == null ? '' : ' · 🃏 ${entry.chip!.label}';
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- لوجو الخماسي: حرف الخاء ونقطته كورة (جوه المنطقة الآمنة للأيقونة) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="0.56"
+        android:scaleY="0.56"
+        android:translateX="24.9"
+        android:translateY="22.6">
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="12"
+            android:strokeLineCap="square"
+            android:strokeLineJoin="miter"
+            android:pathData="M24,44 H72 L32,66 Q20,73 25,83 Q30,91 48,91 H80" />
+        <path
+            android:fillColor="#FF000000"
+            android:pathData="M48,11a11,11 0,1 0,0 22a11,11 0,1 0,0 -22z" />
+        <path
+            android:fillColor="#FF12A150"
+            android:pathData="M48,17 L52.8,20.5 L51,26 L45,26 L43.2,20.5 Z" />
+    </group>
+</vector>

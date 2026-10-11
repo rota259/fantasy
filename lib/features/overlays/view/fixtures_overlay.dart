@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -102,7 +103,11 @@ class _FixturesView extends StatelessWidget {
   Widget _empty() => Padding(
     padding: const EdgeInsets.all(30),
     child: Center(
-      child: Text('مفيش ماتشات قادمة', style: AppText.body(13, color: AppColors.neutral600)),
+      child: EmptyState(
+        icon: Icons.event_busy_outlined,
+        title: 'مفيش ماتشات قادمة',
+        hint: 'مديرين منطقتك بينزّلوا الماتشات قبل كل جولة',
+      ),
     ),
   );
 
@@ -143,8 +148,8 @@ class _FixturesView extends StatelessWidget {
                   ),
                   Text(
                     live
-                        ? '🔴 لايف · ${m.scoreA ?? 0} - ${m.scoreB ?? 0}${m.isChallenge ? ' · 🎯 تحدّي الجولة' : ''}'
-                        : '${arabicTime(m.dateTime)}${m.isChallenge ? ' · 🎯 تحدّي الجولة' : ''}',
+                        ? '● لايف · ${m.scoreA ?? 0} - ${m.scoreB ?? 0}${m.isChallenge ? ' · تحدّي الجولة' : ''}'
+                        : '${arabicTime(m.dateTime)}${m.isChallenge ? ' · تحدّي الجولة' : ''}',
                     style: AppText.body(10, color: live ? AppColors.danger : AppColors.neutral600),
                   ),
                 ],
@@ -204,7 +209,7 @@ class _FixturesView extends StatelessWidget {
                           border: Border.all(color: AppColors.line, width: 1.2),
                         ),
                   child: Text(
-                    canRate ? 'قيّم ⭐' : 'رجل الماتش',
+                    canRate ? 'قيّم' : 'رجل الماتش',
                     style: AppText.h(10, color: canRate ? AppColors.white : AppColors.ink),
                   ),
                 ),

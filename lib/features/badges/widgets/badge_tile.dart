@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../data/badge_catalog.dart';
 import '../../../core/widgets/motion.dart';
 
@@ -27,7 +27,7 @@ class BadgeTile extends StatelessWidget {
         children: [
           Opacity(
             opacity: earned ? 1 : 0.45,
-            child: PentagonIcon(
+            child: IconTile(
               size: size,
               fill: earned ? AppColors.black : AppColors.neutral100,
               stroke: BadgeCatalog.tierColors[tier.clamp(0, 3)],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../fairplay/widgets/report_betting_sheet.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
@@ -59,6 +60,15 @@ class _LiveRoundScreenState extends State<LiveRoundScreen> {
               title: widget.ownerName == null ? 'جولتي' : 'تشكيلة ${widget.ownerName}',
               subtitle: widget.ownerName == null ? 'MY ROUND' : 'للفرجة بس',
               onBack: () => Navigator.pop(context),
+              // صفحة يوزر تاني: بلّغ لو بيستخدم الأبلكيشن في مراهنات
+              trailing: widget.ownerName == null
+                  ? null
+                  : IconButton(
+                      tooltip: 'بلّغ عن مراهنات',
+                      onPressed: () =>
+                          showReportBettingSheet(context, userId: widget.userId, userName: widget.ownerName),
+                      icon: const Icon(Icons.flag_outlined, color: Colors.white),
+                    ),
             ),
             if (widget.ownerName == null)
               Padding(

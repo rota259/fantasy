@@ -64,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('اعمل حسابك 🚀', style: AppText.h(22)),
+                  Text('اعمل حسابك', style: AppText.h(22)),
                   const SizedBox(height: 4),
                   Text('كوّن فريقك ونافس أصحابك.', style: AppText.body(13, color: AppColors.neutral700)),
                   const SizedBox(height: 20),

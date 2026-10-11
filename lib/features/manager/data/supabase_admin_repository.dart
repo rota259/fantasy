@@ -88,4 +88,14 @@ class SupabaseAdminRepository implements AdminRepository {
       for (final uid in targets) {'title': title, 'body': body, 'kind': kind, 'match_id': matchId, 'user_id': uid},
     ]);
   }
+
+  @override
+  Future<Map<String, dynamic>> pushDiagnostics() async =>
+      Map<String, dynamic>.from(await SupabaseService.client.rpc('push_diagnostics') as Map);
+
+  @override
+  Future<void> setPushUrl(String url) => SupabaseService.client.rpc('set_push_url', params: {'p_url': url});
+
+  @override
+  Future<void> sendTestPush() => SupabaseService.client.rpc('send_test_push');
 }

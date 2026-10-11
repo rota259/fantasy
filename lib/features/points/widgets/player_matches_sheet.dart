@@ -91,7 +91,7 @@ Widget _match(PlayerMatchLine m, String team) {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.sm),
               child: Text(
-                m.finished ? m.score : (m.dateTime.isAfter(DateTime.now()) ? 'لسه' : '🔴 ${m.score}'),
+                m.finished ? m.score : (m.dateTime.isAfter(DateTime.now()) ? 'لسه' : '● ${m.score}'),
                 style: AppText.h(12, color: AppColors.white),
               ),
             ),

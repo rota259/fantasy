@@ -28,6 +28,26 @@ const jwt = new JWT({
 
 type Target = { token: string } | { topic: string };
 
+/** صوت الإشعار حسب نوعه (ملفات res/raw في أندرويد). */
+function soundFor(kind: string): string {
+  if (kind === "event") return "goal";
+  if (kind === "match") return "whistle";
+  if (kind === "lineup") return "lineup";
+  if (kind === "badge" || kind === "challenge" || kind === "vote") return "win";
+  return "soft";
+}
+
+/** لون الإشعار: دهبي للفوز · أحمر للأهداف · أخضر للباقي. */
+function colorFor(kind: string): string {
+  const s = soundFor(kind);
+  return s === "win" ? "#D9A92B" : s === "goal" ? "#D32F2F" : "#0F7A3F";
+}
+
+const channelFor = (kind: string) =>
+  ({ goal: "khomasi_goal", whistle: "khomasi_match", lineup: "khomasi_lineup", win: "khomasi_win" } as Record<string, string>)[
+    soundFor(kind)
+  ] ?? "khomasi_general";
+
 async function send(target: Target, n: Record<string, string>, accessToken: string) {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
     method: "POST",
@@ -37,7 +57,19 @@ async function send(target: Target, n: Record<string, string>, accessToken: stri
         ...target,
         notification: { title: n.title, body: n.body },
         data: { kind: n.kind, match_id: n.match_id ?? "", link: n.link ?? "" }, // الضغط بيفتح الصفحة دي
-        android: { priority: "high", notification: { sound: "default" } },
+        // كل نوع بقناته وصوته (القنوات بتتعمل في MainActivity.kt — نفس تقسيمة SoundService)
+        android: {
+          priority: "high",
+          notification: {
+            channel_id: channelFor(n.kind),
+            sound: soundFor(n.kind),
+            icon: "ic_stat_khomasi", // أيقونة الخماسي بدل الأيقونة العامة
+            color: colorFor(n.kind), // لون الإشعار حسب نوعه
+            notification_priority: "PRIORITY_HIGH", // يظهر كشريط فوق الشاشة (heads-up)
+            visibility: "PUBLIC", // يبان على شاشة القفل
+            default_vibrate_timings: true,
+          },
+        },
         apns: { payload: { aps: { sound: "default" } } },
       },
     }),

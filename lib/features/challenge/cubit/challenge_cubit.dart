@@ -8,6 +8,7 @@ import '../../../core/supabase/live_hub.dart';
 import '../../../core/supabase/supabase_config.dart';
 import '../../matches/data/models/game_match.dart';
 import '../data/challenge_repository.dart';
+import '../data/models/challenge_extras.dart';
 import '../data/models/prediction.dart';
 
 part 'challenge_state.dart';
@@ -33,8 +34,9 @@ class ChallengeCubit extends Cubit<ChallengeState> {
   Future<void> _fetch() async {
     try {
       final list = await _repo.challenges();
-      final (mine, summaries) = await (
+      final (mine, board, summaries) = await (
         _repo.mine([for (final m in list) m.id], userId!),
+        _repo.board().catchError((_) => (streak: 0, byMatch: const <String, ChallengeExtras>{})),
         Future.wait([
           for (final m in list)
             m.isFinished
@@ -46,7 +48,16 @@ class ChallengeCubit extends Cubit<ChallengeState> {
       emit(
         ChallengeState(
           loading: false,
-          items: [for (final (i, m) in list.indexed) ChallengeItem(match: m, mine: mine[m.id], summary: summaries[i])],
+          streak: board.streak,
+          items: [
+            for (final (i, m) in list.indexed)
+              ChallengeItem(
+                match: m,
+                mine: mine[m.id],
+                summary: summaries[i],
+                extras: board.byMatch[m.id] ?? const ChallengeExtras(),
+              ),
+          ],
         ),
       );
     } catch (_) {
@@ -64,12 +75,32 @@ class ChallengeCubit extends Cubit<ChallengeState> {
       emit(
         ChallengeState(
           loading: false,
+          streak: state.streak,
           items: [for (final it in state.items) it.match.id == m.id ? it.withMine(p) : it],
         ),
       );
       return null;
     } catch (e) {
       return dbMessage(e, fallback: 'تعذّر حفظ التوقّع');
+    }
+  }
+
+  /// إجاباتي في «مين فيهم؟» · الـ٣ أسئلة · المعكوس. بيرجّع رسالة خطأ أو null.
+  Future<String?> answer(GameMatch m, ChallengeAnswers a) async {
+    if (userId == null) return 'سجّل دخول الأول';
+    if (m.isLocked) return 'التوقّع اتقفل';
+    try {
+      await _repo.answer(m.id, a);
+      emit(
+        ChallengeState(
+          loading: false,
+          streak: state.streak,
+          items: [for (final it in state.items) it.match.id == m.id ? it.withAnswers(a) : it],
+        ),
+      );
+      return null;
+    } catch (e) {
+      return dbMessage(e, fallback: 'تعذّر حفظ إجاباتك');
     }
   }
 

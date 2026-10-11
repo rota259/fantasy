@@ -50,7 +50,7 @@ class _ZoneRequiredScreenState extends State<ZoneRequiredScreen> {
             child: ListView(
               padding: const EdgeInsets.all(26),
               children: [
-                Text('انت منين؟ 📍', style: AppText.h(22)),
+                Text('انت منين؟', style: AppText.h(22)),
                 const SizedBox(height: 4),
                 Text(
                   'الأبلكيشن بقى بالمناطق: كل منطقة ليها ماتشاتها ونجم وتشكيلة جولتها.',

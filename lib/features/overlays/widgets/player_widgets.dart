@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../players/data/availability.dart';
 import '../../players/data/models/player.dart';
 import '../../players/widgets/availability_badge.dart';
@@ -40,12 +40,7 @@ class PlayerHeader extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              PentagonAvatar(
-                initials: player.initials,
-                photoUrl: player.imageUrl,
-                size: 70,
-                verified: player.isVerified,
-              ),
+              AppAvatar(initials: player.initials, photoUrl: player.imageUrl, size: 70, verified: player.isVerified),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

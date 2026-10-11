@@ -77,7 +77,7 @@ class OnboardingScreen extends StatelessWidget {
               const Spacer(),
               Pressable(
                 onTap: nav.onboardSkip,
-                child: Text('تخطّي ✕', style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
+                child: Text('تخطّي', style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.7))),
               ),
             ],
           ),

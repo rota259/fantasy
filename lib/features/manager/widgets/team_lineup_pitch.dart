@@ -4,8 +4,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/motion.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../../players/data/models/player.dart';
 
 /// تشكيلة فريق في ماتش على ملعب خماسي أو سداسي: الحارس تحت والباقي على رؤوس المضلّع،
@@ -32,7 +32,7 @@ class TeamLineupPitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shape = format == 6 ? PentagonPitch.hexagon : PentagonPitch.pentagon;
+    final shape = format == 6 ? FormationPitch.six : FormationPitch.five;
     final gk = starters.where((p) => p.position == 'GK').toList();
     final out = starters.where((p) => p.position != 'GK').toList();
     final benchSlots = squadMax - format;
@@ -53,9 +53,8 @@ class TeamLineupPitch extends StatelessWidget {
         const SizedBox(height: 6),
         ClipRRect(
           borderRadius: AppRadius.md,
-          child: PentagonPitch(
+          child: FormationPitch(
             height: 250,
-            shape: shape,
             tokens: [
               for (var i = 0; i < shape.length; i++)
                 PitchToken(
@@ -85,7 +84,7 @@ class TeamLineupPitch extends StatelessWidget {
     if (p == null) {
       return Pressable(
         onTap: () => onSlot(kind),
-        child: PentagonIcon(
+        child: IconTile(
           size: 42,
           fill: AppColors.night2,
           stroke: AppColors.white.withValues(alpha: 0.5),
@@ -100,7 +99,7 @@ class TeamLineupPitch extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            PentagonAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 42, verified: p.isVerified),
+            AppAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 42, verified: p.isVerified),
             const SizedBox(height: 2),
             Text(
               '${p.name}${p.position == 'GK' ? ' 🧤' : ''}',

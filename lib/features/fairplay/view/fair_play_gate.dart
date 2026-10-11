@@ -3,12 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fair_play_screen.dart';
 
-/// أول ما الأبلكيشن يفتح: «لا للمراهنات» لازم يوافق عليها مرة — وبعدها الأبلكيشن عادي.
+/// تذكير «لا للمراهنات» أول ما الأبلكيشن يفتح: أول مرة، وبعدين كل ٣٠ يوم — «تمام» وتكمّل.
 class FairPlayGate extends StatefulWidget {
   const FairPlayGate({super.key, required this.child});
   final Widget child;
 
-  static const _key = 'fair_play_ack_v1';
+  static const _key = 'fair_play_seen_at';
+  static const _every = Duration(days: 30);
 
   @override
   State<FairPlayGate> createState() => _FairPlayGateState();
@@ -21,7 +22,10 @@ class _FairPlayGateState extends State<FairPlayGate> {
   void initState() {
     super.initState();
     SharedPreferences.getInstance()
-        .then((p) => p.getBool(FairPlayGate._key) ?? false)
+        .then((p) {
+          final at = p.getInt(FairPlayGate._key);
+          return at != null && DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(at)) < FairPlayGate._every;
+        })
         .catchError((_) => false)
         .then((v) => mounted ? setState(() => _acked = v) : null);
   }
@@ -30,7 +34,7 @@ class _FairPlayGateState extends State<FairPlayGate> {
     setState(() => _acked = true);
     try {
       final p = await SharedPreferences.getInstance();
-      await p.setBool(FairPlayGate._key, true);
+      await p.setInt(FairPlayGate._key, DateTime.now().millisecondsSinceEpoch);
     } catch (_) {}
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
@@ -10,10 +11,11 @@ import '../../../core/widgets/status_bar.dart';
 import '../../integrity/widgets/note_dialog.dart';
 import '../data/team.dart';
 import '../data/teams_repository.dart';
+import '../widgets/team_players_card.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
-/// (مدير) فرقي: اللي بعملها بس هي اللي أقدر أعمل بيها ماتشات وأضيف ليها لاعيبة.
+/// (مدير) فرقي: كل فريق وتحته لاعيبته — من هنا بضيف الفرق واللاعيبة (بصورهم) وأحذفهم.
 class MyTeamsScreen extends StatefulWidget {
   const MyTeamsScreen({super.key, required this.userId});
   final String userId;
@@ -83,17 +85,28 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        'اسم الفريق مميّز في الأبلكيشن كله ومبيتغيّرش. الماتش لازم يكون بين فريقين من فرقك، '
-                        'واللاعيبة بتتضاف لفرقك من شاشة الماتش.',
+                        'اسم الفريق مميّز في الأبلكيشن كله ومبيتغيّرش، والماتش لازم يكون بين فريقين من فرقك. '
+                        'افتح أي فريق وضيف لاعيبته بصورهم — الصورة بتظهر في التشكيلات وتشكيلة الجولة.',
                         style: AppText.body(12, color: AppColors.neutral700),
                       ),
                     ),
                     if (snap.data!.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text('لسه معملتش فرق — اضغط "+ فريق"', style: AppText.body(13)),
+                        child: EmptyState(
+                          icon: Icons.shield_outlined,
+                          title: 'لسه معملتش فرق',
+                          hint: 'اضغط «+ فريق» فوق، وبعدها ضيف لاعيبته',
+                        ),
                       ),
-                    for (final t in snap.data!) _row(t),
+                    // كل فريق وتحته لاعيبته (أول فريق مفتوح)
+                    for (final (i, t) in snap.data!.indexed)
+                      TeamPlayersCard(
+                        key: ValueKey(t.id),
+                        team: t,
+                        initiallyOpen: i == 0,
+                        onDeleteTeam: () => _run(() => _repo.delete(t.id), 'اتحذف ✓'),
+                      ),
                   ],
                 );
               },
@@ -103,24 +116,4 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
       ),
     );
   }
-
-  Widget _row(Team t) => Container(
-    margin: AppDecor.tileMargin,
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    decoration: AppDecor.tile,
-    child: Row(
-      children: [
-        Icon(Icons.shield_outlined, size: 20, color: AppColors.accent),
-        const SizedBox(width: 10),
-        Expanded(child: Text(t.name, style: AppText.h(14))),
-        Pressable(
-          onTap: () => _run(() => _repo.delete(t.id), 'اتحذف ✓'),
-          child: Padding(
-            padding: EdgeInsets.all(4),
-            child: Icon(Icons.delete_outline, size: 20, color: AppColors.danger),
-          ),
-        ),
-      ],
-    ),
-  );
 }

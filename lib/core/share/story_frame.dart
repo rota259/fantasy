@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/kha_logo.dart';
 import '../widgets/fx/gold_shine.dart';
 
 import '../theme/app_text.dart';
@@ -32,7 +33,15 @@ class StoryFrame extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(18, 22, 18, 18),
         child: Column(
           children: [
-            Text('الخماسي ⚽', style: AppText.h(24, color: Colors.white)),
+            // اللوجو + الاسم فوق كل كارت شير
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const KhaLogo(size: 30),
+                const SizedBox(width: 8),
+                Text('الخماسي', style: AppText.h(24, color: Colors.white)),
+              ],
+            ),
             if (kicker != null)
               Padding(
                 padding: const EdgeInsets.only(top: 4),

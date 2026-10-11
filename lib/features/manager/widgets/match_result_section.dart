@@ -35,7 +35,7 @@ class _MatchResultSectionState extends State<MatchResultSection> {
         title: Text('إنهاء الماتش؟', style: AppText.h(16)),
         content: Text(
           'النتيجة هتتسجّل زي ما هي من الأهداف واليوزرز هيوصلهم إشعار.'
-          '${widget.isAdmin ? '' : '\n\n⚠️ بعد ما الماتش يخلص مش هتقدر تعدّل أي حاجة فيه (لا تشكيلة ولا أحداث) — اتأكد إن كل حاجة صح.'}',
+          '${widget.isAdmin ? '' : '\n\nبعد ما الماتش يخلص مش هتقدر تعدّل أي حاجة فيه (لا تشكيلة ولا أحداث) — اتأكد إن كل حاجة صح.'}',
           style: AppText.body(13),
         ),
         actions: [
@@ -114,7 +114,7 @@ class _MatchResultSectionState extends State<MatchResultSection> {
               ),
               padding: const EdgeInsets.all(13),
               alignment: Alignment.center,
-              child: Text('🏁 إنهاء الماتش', style: AppText.h(14, color: AppColors.white)),
+              child: Text('إنهاء الماتش', style: AppText.h(14, color: AppColors.white)),
             ),
           ),
       ],

@@ -94,7 +94,7 @@ class _AdminTeamsScreenState extends State<AdminTeamsScreen> {
               children: [
                 Text(t.name, style: AppText.h(14)),
                 Text(
-                  '${zone?.label ?? '⚠️ من غير منطقة'} · ${t.ownerName ?? 'الأدمن'}',
+                  '${zone?.label ?? 'من غير منطقة'} · ${t.ownerName ?? 'الأدمن'}',
                   style: AppText.body(11, color: zone == null ? AppColors.danger : AppColors.neutral700),
                 ),
               ],

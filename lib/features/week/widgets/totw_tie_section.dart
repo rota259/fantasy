@@ -4,7 +4,7 @@ import '../../../core/widgets/jersey.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../polls/data/models/poll.dart';
 import '../data/models/week_player.dart';
@@ -41,7 +41,7 @@ class TotwTieSection extends StatelessWidget {
           Container(
             decoration: BoxDecoration(color: PitchColors.forest, borderRadius: AppRadius.md),
             padding: const EdgeInsets.all(10),
-            child: Text('⚖️ $header', style: AppText.h(12, color: AppColors.white)),
+            child: Text(header, style: AppText.h(12, color: AppColors.white)),
           ),
           for (final p in tied) _row(p, v, open),
         ],

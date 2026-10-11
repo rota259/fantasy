@@ -89,7 +89,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('⭐ لاعب ${_full ? 'الموسم' : 'النص الأول'}', style: AppText.kicker(color: AppColors.gold)),
+                  Text('لاعب ${_full ? 'الموسم' : 'النص الأول'}', style: AppText.kicker(color: AppColors.gold)),
                   const SizedBox(height: 6),
                   Text(star.name, style: AppText.h(22, color: AppColors.white)),
                   Text('${star.team} · ${star.points} نقطة', style: AppText.body(12, color: AppColors.accent400)),
@@ -130,7 +130,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
         decoration: BoxDecoration(
           borderRadius: AppRadius.md,
           color: _full == full ? AppColors.accent : null,
-          border: Border.all(color: _full == full ? AppColors.accent : AppColors.black, width: 2),
+          border: Border.all(color: _full == full ? AppColors.accent : AppColors.line, width: 1.4),
         ),
         child: Text(label, style: AppText.h(13, color: _full == full ? AppColors.white : AppColors.ink)),
       ),

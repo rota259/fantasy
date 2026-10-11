@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../widgets/challenge_setup_sheet.dart';
 import '../../../core/app_mode.dart';
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
@@ -39,29 +40,20 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
     final id = widget.organizerId;
     final all = id == null ? await _matches.fetchAll() : await _matches.fetchOrganizedBy(id);
     final from = DateTime.now().add(Duration(hours: kTestMode ? 0 : 2));
-    return all.where((m) => !m.isFinished && m.dateTime.isAfter(from)).toList()
+    // ماتشات البطولات اللي ميعادها لسه متحددش مش بتتعرض
+    return all.where((m) => m.timeSet && !m.isFinished && m.dateTime.isAfter(from)).toList()
       ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
   }
 
   Future<void> _choose(GameMatch m) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.bg,
-        title: Text('تحدّي الجولة', style: AppText.h(16)),
-        content: Text('${m.teamA} ضد ${m.teamB} — هيتبعت إشعار ليوزرز المنطقة يتوقّعوا.', style: AppText.body(13)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('أعلن')),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
+    // أنواع التحدّي: واحد أو أكتر أو الأربعة
+    final setup = await showChallengeSetupSheet(context, m);
+    if (setup == null || !mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     final repo = context.read<ChallengeRepository>();
     setState(() => _busy = true);
     try {
-      await repo.setChallenge(m.id);
+      await repo.setChallenge(m.id, modes: setup.modes, duelA: setup.duelA, duelB: setup.duelB);
       messenger.showSnackBar(const SnackBar(content: Text('اتعلن التحدّي واتبعت إشعار ✓')));
       setState(() {
         _future = _load();
@@ -96,8 +88,8 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     Text(
-                      'اختار ماتش من ماتشاتك (تحدّي واحد في الجولة) — يوزرز منطقتك يتوقّعوا، '
-                      'واللي يجيب فرق الأهداف صح (مثلًا ٣-١ والنتيجة ٢-٠) ياخد +٥ بعد اعتماد الماتش.',
+                      'اختار ماتش من ماتشاتك (ماتش واحد في الجولة)، وبعدها اختار أنواع التحدّي عليه: فرق الأهداف · '
+                      'مين فيهم؟ · ٣ أسئلة · المعكوس — نوع واحد أو أكتر أو الأربعة. النقط بتتحسب بعد اعتماد الماتش.',
                       style: AppText.body(12, color: AppColors.neutral700),
                     ),
                     const SizedBox(height: 12),
@@ -110,7 +102,7 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
                         ),
                         padding: const EdgeInsets.all(13),
                         alignment: Alignment.center,
-                        child: Text('🎲 اختار ماتش عشوائي', style: AppText.h(14, color: AppColors.white)),
+                        child: Text('اختار ماتش عشوائي', style: AppText.h(14, color: AppColors.white)),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -148,7 +140,7 @@ class _ManagerChallengeScreenState extends State<ManagerChallengeScreen> {
           ),
         ),
         if (m.isChallenge)
-          Text('🎯 تحدّي', style: AppText.h(12, color: AppColors.accent))
+          Text('تحدّي', style: AppText.h(12, color: AppColors.accent))
         else
           Pressable(
             onTap: _busy ? null : () => _choose(m),

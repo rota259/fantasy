@@ -46,7 +46,7 @@ class AwardOptionCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       decoration: BoxDecoration(
         borderRadius: AppRadius.md,
-        border: Border.all(color: voted || winner ? AppColors.accent : AppColors.black, width: 2),
+        border: Border.all(color: voted || winner ? AppColors.accent : AppColors.line, width: 1.4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,7 +69,7 @@ class AwardOptionCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(color: AppColors.gold, borderRadius: AppRadius.sm),
-                        child: Text('🏆 الفايز', style: AppText.h(11, color: AppColors.black)),
+                        child: Text('الفايز', style: AppText.h(11, color: AppColors.black)),
                       ),
                     ),
                 ],

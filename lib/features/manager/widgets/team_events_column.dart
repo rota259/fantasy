@@ -112,7 +112,7 @@ Future<Player?> showSubSheet(BuildContext context, Player out, List<Player> benc
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text('🔁 مين ينزل مكان ${out.name}؟', style: AppText.h(15)),
+            child: Text('مين ينزل مكان ${out.name}؟', style: AppText.h(15)),
           ),
           if (bench.isEmpty)
             Padding(

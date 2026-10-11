@@ -94,7 +94,7 @@ class _TournamentTeamsTabState extends State<TournamentTeamsTab> {
               style: FilledButton.styleFrom(backgroundColor: AppColors.black),
               onPressed: s.approved.length < 2 ? null : _draw,
               icon: const Icon(Icons.casino_outlined),
-              label: const Text('🎲 اعمل القرعة والجدول'),
+              label: const Text('اعمل القرعة والجدول'),
             ),
           ),
         ],
@@ -149,7 +149,7 @@ class _TournamentTeamsTabState extends State<TournamentTeamsTab> {
             decoration: AppDecor.tile,
             child: Row(
               children: [
-                const Text('🛡'),
+                Icon(Icons.shield_outlined, size: 18, color: AppColors.accent),
                 const SizedBox(width: 10),
                 Expanded(child: Text(team.team, style: AppText.h(14))),
                 if (team.group != null) Text('مجموعة ${team.group}', style: AppText.h(11, color: AppColors.info)),

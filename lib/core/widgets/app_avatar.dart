@@ -4,13 +4,10 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import 'net_image.dart';
 
-/// الشكل الخماسي بتاع الهوية (رأسه لفوق).
-const ShapeBorder kPentagon = StarBorder.polygon(sides: 5);
-
-/// صورة جوه خماسي — ولو مفيش صورة أول حرفين من الاسم.
+/// صورة جوه دايرة — ولو مفيش صورة أول حرفين من الاسم.
 /// بتستخدم لليوزرز واللاعيبة في كل التطبيق.
-class PentagonAvatar extends StatelessWidget {
-  const PentagonAvatar({
+class AppAvatar extends StatelessWidget {
+  const AppAvatar({
     super.key,
     required this.initials,
     this.photoUrl,
@@ -33,16 +30,12 @@ class PentagonAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final url = photoUrl;
     final fallback = Center(
-      child: Padding(
-        padding: EdgeInsets.only(top: size * 0.12),
-        child: Text(initials, style: AppText.h(size * 0.3, color: color ?? AppColors.white)),
-      ),
+      child: Text(initials, style: AppText.h(size * 0.32, color: color ?? AppColors.white)),
     );
     final shape = SizedBox(
       width: size,
       height: size,
-      child: ClipPath(
-        clipper: const ShapeBorderClipper(shape: kPentagon),
+      child: ClipOval(
         child: ColoredBox(
           color: background ?? AppColors.accent,
           child: (url == null || url.isEmpty) ? fallback : NetImage(url, width: size, height: size, fallback: fallback),
@@ -55,14 +48,18 @@ class PentagonAvatar extends StatelessWidget {
       children: [
         shape,
         Positioned(
-          bottom: 0,
-          right: 0,
+          bottom: -1,
+          right: -1,
           child: Container(
             width: size * 0.34,
             height: size * 0.34,
             alignment: Alignment.center,
-            decoration: ShapeDecoration(color: AppColors.info, shape: CircleBorder()),
-            child: Icon(Icons.check, size: size * 0.24, color: AppColors.white),
+            decoration: BoxDecoration(
+              color: AppColors.info,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.card, width: 1.5),
+            ),
+            child: Icon(Icons.check, size: size * 0.2, color: AppColors.white),
           ),
         ),
       ],
@@ -70,9 +67,9 @@ class PentagonAvatar extends StatelessWidget {
   }
 }
 
-/// كارت/زرار على شكل خماسي فيه أيقونة (المختصرات والشارات).
-class PentagonIcon extends StatelessWidget {
-  const PentagonIcon({super.key, required this.child, this.size = 56, this.fill, this.stroke, this.strokeWidth = 2});
+/// مربع ناعم بحواف مدوّرة فيه أيقونة (المختصرات والشارات والكروت).
+class IconTile extends StatelessWidget {
+  const IconTile({super.key, required this.child, this.size = 56, this.fill, this.stroke, this.strokeWidth = 1.4});
 
   final Widget child;
   final double size;
@@ -85,14 +82,11 @@ class PentagonIcon extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      padding: EdgeInsets.only(top: size * 0.1),
       alignment: Alignment.center,
-      decoration: ShapeDecoration(
+      decoration: BoxDecoration(
         color: fill ?? AppColors.card,
-        shape: StarBorder.polygon(
-          sides: 5,
-          side: strokeWidth <= 0 ? BorderSide.none : BorderSide(color: stroke ?? AppColors.line, width: strokeWidth),
-        ),
+        borderRadius: BorderRadius.circular(size * 0.3),
+        border: strokeWidth <= 0 ? null : Border.all(color: stroke ?? AppColors.line, width: strokeWidth),
       ),
       child: child,
     );

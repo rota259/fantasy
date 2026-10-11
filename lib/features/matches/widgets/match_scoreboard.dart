@@ -72,7 +72,7 @@ class MatchScoreboard extends StatelessWidget {
     if (live) return 'لايف دلوقتي';
     if (notYet) return '${arabicWeekday(m.dateTime)} ${m.dateTime.day}/${m.dateTime.month}';
     if (m.isVoid) return 'الماتش اتلغى';
-    return m.isApproved ? 'خلص · النتيجة معتمدة ✓' : 'خلص · مستني تأكيد اللاعيبة ⏳';
+    return m.isApproved ? 'خلص · النتيجة معتمدة ✓' : 'خلص · مستني تأكيد اللاعيبة';
   }
 
   Widget _team(String t) => Text(

@@ -58,7 +58,7 @@ class _MatchReviewScreenState extends State<MatchReviewScreen> {
         SnackBar(
           content: Text(switch (r) {
             'approved' => 'الفريقين أكّدوا — الماتش اتعتمد ✓',
-            'disputed' => 'اعتراضك وصل للإدارة ⚠️',
+            'disputed' => 'اعتراضك وصل للإدارة',
             _ => 'اتسجّل تأكيدك ✓',
           }),
         ),
@@ -109,9 +109,9 @@ class _MatchReviewScreenState extends State<MatchReviewScreen> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(
                 children: [
-                  _button('❌ فيه غلط', AppColors.danger, () => _send(false)),
+                  _button('فيه غلط', AppColors.danger, () => _send(false)),
                   const SizedBox(width: 8),
-                  _button('✅ كله صح', AppColors.accent, () => _send(true)),
+                  _button('كله صح', AppColors.accent, () => _send(true)),
                 ],
               ),
             ),

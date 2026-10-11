@@ -1,16 +1,18 @@
 import 'package:audioplayers/audioplayers.dart';
 
-/// بتشغّل صوت مميّز لكل نوع إشعار.
-/// الملفات المتوقّعة في assets/sounds/ : lineup.mp3 · match.mp3 · event.mp3 · status.mp3
-/// (الأنواع الجديدة بتستخدم أقرب صوت ليها)
+/// بتشغّل صوت مميّز لكل نوع إشعار والأبلكيشن مفتوح.
+/// الأصوات في assets/sounds (متولّدة بـ tool/make_sounds.py — ونفسها في res/raw لقنوات أندرويد):
+///   goal جول وأحداث · whistle ماتش · lineup تشكيلة · win شارة/تحدّي/تصويت · soft الباقي
 class SoundService {
   final AudioPlayer _player = AudioPlayer();
 
+  /// نفس التقسيمة في فانكشن push (channel_id) عشان الصوت يبقى واحد والأبلكيشن مقفول.
   static String _fileFor(String kind) => switch (kind) {
-    'lineup' => 'sounds/lineup.mp3',
-    'match' || 'vote' || 'challenge' => 'sounds/match.mp3',
-    'status' || 'badge' || 'booking' => 'sounds/status.mp3',
-    _ => 'sounds/event.mp3',
+    'event' => 'sounds/goal.wav',
+    'match' => 'sounds/whistle.wav',
+    'lineup' => 'sounds/lineup.wav',
+    'badge' || 'challenge' || 'vote' => 'sounds/win.wav',
+    _ => 'sounds/soft.wav',
   };
 
   /// بتشغّل صوت النوع. بتفشل بهدوء لو الملف مش موجود.

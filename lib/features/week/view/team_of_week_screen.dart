@@ -11,7 +11,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
 import '../../../core/widgets/fx/gold_shine.dart';
 import '../../../core/widgets/fx/skeleton.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../polls/data/polls_repository.dart';
@@ -143,7 +143,7 @@ class _View extends StatelessWidget {
             padding: const EdgeInsets.all(28),
             child: Text(
               s.isCurrent
-                  ? 'الجولة لسه بتتلعب ⚽\nتشكيلة الجولة بتنزل بعد ما الجولة تخلص (السبت ٨ الصبح) والإدارة تعتمدها.'
+                  ? 'الجولة لسه بتتلعب\nتشكيلة الجولة بتنزل بعد ما الجولة تخلص (السبت ٨ الصبح) والإدارة تعتمدها.'
                   : 'الإدارة بتراجع تشكيلة الجولة دي — هيوصلك إشعار أول ما تنزل.',
               textAlign: TextAlign.center,
               style: AppText.body(13, color: AppColors.neutral700),
@@ -174,7 +174,7 @@ class _View extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
               padding: const EdgeInsets.all(12),
               child: Center(
-                child: Text('🎴 اكشف التشكيلة وشيّرها', style: AppText.h(14, color: const Color(0xFF3A2600))),
+                child: Text('اكشف التشكيلة وشيّرها', style: AppText.h(14, color: const Color(0xFF3A2600))),
               ),
             ),
           ),
@@ -229,7 +229,7 @@ class _View extends StatelessWidget {
             ],
           ),
         ),
-        Text('${p.points}', style: AppText.h(20, color: inTeam ? const Color(0xFF9C7412) : null)),
+        Text('${p.points}', style: AppText.h(20, color: inTeam ? AppColors.gold : null)),
       ],
     ),
   );

@@ -25,7 +25,7 @@ class BannedScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('حسابك اتوقف 🚫', style: AppText.h(22)),
+                  Text('حسابك اتوقف', style: AppText.h(22)),
                   const SizedBox(height: 8),
                   Text(
                     'الإدارة وقفت الحساب ده. لو شايف إن ده غلط كلّم الإدارة.',

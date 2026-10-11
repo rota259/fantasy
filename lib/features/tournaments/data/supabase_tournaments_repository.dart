@@ -117,4 +117,17 @@ class SupabaseTournamentsRepository implements TournamentsRepository {
 
   @override
   Future<void> predict(String id, String team) => _call('predict_champion', {'p_t': id, 'p_team': team});
+
+  @override
+  Future<void> setMatchTime(String matchId, DateTime time) =>
+      _call('set_tournament_match_time', {'p_match': matchId, 'p_time': time.toUtc().toIso8601String()});
+
+  @override
+  Future<TournamentFantasy> fantasy(String id) async => TournamentFantasy.fromMap(
+    await SupabaseService.client.rpc('tournament_fantasy_board', params: {'p_t': id}) as Map<String, dynamic>,
+  );
+
+  @override
+  Future<void> saveFantasy(String id, List<String> players, String captain) =>
+      _call('save_tournament_picks', {'p_t': id, 'p_players': players, 'p_captain': captain});
 }

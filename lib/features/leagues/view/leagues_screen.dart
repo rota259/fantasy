@@ -78,7 +78,7 @@ class _LeaguesView extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            Text('🏙', style: AppText.h(22)),
+                            Icon(Icons.location_city_outlined, size: 26, color: AppColors.accent),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -183,7 +183,7 @@ class _LeaguesView extends StatelessWidget {
       Padding(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
         child: Text(
-          'لو اتنين متعادلين في النقط: اللي اختار لاعيبة امتلاكها أقل (تحت ٢٥٪) أكتر بيبقى فوق 🧭',
+          'لو اتنين متعادلين في النقط: اللي اختار لاعيبة امتلاكها أقل (تحت ٢٥٪) أكتر بيبقى فوق',
           style: AppText.body(10, color: AppColors.neutral600),
         ),
       ),

@@ -131,7 +131,7 @@ class _ViewState extends State<_View> {
         decoration: BoxDecoration(
           borderRadius: AppRadius.md,
           color: _mode == value ? AppColors.accent : null,
-          border: Border.all(color: _mode == value ? AppColors.accent : AppColors.black, width: 2),
+          border: Border.all(color: _mode == value ? AppColors.accent : AppColors.line, width: 1.4),
         ),
         child: Text(label, style: AppText.h(13, color: _mode == value ? AppColors.white : AppColors.ink)),
       ),

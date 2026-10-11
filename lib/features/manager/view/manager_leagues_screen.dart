@@ -124,10 +124,7 @@ class _ManagerLeaguesScreenState extends State<ManagerLeaguesScreen> {
                           padding: const EdgeInsets.all(13),
                           decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                           alignment: Alignment.center,
-                          child: Text(
-                            '🏆 اعمل الدوري العام (كل اليوزرز)',
-                            style: AppText.h(14, color: AppColors.white),
-                          ),
+                          child: Text('اعمل الدوري العام (كل اليوزرز)', style: AppText.h(14, color: AppColors.white)),
                         ),
                       ),
                     if (list.isEmpty) Text('مفيش دوريات', style: AppText.body(12, color: AppColors.neutral600)),

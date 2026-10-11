@@ -4,10 +4,10 @@ import 'fairplay_repository.dart';
 /// تنفيذ FairPlayRepository فوق betting_reports + report_betting / admin_betting_reports.
 class SupabaseFairPlayRepository implements FairPlayRepository {
   @override
-  Future<void> report(String suspect, String details) async {
+  Future<void> report(String suspect, String details, {String? userId}) async {
     await SupabaseService.client.rpc(
       'report_betting',
-      params: {'p_suspect': suspect.trim(), 'p_details': details.trim()},
+      params: {'p_suspect': suspect.trim(), 'p_details': details.trim(), 'p_user': userId},
     );
   }
 
@@ -24,12 +24,15 @@ class SupabaseFairPlayRepository implements FairPlayRepository {
           details: r['details'] as String,
           status: r['status'] as String,
           createdAt: DateTime.parse(r['created_at'] as String).toLocal(),
+          suspectUserId: r['suspect_user'] as String?,
+          suspectBanned: r['suspect_user'] != null && r['suspect_active'] == false,
         ),
     ];
   }
 
   @override
-  Future<void> setStatus(String id, String status) async {
-    await SupabaseService.table('betting_reports').update({'status': status}).eq('id', id);
+  Future<bool> setStatus(String id, String status) async {
+    final banned = await SupabaseService.client.rpc('resolve_betting_report', params: {'p_id': id, 'p_status': status});
+    return banned == true;
   }
 }

@@ -76,7 +76,7 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
       final kind = _kind == 'goal' ? PollKind.goalWeek : PollKind.saveWeek;
       await context.read<PollsRepository>().createAward(
         kind,
-        _kind == 'goal' ? 'هدف الجولة ⚽' : 'تصدّي الجولة 🧤',
+        _kind == 'goal' ? 'هدف الجولة' : 'تصدّي الجولة 🧤',
         opts,
         _closesAt,
       );
@@ -117,7 +117,7 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Row(children: [_kindTab('goal', 'هدف ⚽'), const SizedBox(width: 8), _kindTab('save', 'تصدّي 🧤')]),
+                    Row(children: [_kindTab('goal', 'هدف'), const SizedBox(width: 8), _kindTab('save', 'تصدّي 🧤')]),
                     ManagerPollResults(key: ValueKey(weekKind), kind: weekKind),
                     Text('مرشّحين جداد (التصويت بيقفل لوحده نص ليل الجمعة)', style: AppText.kicker()),
                     const SizedBox(height: 8),
@@ -150,7 +150,7 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
                       style: AppText.body(12, color: AppColors.neutral700),
                     ),
                     const SizedBox(height: 8),
-                    _button('🏆 اعمل تصويت ${_kind == 'goal' ? 'هدف' : 'تصدّي'} الموسم', AppColors.black, _season),
+                    _button('اعمل تصويت ${_kind == 'goal' ? 'هدف' : 'تصدّي'} الموسم', AppColors.black, _season),
                   ],
                 );
               },
@@ -170,7 +170,7 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
         decoration: BoxDecoration(
           borderRadius: AppRadius.md,
           color: on ? AppColors.accent : null,
-          border: Border.all(color: on ? AppColors.accent : AppColors.black, width: 2),
+          border: Border.all(color: on ? AppColors.accent : AppColors.line, width: 1.4),
         ),
         child: Text(label, style: AppText.h(13, color: on ? AppColors.white : AppColors.ink)),
       ),

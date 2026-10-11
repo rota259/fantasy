@@ -89,12 +89,12 @@ class _ClaimButtonState extends State<ClaimButton> {
         if (linked != null) return const SizedBox.shrink(); // موثّق على لاعب تاني
         if (claim != null && claim.isPending) {
           return _bar(
-            claim.playerId == p.id ? '⏳ طلبك مستني موافقة الإدارة' : 'عندك طلب توثيق تاني مستني',
+            claim.playerId == p.id ? 'طلبك مستني موافقة الإدارة' : 'عندك طلب توثيق تاني مستني',
             AppColors.neutral600,
             null,
           );
         }
-        return _bar('انت اللاعب ده؟ ده أنا 🙋', AppColors.black, _request);
+        return _bar('انت اللاعب ده؟ ده أنا', AppColors.black, _request);
       },
     );
   }

@@ -566,12 +566,12 @@ create index if not exists events_match on public.events(match_id);
 alter table public.events add column if not exists other_player_id uuid references public.players(id) on delete set null; -- التبديل: اللي طلع
 create index if not exists events_player on public.events(player_id);
 
--- الدخول برقم الموبايل: يحوّل الرقم لإيميل
+-- الدخول برقم الموبايل: يحوّل الرقم لإيميل (للسيرفر بس — الأبلكيشن بيدخل بالرقم من auth-phone)
 create or replace function public.email_for_phone(p text)
 returns text language sql security definer set search_path = public as $$
   select email from public.profiles where phone = p limit 1;
 $$;
-grant execute on function public.email_for_phone(text) to anon, authenticated;
+grant execute on function public.email_for_phone(text) to service_role;   -- للسيرفر بس (قسم 44)
 
 alter table public.profiles       enable row level security;
 alter table public.players        enable row level security;
@@ -4145,7 +4145,7 @@ grant execute on function public.phone_taken(text) to anon, authenticated;
 grant execute on function public.delete_my_account() to authenticated;
 
 -- دوال التطبيق
-grant execute on function public.email_for_phone(text) to anon, authenticated;
+grant execute on function public.email_for_phone(text) to service_role;   -- للسيرفر بس (قسم 44)
 grant execute on function public.player_week_points(int) to authenticated;
 grant execute on function public.player_gw_stats(int) to authenticated;
 grant execute on function public.player_history(uuid) to authenticated;
@@ -5364,42 +5364,675 @@ drop policy if exists "betting reports admin update" on public.betting_reports;
 create policy "betting reports admin update" on public.betting_reports for update to authenticated
   using (public.is_manager()) with check (public.is_manager());
 
-create or replace function public.report_betting(p_suspect text, p_details text)
+-- p_user: لو البلاغ من صفحة يوزر بعينه
+alter table public.betting_reports add column if not exists suspect_user uuid references public.profiles(id) on delete set null;
+drop function if exists public.report_betting(text, text);
+create or replace function public.report_betting(p_suspect text, p_details text, p_user uuid default null)
 returns uuid language plpgsql security definer set search_path = public as $$
 declare rid uuid;
 begin
+  if p_user = auth.uid() then raise exception 'مينفعش تبلّغ عن نفسك'; end if;
   if auth.uid() is null then raise exception 'سجّل دخول الأول'; end if;
   if (select count(*) from public.betting_reports
       where reporter = auth.uid() and created_at > now() - interval '1 day') >= 5 then
     raise exception 'بعتّ بلاغات كتير النهارده — الإدارة بتراجعهم';
   end if;
-  insert into public.betting_reports (reporter, zone_id, suspect, details)
-  values (auth.uid(), (select zone_id from public.profiles where id = auth.uid()), trim(p_suspect), trim(p_details))
+  insert into public.betting_reports (reporter, zone_id, suspect, details, suspect_user)
+  values (auth.uid(), (select zone_id from public.profiles where id = auth.uid()), trim(p_suspect), trim(p_details), p_user)
   returning id into rid;
   insert into public.notifications (title, body, kind, user_id, link)
   select '🚫 بلاغ مراهنات', trim(p_suspect) || ' — ' || left(trim(p_details), 100), 'admin', pr.id, 'admin:betting'
   from public.profiles pr where pr.role = 'manager';
   return rid;
 end $$;
-revoke all on function public.report_betting(text, text) from public, anon;
-grant execute on function public.report_betting(text, text) to authenticated;
+revoke all on function public.report_betting(text, text, uuid) from public, anon;
+grant execute on function public.report_betting(text, text, uuid) to authenticated;
 
--- (أدمن) البلاغات بأسماء اللي بلّغوا ومناطقهم
+-- (أدمن) البلاغات بأسماء اللي بلّغوا ومناطقهم + حساب المبلَّغ عنه (لو البلاغ من صفحته) وحالته
+drop function if exists public.admin_betting_reports();
 create or replace function public.admin_betting_reports()
-returns table(id uuid, reporter_name text, zone text, suspect text, details text, status text, created_at timestamptz)
+returns table(id uuid, reporter_name text, zone text, suspect text, details text, status text,
+              created_at timestamptz, suspect_user uuid, suspect_active boolean, suspect_role text)
 language plpgsql stable security definer set search_path = public as $$
 begin
   if not public.is_manager() then raise exception 'للأدمن بس'; end if;
   return query
-  select r.id, coalesce(p.name, '—'), coalesce(z.name, '—'), r.suspect, r.details, r.status, r.created_at
+  select r.id, coalesce(p.name, '—'), coalesce(z.name, '—'), r.suspect, r.details, r.status, r.created_at,
+         r.suspect_user, su.is_active, su.role
   from public.betting_reports r
   left join public.profiles p on p.id = r.reporter
   left join public.zones z on z.id = r.zone_id
+  left join public.profiles su on su.id = r.suspect_user
   order by (r.status in ('open', 'investigating')) desc, r.created_at desc
   limit 200;
 end $$;
 revoke all on function public.admin_betting_reports() from public, anon;
 grant execute on function public.admin_betting_reports() to authenticated;
+
+-- (أدمن) قرار البلاغ: بيتحقق فيه · مش صحيح · اتثبت — ولو اتثبت والبلاغ على حساب بعينه: بان نهائي للحساب.
+create or replace function public.resolve_betting_report(p_id uuid, p_status text)
+returns boolean language plpgsql security definer set search_path = public as $$
+declare r public.betting_reports; banned boolean := false;
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  if p_status not in ('investigating', 'proven', 'dismissed') then raise exception 'حالة غلط'; end if;
+  update public.betting_reports set status = p_status where id = p_id returning * into r;
+  if r.id is null then raise exception 'البلاغ مش موجود'; end if;
+  if p_status = 'proven' and r.suspect_user is not null then
+    if exists (select 1 from public.profiles where id = r.suspect_user and role <> 'manager' and is_active) then
+      perform public.set_user_active(r.suspect_user, false);   -- بيتسجّل في سجل العمليات وبيوصله إشعار
+      banned := true;
+    end if;
+    -- باقي البلاغات المفتوحة على نفس الحساب اتقفلت معاه
+    update public.betting_reports set status = 'proven'
+    where suspect_user = r.suspect_user and status in ('open', 'investigating');
+  end if;
+  return banned;
+end $$;
+revoke all on function public.resolve_betting_report(uuid, text) from public, anon;
+grant execute on function public.resolve_betting_report(uuid, text) to authenticated;
+
+-- ═══ 42. تحدّي الجولة: ٤ أنواع والمدير يختار ═══
+-- المدير وهو بيعلن التحدّي بيختار نوع واحد أو أكتر (أو الأربعة):
+--   diff   فرق الأهداف — صح = +٥، ولو صح ورا بعض السلسلة بتكبر: +٥ ← +٧ ← +١٠ (أول غلطة ترجّعها)
+--   duel   مين فيهم؟ — لاعب من كل فريق، مين يجيب نقط أكتر في الماتش = +٣ (التعادل الاتنين صح)
+--   quiz   ٣ أسئلة — مين يكسب · الأهداف أكتر من ٦ · مين يسجّل الأول: كل واحد +٢، والتلاتة صح +١٠
+--   lowest المعكوس — أقل لاعب نقط من الأساسيين = +٤ (لو كذا واحد متعادلين أي حد فيهم صح)
+alter table public.matches add column if not exists challenge_modes text[] not null default '{}';
+alter table public.matches add column if not exists duel_a uuid references public.players(id) on delete set null;
+alter table public.matches add column if not exists duel_b uuid references public.players(id) on delete set null;
+update public.matches set challenge_modes = '{diff}' where is_challenge and challenge_modes = '{}';
+alter table public.events add column if not exists created_at timestamptz not null default now();
+
+-- إعدادات التحدّي بتتغيّر من set_challenge بس (مش من تعديل الماتش)
+create or replace function public.trg_match_challenge_guard()
+returns trigger language plpgsql as $$
+begin
+  if current_user in ('authenticated', 'anon') then
+    if tg_op = 'INSERT' then
+      new.challenge_modes := '{}'; new.duel_a := null; new.duel_b := null;
+    else
+      new.challenge_modes := old.challenge_modes; new.duel_a := old.duel_a; new.duel_b := old.duel_b;
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists match_challenge_guard on public.matches;
+create trigger match_challenge_guard before insert or update on public.matches
+for each row execute function public.trg_match_challenge_guard();
+
+create table if not exists public.challenge_answers (
+  user_id     uuid references public.profiles(id) on delete cascade,
+  match_id    uuid references public.matches(id) on delete cascade,
+  duel_pick   uuid references public.players(id) on delete set null,
+  q_winner    text check (q_winner in ('a', 'b', 'draw')),
+  q_over      boolean,
+  q_first     uuid references public.players(id) on delete set null,
+  lowest_pick uuid references public.players(id) on delete set null,
+  updated_at  timestamptz not null default now(),
+  primary key (user_id, match_id)
+);
+create index if not exists challenge_answers_match on public.challenge_answers(match_id);
+alter table public.challenge_answers enable row level security;
+-- إجابات الناس تبان بعد ما الماتش يبدأ بس — والكتابة من answer_challenge
+drop policy if exists "challenge answers read" on public.challenge_answers;
+create policy "challenge answers read" on public.challenge_answers for select to authenticated using (
+  user_id = auth.uid() or public.is_manager()
+  or exists (select 1 from public.matches m where m.id = match_id and m.date_time <= now()
+             and m.zone_id = (select p.zone_id from public.profiles p where p.id = auth.uid()))
+);
+
+-- إعلان التحدّي بالأنواع المختارة (+ لاعيبة «مين فيهم؟»)
+drop function if exists public.set_challenge(uuid);
+create or replace function public.set_challenge(p_match uuid, p_modes text[] default '{diff}',
+                                                p_duel_a uuid default null, p_duel_b uuid default null)
+returns void language plpgsql security definer set search_path = public as $$
+declare m public.matches; v_modes text[]; ta text; tb text;
+begin
+  select * into m from public.matches where id = p_match;
+  if not found then raise exception 'الماتش مش موجود'; end if;
+  if not (public.is_manager() or (public.is_organizer() and m.organizer_id = auth.uid())) then
+    raise exception 'التحدّي من ماتشاتك بس';
+  end if;
+  if m.status <> 'upcoming' or (now() >= m.date_time - 2 * public.fn_lock_lead() and not public.fn_test_mode()) then
+    raise exception 'اختار ماتش لسه فاضل عليه أكتر من ساعتين (الناس تلحق تتوقّع)';
+  end if;
+  if m.is_challenge then raise exception 'الماتش ده تحدّي خلاص'; end if;
+  if m.zone_id is null then raise exception 'الماتش ملوش منطقة'; end if;
+  select array_agg(distinct x order by x) into v_modes from unnest(coalesce(p_modes, '{}')) x;
+  if v_modes is null or not (v_modes <@ array['diff', 'duel', 'quiz', 'lowest']) then
+    raise exception 'اختار نوع تحدّي واحد على الأقل';
+  end if;
+  if 'duel' = any(v_modes) then
+    select team into ta from public.players where id = p_duel_a;
+    select team into tb from public.players where id = p_duel_b;
+    if ta is null or tb is null or ta = tb or not (ta = any(m.teams)) or not (tb = any(m.teams)) then
+      raise exception '«مين فيهم؟» محتاج لاعب من كل فريق في الماتش';
+    end if;
+  else
+    p_duel_a := null; p_duel_b := null;
+  end if;
+  if exists (select 1 from public.matches x
+             where x.is_challenge and x.organizer_id is not distinct from m.organizer_id and x.id <> m.id
+               and public.fn_week_cutoff(x.date_time) = public.fn_week_cutoff(m.date_time)) then
+    raise exception 'فيه تحدّي من ماتشات المدير ده في الجولة دي خلاص';
+  end if;
+  update public.matches set is_challenge = true, challenge_modes = v_modes, duel_a = p_duel_a, duel_b = p_duel_b
+  where id = p_match;
+  perform public.fn_notify_match(p_match, '🎯 تحدّي الجولة',
+    m.teams[1] || ' ضد ' || m.teams[2] || ' — ' || cardinality(v_modes)
+      || case when cardinality(v_modes) = 1 then ' تحدّي' else ' تحدّيات' end || ' مستنيينك: جاوب صح واكسب نقط',
+    'challenge');
+end $$;
+revoke all on function public.set_challenge(uuid, text[], uuid, uuid) from public, anon;
+grant execute on function public.set_challenge(uuid, text[], uuid, uuid) to authenticated;
+
+-- اليوزر يجاوب (مين فيهم · الـ٣ أسئلة · المعكوس) — لحد قفل التوقّع، ولأهل منطقة الماتش بس
+create or replace function public.answer_challenge(p_match uuid, p_duel uuid default null, p_winner text default null,
+                                                   p_over boolean default null, p_first uuid default null,
+                                                   p_lowest uuid default null)
+returns void language plpgsql security definer set search_path = public as $$
+declare m public.matches;
+begin
+  select * into m from public.matches where id = p_match;
+  if m.id is null or not m.is_challenge then raise exception 'ده مش تحدّي'; end if;
+  if not public.fn_me_active() then raise exception 'حسابك موقوف — كلّم الإدارة'; end if;
+  if public.fn_is_zone_manager() then raise exception 'حساب المدير مش بيتوقّع'; end if;
+  if m.zone_id is distinct from (select zone_id from public.profiles where id = auth.uid()) then
+    raise exception 'التحدّي ده لمنطقة تانية';
+  end if;
+  if m.status <> 'upcoming' or not (public.fn_test_mode() or now() < m.date_time - public.fn_lock_lead()) then
+    raise exception 'التوقّع اتقفل';
+  end if;
+  if p_duel is not null and p_duel not in (m.duel_a, m.duel_b) then raise exception 'اختار واحد من الاتنين'; end if;
+  if exists (select 1 from unnest(array[p_first, p_lowest]) x
+             where x is not null and not exists (select 1 from public.players pl
+                                                 where pl.id = x and pl.team = any(m.teams))) then
+    raise exception 'اللاعب مش من الفريقين';
+  end if;
+  insert into public.challenge_answers (user_id, match_id, duel_pick, q_winner, q_over, q_first, lowest_pick)
+  values (auth.uid(), p_match,
+          case when 'duel' = any(m.challenge_modes) then p_duel end,
+          case when 'quiz' = any(m.challenge_modes) then p_winner end,
+          case when 'quiz' = any(m.challenge_modes) then p_over end,
+          case when 'quiz' = any(m.challenge_modes) then p_first end,
+          case when 'lowest' = any(m.challenge_modes) then p_lowest end)
+  on conflict (user_id, match_id) do update set
+    duel_pick = excluded.duel_pick, q_winner = excluded.q_winner, q_over = excluded.q_over,
+    q_first = excluded.q_first, lowest_pick = excluded.lowest_pick, updated_at = now();
+end $$;
+revoke all on function public.answer_challenge(uuid, uuid, text, boolean, uuid, uuid) from public, anon;
+grant execute on function public.answer_challenge(uuid, uuid, text, boolean, uuid, uuid) to authenticated;
+
+-- نتيجة التحدّي بعد الماتش: مين كسب · أكتر من ٦ · أول هدّاف · الفايزين في «مين فيهم؟» · أقل الأساسيين نقط
+create or replace function public.fn_challenge_result(p_match uuid)
+returns table(winner text, over boolean, first_scorer uuid, duel_winners uuid[], lowest uuid[])
+language sql stable security definer set search_path = public as $$
+  with m as (select * from public.matches where id = p_match),
+  pts as (
+    select l.player_id, l.status, coalesce(x.points, 0) as p
+    from m join public.lineups l on l.match_id = m.id
+    left join public.fn_pmp(m.date_time - interval '1 second', m.date_time) x
+      on x.match_id = m.id and x.player_id = l.player_id
+  ), duel as (
+    select d.id, coalesce((select pts.p from pts where pts.player_id = d.id), 0) as p
+    from m, unnest(array[m.duel_a, m.duel_b]) d(id) where d.id is not null
+  )
+  select case when m.score_a > m.score_b then 'a' when m.score_b > m.score_a then 'b' else 'draw' end,
+         m.score_a + m.score_b > 6,
+         (select e.player_id from public.events e where e.match_id = m.id and e.type = 'goal'
+          order by e.minute nulls last, e.created_at, e.id limit 1),
+         (select array_agg(duel.id) from duel where duel.p = (select max(p) from duel)),
+         (select array_agg(pts.player_id) from pts
+          where pts.status = 'starting' and pts.p = (select min(p) from pts where status = 'starting'))
+  from m where m.status = 'finished' and m.score_a is not null and m.score_b is not null;
+$$;
+
+-- نقط اليوزر من كل تحدّي خلص (المعتمد — وفي التجربة على طول): كل نوع لوحده + سلسلة فرق الأهداف
+create or replace function public.fn_challenge_scores(p_user uuid)
+returns table(match_id uuid, date_time timestamptz, diff_pts int, streak int, duel_pts int, quiz_pts int, lowest_pts int)
+language sql stable security definer set search_path = public as $$
+  with ms as (
+    select m.* from public.matches m
+    where m.is_challenge and m.status = 'finished' and m.score_a is not null
+      and (m.review_status = 'approved' or (public.fn_test_mode() and m.review_status <> 'void'))
+      and (exists (select 1 from public.predictions pr where pr.user_id = p_user and pr.match_id = m.id)
+           or exists (select 1 from public.challenge_answers ca where ca.user_id = p_user and ca.match_id = m.id))
+  ), d as (
+    -- فرق الأهداف: التوقعات بالترتيب، وكل غلطة بتبدأ مجموعة جديدة (السلسلة)
+    select ms.id, ms.date_time, (pr.score_a - pr.score_b = ms.score_a - ms.score_b) as ok,
+           sum(case when pr.score_a - pr.score_b = ms.score_a - ms.score_b then 0 else 1 end)
+             over (order by ms.date_time, ms.id) as grp
+    from ms join public.predictions pr on pr.user_id = p_user and pr.match_id = ms.id
+    where cardinality(ms.challenge_modes) = 0 or 'diff' = any(ms.challenge_modes)
+  ), ds as (
+    select d.id, d.ok, case when d.ok then row_number() over (partition by d.grp, d.ok order by d.date_time, d.id) else 0 end as streak
+    from d
+  )
+  select ms.id, ms.date_time,
+    coalesce(case ds.streak when 0 then 0 when 1 then 5 when 2 then 7 else 10 end, 0)::int,
+    coalesce(ds.streak, 0)::int,
+    (case when 'duel' = any(ms.challenge_modes) and ca.duel_pick = any(r.duel_winners) then 3 else 0 end)::int,
+    (case when 'quiz' = any(ms.challenge_modes) then
+       case when ca.q_winner = r.winner and ca.q_over = r.over and ca.q_first = r.first_scorer then 10
+            else (case when ca.q_winner = r.winner then 2 else 0 end
+                + case when ca.q_over = r.over then 2 else 0 end
+                + case when ca.q_first = r.first_scorer then 2 else 0 end) end
+     else 0 end)::int,
+    (case when 'lowest' = any(ms.challenge_modes) and ca.lowest_pick = any(r.lowest) then 4 else 0 end)::int
+  from ms
+  left join ds on ds.id = ms.id
+  left join public.challenge_answers ca on ca.user_id = p_user and ca.match_id = ms.id
+  left join lateral public.fn_challenge_result(ms.id) r on true;
+$$;
+
+-- بونص التوقعات: تحدّي الجولة بأنواعه + توقّع بطل البطولة صح (+١٠)
+create or replace function public.fn_user_bonus(p_user uuid)
+returns int language sql stable security definer set search_path = public as $$
+  select (coalesce((select sum(s.diff_pts + s.duel_pts + s.quiz_pts + s.lowest_pts)
+                    from public.fn_challenge_scores(p_user) s), 0)
+        + (select 10 * count(*) from public.tournament_predictions tp join public.tournaments t on t.id = tp.tournament_id
+           where tp.user_id = p_user and t.champion is not null and lower(trim(tp.team)) = lower(trim(t.champion))))::int;
+$$;
+
+-- النتيجة/الاعتماد: إعادة حساب نقط الناس (+ اللي جاوبوا التحدّي) وإشعار اللي كسب منه
+create or replace function public.trg_match_result()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if (new.status, new.score_a, new.score_b) is distinct from (old.status, old.score_a, old.score_b) then
+    perform public.fn_recalc_player(l.player_id) from public.lineups l
+      join public.players pl on pl.id = l.player_id and pl.position = 'GK' where l.match_id = new.id;
+    perform public.fn_recalc_round_players(public.fn_week_cutoff(new.date_time),
+      array(select id from public.players where team = any(new.teams)));
+  end if;
+  if new.review_status is distinct from old.review_status
+     or (new.is_challenge and new.status is distinct from old.status)
+     or (new.review_status = 'approved' and (new.score_a, new.score_b, new.is_challenge)
+           is distinct from (old.score_a, old.score_b, old.is_challenge)) then
+    update public.profiles set total_points = public.fn_user_points(id), badges_dirty = true
+    where id in (select user_id from public.picks where match_id = new.id
+                 union select user_id from public.predictions where match_id = new.id
+                 union select user_id from public.challenge_answers where match_id = new.id);
+    perform public.fn_recalc_round_players(public.fn_week_cutoff(new.date_time),
+      array(select id from public.players where team = any(new.teams)));
+    if new.is_challenge and new.review_status = 'approved' and old.review_status is distinct from 'approved' then
+      insert into public.notifications (title, body, kind, user_id, match_id)
+      select '🎯 كسبت +' || w.pts || ' من تحدّي الجولة',
+             new.teams[1] || ' ' || new.score_a || ' - ' || new.score_b || ' ' || new.teams[2]
+               || case when w.streak >= 2 then ' · سلسلة ' || w.streak || ' 🔥' else '' end,
+             'challenge', w.user_id, new.id
+      from (select u.user_id, s.diff_pts + s.duel_pts + s.quiz_pts + s.lowest_pts as pts, s.streak
+            from (select user_id from public.predictions where match_id = new.id
+                  union select user_id from public.challenge_answers where match_id = new.id) u
+            cross join lateral public.fn_challenge_scores(u.user_id) s
+            where s.match_id = new.id) w
+      where w.pts > 0;
+    end if;
+  end if;
+  return null;
+end $$;
+
+-- (للشاشة) تحدّيات منطقتي: الأنواع · لاعيبة الفريقين · إجاباتي · النتيجة ونقطي بعد الماتش · سلسلتي
+create or replace function public.challenge_board()
+returns jsonb language sql stable security definer set search_path = public as $$
+  with me as (select id, zone_id from public.profiles where id = auth.uid()),
+  ms as (
+    select m.* from public.matches m, me
+    where m.is_challenge and m.zone_id = me.zone_id and m.date_time > now() - interval '7 days'
+  ), sc as (select * from public.fn_challenge_scores(auth.uid()))
+  select jsonb_build_object(
+    'streak', coalesce((select sc.streak from sc where sc.diff_pts is not null
+                        and exists (select 1 from public.predictions pr where pr.user_id = auth.uid() and pr.match_id = sc.match_id)
+                        order by sc.date_time desc, sc.match_id desc limit 1), 0),
+    'items', coalesce((select jsonb_agg(jsonb_build_object(
+      'match_id', ms.id,
+      'modes', case when cardinality(ms.challenge_modes) = 0 then array['diff'] else ms.challenge_modes end,
+      'duel_a', ms.duel_a, 'duel_b', ms.duel_b,
+      'players', (select coalesce(jsonb_agg(jsonb_build_object('id', pl.id, 'name', pl.name, 'team', pl.team,
+                                                              'gk', pl.position = 'GK') order by pl.team, pl.name), '[]')
+                  from public.players pl where pl.team = any(ms.teams)),
+      'mine', (select to_jsonb(ca) - 'user_id' - 'match_id' from public.challenge_answers ca
+               where ca.user_id = auth.uid() and ca.match_id = ms.id),
+      'result', (select to_jsonb(r) from public.fn_challenge_result(ms.id) r),
+      'points', (select jsonb_build_object('diff', sc.diff_pts, 'duel', sc.duel_pts, 'quiz', sc.quiz_pts,
+                                           'lowest', sc.lowest_pts, 'streak', sc.streak)
+                 from sc where sc.match_id = ms.id)
+    )) from ms), '[]'));
+$$;
+revoke all on function public.challenge_board() from public, anon;
+grant execute on function public.challenge_board() to authenticated;
+
+-- (لتفاصيل النقط) التحدّيات اللي كسبت منها: الماتش + كام نقطة (بكل الأنواع والسلسلة)
+create or replace function public.my_challenge_wins()
+returns setof jsonb language sql stable security definer set search_path = public as $$
+  select to_jsonb(m) || jsonb_build_object('bonus', s.diff_pts + s.duel_pts + s.quiz_pts + s.lowest_pts)
+  from public.fn_challenge_scores(auth.uid()) s join public.matches m on m.id = s.match_id
+  where s.diff_pts + s.duel_pts + s.quiz_pts + s.lowest_pts > 0
+  order by m.date_time desc;
+$$;
+revoke all on function public.my_challenge_wins() from public, anon;
+grant execute on function public.my_challenge_wins() to authenticated;
+
+-- ═══ 43. المدير يرفع صور لاعيبته ═══
+-- مدير المنطقة يرفع صورة لأي لاعب في فريق من فرقه (الفولدر = id اللاعب) — مش بس اللي هو ضافهم.
+-- الأدمن زي ما هو لأي لاعب. الرابط بيتحفظ من set_player_photo (نفس الشرط).
+create or replace function public.fn_can_edit_player(p_player uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select public.is_manager() or (public.is_organizer() and public.fn_me_active() and exists (
+    select 1 from public.players p
+    where p.id = p_player
+      and (p.created_by = auth.uid()
+           or exists (select 1 from public.teams t
+                      where lower(trim(t.name)) = lower(trim(p.team)) and t.owner_id = auth.uid()))));
+$$;
+grant execute on function public.fn_can_edit_player(uuid) to authenticated;
+
+drop policy if exists "player photos organizer write" on storage.objects;
+create policy "player photos organizer write" on storage.objects for insert to authenticated
+  with check (bucket_id = 'player-photos'
+              and (storage.foldername(name))[1] ~ '^[0-9a-fA-F-]{36}$'
+              and public.fn_can_edit_player(((storage.foldername(name))[1])::uuid));
+
+create or replace function public.set_player_photo(p_player uuid, p_url text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.fn_can_edit_player(p_player) then raise exception 'اللاعب ده مش في فرقك'; end if;
+  if p_url is null or p_url !~ '^https://' or length(p_url) > 600 then raise exception 'رابط الصورة غلط'; end if;
+  update public.players set image_url = p_url where id = p_player;
+end $$;
+revoke all on function public.set_player_photo(uuid, text) from public, anon;
+grant execute on function public.set_player_photo(uuid, text) to authenticated;
+
+-- ═══ 44. قفل تسريب الإيميل من رقم الموبايل ═══
+-- قبل كده أي حد (حتى من غير حساب) كان يقدر يسأل email_for_phone ويعرف إيميل أي رقم.
+-- دلوقتي الدخول و«نسيت كلمة السر» بالرقم بيتعملوا في السيرفر (Edge Function: auth-phone)،
+-- والإيميل مبيطلعش بره. الدالتين دول للسيرفر بس، ومعاهم عدّاد محاولات لكل رقم ضد التخمين.
+revoke execute on function public.email_for_phone(text) from public, anon, authenticated;
+
+create table if not exists private.phone_auth_attempts (
+  phone text not null,
+  at    timestamptz not null default now()
+);
+create index if not exists phone_auth_attempts_idx on private.phone_auth_attempts(phone, at desc);
+
+-- إيميل الرقم + تسجيل المحاولة. أكتر من p_max محاولة في ربع ساعة لنفس الرقم = too_many.
+create or replace function public.phone_auth_email(p text, p_max int default 10)
+returns text language plpgsql security definer set search_path = public, private as $$
+declare n int;
+begin
+  if p is null or length(p) < 6 or length(p) > 20 then return null; end if;
+  delete from private.phone_auth_attempts where at < now() - interval '1 day';
+  select count(*) into n from private.phone_auth_attempts
+  where phone = p and at > now() - interval '15 minutes';
+  if n >= greatest(p_max, 1) then raise exception 'too_many'; end if;
+  insert into private.phone_auth_attempts (phone) values (p);
+  return (select email from public.profiles where phone = p limit 1);
+end $$;
+revoke all on function public.phone_auth_email(text, int) from public, anon, authenticated;
+grant execute on function public.phone_auth_email(text, int) to service_role;
+
+-- ═══ 45. البطولات: المنظّم يحدد مواعيد الماتشات + فانتازي لكل بطولة ═══
+
+-- ── (أ) المواعيد: القرعة بتعمل الماتشات من غير ميعاد، والمنظّم يحدده لكل ماتش ──
+-- time_set = false → الماتش لسه «ميعاده متحددش»: تاريخه مؤقت بعيد (مبيظهرش في الماتشات الجاية ولا بيتلعب)
+-- لحد ما المنظّم يحدده من صفحة البطولة — وبعدها يبقى ماتش عادي (تشكيلة · أحداث · نتيجة).
+alter table public.matches add column if not exists time_set boolean not null default true;
+
+create or replace function public.fn_tournament_match(p_t uuid, a text, b text, p_stage text, p_day int)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare t public.tournaments; mid uuid; n int;
+begin
+  select * into t from public.tournaments where id = p_t;
+  select count(*) into n from public.matches where tournament_id = p_t;
+  insert into public.matches (teams, date_time, week, organizer_id, tournament_id, stage, zone_id, time_set)
+  values (array[a, b],
+          -- مؤقت (أحد ٤ يناير ٢٠٩٩) بنفس ترتيب القرعة — المنظّم هيحدد الميعاد الحقيقي
+          timestamptz '2099-01-04 12:00:00+00' + p_day * interval '10 minutes' + n * interval '1 second',
+          0,
+          case when exists (select 1 from public.profiles where id = t.created_by and role = 'organizer')
+               then t.created_by end, p_t, p_stage, t.zone_id, false)
+  returning id into mid;
+  return mid;
+end $$;
+
+-- ماتش ميعاده متحددش مينفعش يخلص
+create or replace function public.trg_match_time_guard()
+returns trigger language plpgsql as $$
+begin
+  if not new.time_set and new.status = 'finished' then
+    raise exception 'حدّد ميعاد الماتش الأول';
+  end if;
+  if current_user in ('authenticated', 'anon') then
+    new.time_set := case when tg_op = 'INSERT' then true else old.time_set end;
+  end if;
+  return new;
+end $$;
+drop trigger if exists match_time_guard on public.matches;
+create trigger match_time_guard before insert or update on public.matches
+for each row execute function public.trg_match_time_guard();
+
+-- (منظّم البطولة / الأدمن) تحديد أو تغيير ميعاد ماتش بطولة — قبل ما الماتش يبدأ
+create or replace function public.set_tournament_match_time(p_match uuid, p_time timestamptz)
+returns void language plpgsql security definer set search_path = public as $$
+declare m public.matches;
+begin
+  select * into m from public.matches where id = p_match;
+  if m.id is null or m.tournament_id is null then raise exception 'ده مش ماتش بطولة'; end if;
+  if not public.fn_runs_tournament(m.tournament_id) then raise exception 'منظّم البطولة بس اللي يحدد المواعيد'; end if;
+  if m.status <> 'upcoming' then raise exception 'الماتش خلص'; end if;
+  if exists (select 1 from public.events e where e.match_id = p_match) or (m.time_set and m.date_time <= now()) then
+    raise exception 'الماتش بدأ — مينفعش تغيّر ميعاده';
+  end if;
+  if p_time is null or (p_time < now() + interval '30 minutes' and not public.fn_test_mode()) then
+    raise exception 'الميعاد لازم يكون بعد نص ساعة على الأقل';
+  end if;
+  if p_time > now() + interval '180 days' then raise exception 'الميعاد بعيد أوي'; end if;
+  update public.matches set date_time = p_time, time_set = true where id = p_match;
+  perform public.fn_notify_match(p_match, '🏆 ميعاد ماتش البطولة',
+    m.teams[1] || ' ضد ' || m.teams[2] || coalesce(' · ' || m.stage, '') || ' — '
+      || to_char(p_time at time zone 'Africa/Cairo', 'DD/MM HH24:MI'), 'match');
+end $$;
+revoke all on function public.set_tournament_match_time(uuid, timestamptz) from public, anon;
+grant execute on function public.set_tournament_match_time(uuid, timestamptz) to authenticated;
+
+-- ── (ب) فانتازي البطولة: كل بطولة بتشكيلة لوحدها ──
+-- أهل منطقة البطولة بيختاروا ٥ لاعيبة من فرق البطولة (حارس + ٤ · بحد أقصى ٢ من نفس الفريق) وكابتن ×٢.
+-- تقدر تغيّر تشكيلتك بين الماتشات (مقفولة وأي ماتش في البطولة شغال). لما ماتش يخلص تشكيلة كل واحد
+-- بتتسجّل عليه (snapshot) — فالتغيير بعد كده مبيأثرش على اللي فات. الترتيب لكل بطولة لوحدها، وتقدر تلعب
+-- في كذا بطولة في نفس الوقت. نقط فانتازي البطولة مبتدخلش إجمالي الدوري العام.
+create table if not exists public.tournament_picks (
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  user_id       uuid not null references public.profiles(id) on delete cascade,
+  player_id     uuid not null references public.players(id) on delete cascade,
+  is_captain    boolean not null default false,
+  primary key (tournament_id, user_id, player_id)
+);
+create index if not exists tournament_picks_user on public.tournament_picks(user_id);
+alter table public.tournament_picks enable row level security;
+drop policy if exists "tournament picks read" on public.tournament_picks;
+create policy "tournament picks read" on public.tournament_picks for select to authenticated
+  using (user_id = auth.uid() or public.is_manager());
+
+-- تشكيلة كل يوزر وقت ما الماتش خلص (القراية من الدوال بس)
+create table if not exists public.tournament_pick_snaps (
+  tournament_id uuid not null references public.tournaments(id) on delete cascade,
+  match_id      uuid not null references public.matches(id) on delete cascade,
+  user_id       uuid not null references public.profiles(id) on delete cascade,
+  player_id     uuid not null references public.players(id) on delete cascade,
+  is_captain    boolean not null default false,
+  primary key (match_id, user_id, player_id)
+);
+create index if not exists tournament_pick_snaps_t on public.tournament_pick_snaps(tournament_id, user_id);
+alter table public.tournament_pick_snaps enable row level security;
+
+-- فيه ماتش في البطولة شغال دلوقتي؟ (التشكيلات مقفولة لحد ما يخلص)
+create or replace function public.fn_tournament_live(p_t uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.matches m
+                 where m.tournament_id = p_t and m.status = 'upcoming' and m.time_set and m.date_time <= now());
+$$;
+
+create or replace function public.save_tournament_picks(p_t uuid, p_players uuid[], p_captain uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare t public.tournaments; ids uuid[];
+begin
+  select * into t from public.tournaments where id = p_t;
+  if t.id is null then raise exception 'البطولة مش موجودة'; end if;
+  if not public.fn_me_active() then raise exception 'حسابك موقوف — كلّم الإدارة'; end if;
+  if public.fn_is_zone_manager() then raise exception 'حساب المدير مش بيلعب فانتازي'; end if;
+  if t.zone_id is distinct from (select zone_id from public.profiles where id = auth.uid()) then
+    raise exception 'البطولة دي لمنطقة تانية';
+  end if;
+  if t.status = 'finished' then raise exception 'البطولة خلصت'; end if;
+  if public.fn_tournament_live(p_t) then raise exception 'فيه ماتش في البطولة شغال — غيّر تشكيلتك بعد ما يخلص'; end if;
+  select array_agg(distinct x) into ids from unnest(coalesce(p_players, '{}')) x;
+  if coalesce(cardinality(ids), 0) <> 5 then raise exception 'اختار ٥ لاعيبة (حارس + ٤)'; end if;
+  if (select count(*) from public.players pl where pl.id = any(ids)
+        and exists (select 1 from public.tournament_teams tt
+                    where tt.tournament_id = p_t and tt.status = 'approved'
+                      and lower(trim(tt.team)) = lower(trim(pl.team)))) <> 5 then
+    raise exception 'كل اللاعيبة لازم يكونوا من فرق البطولة';
+  end if;
+  if (select count(*) from public.players pl where pl.id = any(ids) and pl.position = 'GK') <> 1 then
+    raise exception 'لازم حارس واحد بالظبط';
+  end if;
+  if exists (select 1 from public.players pl where pl.id = any(ids) group by lower(trim(pl.team)) having count(*) > 2) then
+    raise exception 'بحد أقصى لاعبين من نفس الفريق';
+  end if;
+  if p_captain is null or not (p_captain = any(ids)) then raise exception 'اختار الكابتن من تشكيلتك'; end if;
+  delete from public.tournament_picks where tournament_id = p_t and user_id = auth.uid();
+  insert into public.tournament_picks (tournament_id, user_id, player_id, is_captain)
+  select p_t, auth.uid(), x, x = p_captain from unnest(ids) x;
+end $$;
+revoke all on function public.save_tournament_picks(uuid, uuid[], uuid) from public, anon;
+grant execute on function public.save_tournament_picks(uuid, uuid[], uuid) to authenticated;
+
+-- الماتش خلص → تشكيلات البطولة بتتسجّل عليه (لاعيبة الفريقين بس)
+create or replace function public.trg_tournament_snap()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if new.tournament_id is not null and new.status = 'finished' and old.status is distinct from 'finished' then
+    insert into public.tournament_pick_snaps (tournament_id, match_id, user_id, player_id, is_captain)
+    select new.tournament_id, new.id, tp.user_id, tp.player_id, tp.is_captain
+    from public.tournament_picks tp join public.players pl on pl.id = tp.player_id
+    where tp.tournament_id = new.tournament_id and pl.team = any(new.teams)
+    on conflict do nothing;
+  end if;
+  return null;
+end $$;
+drop trigger if exists tournament_snap on public.matches;
+create trigger tournament_snap after update on public.matches
+for each row execute function public.trg_tournament_snap();
+
+-- نقط كل لاعب في كل ماتش خلص في البطولة
+create or replace function public.fn_tournament_pmp(p_t uuid)
+returns table(match_id uuid, player_id uuid, points int)
+language sql stable security definer set search_path = public as $$
+  select x.match_id, x.player_id, x.points
+  from public.matches m
+  cross join lateral public.fn_pmp(m.date_time - interval '1 second', m.date_time) x
+  where m.tournament_id = p_t and m.status = 'finished' and m.review_status <> 'void' and x.match_id = m.id;
+$$;
+
+-- (للشاشة) فانتازي البطولة: مفتوح ولا لأ · لاعيبة فرق البطولة ونقطهم · تشكيلتي · نقطي · الترتيب
+create or replace function public.tournament_fantasy_board(p_t uuid)
+returns jsonb language sql stable security definer set search_path = public as $$
+  with t as (select * from public.tournaments where id = p_t),
+  pm as (select * from public.fn_tournament_pmp(p_t)),
+  sc as (
+    select s.user_id, sum(coalesce(pm.points, 0) * case when s.is_captain then 2 else 1 end)::int as pts
+    from public.tournament_pick_snaps s
+    left join pm on pm.match_id = s.match_id and pm.player_id = s.player_id
+    where s.tournament_id = p_t group by s.user_id
+  ), us as (
+    select u.user_id, coalesce(sc.pts, 0) as pts
+    from (select distinct user_id from public.tournament_picks where tournament_id = p_t
+          union select user_id from sc) u
+    left join sc on sc.user_id = u.user_id
+  ), rk as (
+    select us.user_id, us.pts, p.name, rank() over (order by us.pts desc) as rnk
+    from us join public.profiles p on p.id = us.user_id
+  )
+  select jsonb_build_object(
+    'can_play', (select t.zone_id is not distinct from (select zone_id from public.profiles where id = auth.uid())
+                        and not public.fn_is_zone_manager() from t),
+    'finished', (select t.status = 'finished' from t),
+    'live', public.fn_tournament_live(p_t),
+    'players', coalesce((
+      select jsonb_agg(jsonb_build_object('id', pl.id, 'name', pl.name, 'team', pl.team, 'gk', pl.position = 'GK',
+               'image_url', pl.image_url,
+               'points', coalesce((select sum(pm.points) from pm where pm.player_id = pl.id), 0))
+             order by pl.team, (pl.position <> 'GK'), pl.name)
+      from public.players pl
+      where exists (select 1 from public.tournament_teams tt
+                    where tt.tournament_id = p_t and tt.status = 'approved'
+                      and lower(trim(tt.team)) = lower(trim(pl.team)))), '[]'),
+    'mine', coalesce((select jsonb_agg(jsonb_build_object('id', tp.player_id, 'captain', tp.is_captain))
+                      from public.tournament_picks tp where tp.tournament_id = p_t and tp.user_id = auth.uid()), '[]'),
+    'my_points', coalesce((select rk.pts from rk where rk.user_id = auth.uid()), 0),
+    'my_rank', (select rk.rnk from rk where rk.user_id = auth.uid()),
+    'standings', coalesce((select jsonb_agg(jsonb_build_object('rank', x.rnk, 'name', x.name, 'points', x.pts,
+                                                                'mine', x.user_id = auth.uid()) order by x.rnk, x.name)
+                           from (select * from rk order by rk.rnk, rk.name limit 50) x), '[]'));
+$$;
+revoke all on function public.tournament_fantasy_board(uuid) from public, anon;
+grant execute on function public.tournament_fantasy_board(uuid) to authenticated;
+
+-- ═══ 46. فحص إشعارات الموبايل (push) ═══
+-- (أدمن) إيه الناقص عشان الإشعار يوصل والأبلكيشن مقفول: الإضافة · رابط الفانكشن · آخر ردود الفانكشن · توكن جهازي.
+create or replace function public.push_diagnostics()
+returns jsonb language plpgsql security definer set search_path = public, private as $$
+declare has_net boolean; u text; last jsonb := '[]'::jsonb;
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  select exists (select 1 from pg_extension where extname = 'pg_net') into has_net;
+  select value into u from private.settings where key = 'push_url';
+  if has_net then
+    begin
+      execute $q$
+        select coalesce(jsonb_agg(jsonb_build_object('status', x.status_code, 'error', x.error_msg,
+                                                     'body', left(x.content::text, 160), 'at', x.created)), '[]')
+        from (select status_code, error_msg, content, created from net._http_response
+              order by created desc limit 5) x
+      $q$ into last;
+    exception when others then last := '[]'::jsonb;
+    end;
+  end if;
+  return jsonb_build_object(
+    'pg_net', has_net,
+    'push_url', u,
+    'my_token', (select fcm_token is not null from public.profiles where id = auth.uid()),
+    'tokens', (select count(*) from public.profiles where fcm_token is not null),
+    'last', last);
+end $$;
+revoke all on function public.push_diagnostics() from public, anon;
+grant execute on function public.push_diagnostics() to authenticated;
+
+-- (أدمن) رابط فانكشن الإشعارات للمشروع ده (بيتحط مرة واحدة) — لازم يكون رابط فانكشن push على supabase.co
+create or replace function public.set_push_url(p_url text)
+returns void language plpgsql security definer set search_path = public, private as $$
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  if p_url !~ '^https://[a-z0-9]{15,30}\.supabase\.co/functions/v1/push$' then
+    raise exception 'الرابط لازم يكون: https://<project-ref>.supabase.co/functions/v1/push';
+  end if;
+  insert into private.settings (key, value) values ('push_url', p_url)
+  on conflict (key) do update set value = excluded.value;
+  perform public.fn_admin_log('push_url', p_url, '{}'::jsonb);
+end $$;
+revoke all on function public.set_push_url(text) from public, anon;
+grant execute on function public.set_push_url(text) to authenticated;
+
+-- (أدمن) إشعار تجربة لنفسي
+create or replace function public.send_test_push()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  insert into public.notifications (title, body, kind, user_id)
+  values ('🔔 تجربة الإشعارات', 'لو شايف ده والأبلكيشن مقفول يبقى كله تمام ✓', 'match', auth.uid());
+end $$;
+revoke all on function public.send_test_push() from public, anon;
+grant execute on function public.send_test_push() to authenticated;
 
 -- ═══════════════════════════════════════════════════════════════
 -- خلصنا. (اختياري) خلّي نفسك مدير — بدّل الإيميل بإيميلك:

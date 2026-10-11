@@ -169,6 +169,26 @@ select t.expect_fail('user cannot list reports', $q$select * from public.admin_b
 reset role;
 select t.check('admins notified of betting report',
   (select count(*) >= 1 from public.notifications where link = 'admin:betting'));
+select t.as_user('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select t.check('report on a specific account', public.report_betting('يوزر٣', 'بيلم فلوس على نتيجة التحدي كل جولة',
+  '00000000-0000-0000-0000-000000000003') is not null);
+select t.expect_fail('cannot report yourself', $q$select public.report_betting('أنا', 'بلاغ على نفسي للتجربة',
+  '00000000-0000-0000-0000-000000000002')$q$);
+select t.expect_fail('user cannot resolve reports',
+  $q$select public.resolve_betting_report((select id from public.betting_reports limit 1), 'proven')$q$);
+reset role;
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select t.check('admin sees betting reports', (select count(*) = 2 from public.admin_betting_reports()));
+select t.check('proven on an account = permanent ban', public.resolve_betting_report(
+  (select id from public.betting_reports where suspect_user is not null limit 1), 'proven'));
+select t.check('proven on a name only = no auto ban', not public.resolve_betting_report(
+  (select id from public.betting_reports where suspect_user is null limit 1), 'proven'));
+reset role;
+select t.check('reported account is banned',
+  (select not is_active from public.profiles where id = '00000000-0000-0000-0000-000000000003'));
+update public.profiles set is_active = true where id = '00000000-0000-0000-0000-000000000003';
 select t.as_user('00000000-0000-0000-0000-000000000001');
 set role authenticated;
 select public.review_match((select id from public.matches limit 1), true, null);
@@ -279,7 +299,15 @@ select t.expect_fail('user sets challenge', $q$select public.set_challenge(t.ch(
 reset role;
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
-select public.set_challenge(t.ch());
+select t.expect_fail('duel needs a player from each team', $q$select public.set_challenge(t.ch(), array['duel'],
+  (select id from public.players where name = 'ه١'), (select id from public.players where name = 'و١'))$q$);
+select t.expect_fail('challenge needs a known mode', $q$select public.set_challenge(t.ch(), array['nope'])$q$);
+select public.set_challenge(t.ch(), array['diff', 'duel', 'quiz', 'lowest'],
+  (select id from public.players where name = 'ه١'),
+  (select id from public.players where team = 'صقور بدر' order by name limit 1));
+update public.matches set challenge_modes = '{}' where id = t.ch();
+select t.check('organizer cannot edit challenge modes directly',
+  (select cardinality(challenge_modes) = 4 from public.matches where id = t.ch()));
 select t.expect_fail('second challenge same round same organizer',
   $q$select public.set_challenge((select id from public.matches where week = 2 order by date_time desc limit 1))$q$);
 reset role;
@@ -289,12 +317,19 @@ select t.check('challenge notification to the zone only',
 select t.as_user('00000000-0000-0000-0000-000000000004');
 set role authenticated;
 select t.expect_fail('other zone predicts', $q$insert into public.predictions (user_id, match_id, score_a, score_b) values (auth.uid(), t.ch(), 1, 0)$q$);
+select t.expect_fail('other zone answers challenge', $q$select public.answer_challenge(t.ch(), null, 'a', false)$q$);
 select t.check('other zone does not see challenge notification', (select count(*) = 0 from public.notifications where kind = 'challenge'));
 select t.check('other zone does not see Badr team of the week', (select count(*) = 0 from public.team_of_week));
 reset role;
 select t.as_user('00000000-0000-0000-0000-000000000001');
 set role authenticated;
 insert into public.predictions (user_id, match_id, score_a, score_b) values (auth.uid(), t.ch(), 3, 1);
+select t.expect_fail('duel pick must be one of the two', $q$select public.answer_challenge(t.ch(),
+  (select id from public.players where name = 'و١'))$q$);
+select public.answer_challenge(t.ch(), (select id from public.players where name = 'ه١'), 'a', false,
+  (select id from public.players where name = 'ه١'), null);
+select t.check('challenge board lists my answers',
+  (select jsonb_array_length(b->'items') >= 1 and (b->'items'->0->'mine'->>'q_winner') = 'a' from public.challenge_board() b));
 select t.check('own zone sees team of the week', (select count(*) = 1 from public.team_of_week));
 reset role;
 -- النتيجة من الأهداف: جولين لنسور بدر (الفريق الأول)
@@ -303,7 +338,13 @@ select t.check('score follows goals live', (select score_a = 2 and score_b = 0 a
 update public.matches set status = 'finished', score_a = 9, score_b = 9 where id = t.ch();   -- النتيجة اليدوي بتتجاهل
 select t.check('manual score ignored', (select score_a = 2 and score_b = 0 from public.matches where id = t.ch()));
 update public.matches set review_status = 'approved' where id = t.ch();   -- الاعتماد
-select t.check('goal difference right (3-1 vs 2-0) = +5', public.fn_user_bonus('00000000-0000-0000-0000-000000000001') = 5);
+-- فرق الأهداف +٥ · مين فيهم +٣ · الأسئلة: الفايز +٢ والأهداف +٢ (وأول هدّاف لو صح يبقوا التلاتة = +١٠)
+select t.check('challenge: diff 5 + duel 3 + quiz (4 or 10)',
+  public.fn_user_bonus('00000000-0000-0000-0000-000000000001') in (12, 18));
+select t.check('challenge scores per mode',
+  (select diff_pts = 5 and streak = 1 and duel_pts = 3 and quiz_pts in (4, 10) and lowest_pts = 0
+   from public.fn_challenge_scores('00000000-0000-0000-0000-000000000001') where match_id = t.ch()));
+select t.check('challenge win notification', (select count(*) = 1 from public.notifications where title like '🎯 كسبت +%'));
 select t.check('challenge summary counts goal difference', (select correct = 1 from public.challenge_summary(t.ch())));
 
 -- ── حالة اللاعب: إشعار لمنطقته بس ──
@@ -366,6 +407,20 @@ set role authenticated;
 select t.check('player_history runs as a user', (select count(*) >= 0 from public.player_history((select id from public.players where name = 'ه١'))));
 select t.check('round_highlights returns one row', (select count(*) = 1 from public.round_highlights(now())));
 reset role;
+
+-- ── الإيميل مبيطلعش من رقم الموبايل (للسيرفر بس) + عدّاد المحاولات ──
+select t.as_user('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select t.expect_fail('user cannot map phone to email', $q$select public.email_for_phone('0101')$q$);
+select t.expect_fail('user cannot call phone_auth_email', $q$select public.phone_auth_email('0101', 10)$q$);
+reset role;
+set role anon;
+select t.expect_fail('anon cannot map phone to email', $q$select public.email_for_phone('0101')$q$);
+reset role;
+select t.check('server resolves the phone', public.phone_auth_email('010100', 3) is null);
+select public.phone_auth_email('010100', 3);
+select public.phone_auth_email('010100', 3);
+select t.expect_fail('phone attempts are throttled', $q$select public.phone_auth_email('010100', 3)$q$);
 
 -- ── حذف لاعب طلع تبديل (كان بيكسر الحذف) + حذف الكل ──
 select t.as_user('00000000-0000-0000-0000-00000000000a');

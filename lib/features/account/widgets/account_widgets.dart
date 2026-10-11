@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/motion.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../auth/data/models/app_user.dart';
 import '../../squad/data/profile_repository.dart';
@@ -61,7 +61,7 @@ class _AccountHeaderState extends State<AccountHeader> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                PentagonAvatar(initials: u?.initials ?? '؟', photoUrl: u?.photoUrl, size: 68),
+                AppAvatar(initials: u?.initials ?? '؟', photoUrl: u?.photoUrl, size: 68),
                 Positioned(
                   bottom: -2,
                   left: -2,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -93,7 +94,11 @@ class _PitchViewState extends State<_PitchView> {
                 if (s.isLoading) return const SkeletonList();
                 if (s.venues.isEmpty) {
                   return Center(
-                    child: Text('لسه مفيش ملاعب متاحة', style: AppText.body(13, color: AppColors.neutral600)),
+                    child: EmptyState(
+                      icon: Icons.stadium_outlined,
+                      title: 'لسه مفيش ملاعب متاحة',
+                      hint: 'عندك ملعب؟ ضيفه من «حسابي» ← ملاعبي',
+                    ),
                   );
                 }
                 if (_map) return VenuesMapView(venues: s.venues, onOpen: _open);

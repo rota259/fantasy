@@ -10,6 +10,8 @@ import '../data/admin_repository.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 import '../../../core/widgets/motion.dart';
 import '../../events/data/events_repository.dart';
+import '../../fairplay/data/fairplay_repository.dart';
+import '../../fairplay/view/admin_betting_screen.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../players/data/players_repository.dart';
 import '../../points/view/live_round_screen.dart';
@@ -18,7 +20,7 @@ import '../view/manager_matches_screen.dart';
 import '../view/manager_players_screen.dart';
 import '../view/manager_users_screen.dart';
 
-typedef _Stats = ({AdminCounts counts, List<AppUser> top, int nextPicks, int managersActive});
+typedef _Stats = ({AdminCounts counts, List<AppUser> top, int nextPicks, int managersActive, int betting});
 
 /// (أدمن) أرقام سريعة من السيرفر — كل رقم كارت بيفتح القايمة بتاعته (من غير ما نحمّل كل اليوزرز واللاعيبة): المستخدمين، اللاعيبة، الماتشات،
 /// تشكيلات الجولة الجاية، وأعلى ٥.
@@ -34,12 +36,18 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
 
   Future<_Stats> _load() async {
     final admin = context.read<AdminRepository>();
-    final (counts, top, picks) = await (
+    final (counts, top, picks, betting) = await (
       admin.counts(),
       admin.fetchUsers(role: 'user', limit: 5),
       admin.roundPickerCount(WeekWindow.open().cutoff),
+      // بلاغات المراهنات اللي لسه مفتوحة
+      context
+          .read<FairPlayRepository>()
+          .adminReports()
+          .then((l) => l.where((r) => r.status == 'open' || r.status == 'investigating').length)
+          .catchError((_) => 0),
     ).wait;
-    return (counts: counts, top: top, nextPicks: picks, managersActive: counts.managers);
+    return (counts: counts, top: top, nextPicks: picks, managersActive: counts.managers, betting: betting);
   }
 
   @override
@@ -62,6 +70,43 @@ class _ManagerDashboardState extends State<ManagerDashboard> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // بلاغات المراهنات: أول حاجة في اللوحة — أحمر لو فيه بلاغات مستنية
+            Pressable(
+              onTap: () => _open(context, const AdminBettingScreen()),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: s.betting > 0 ? AppColors.danger : AppColors.black,
+                  borderRadius: AppRadius.md,
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.block_outlined, color: AppColors.white, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('بلاغات المراهنات', style: AppText.h(14, color: AppColors.white)),
+                          Text(
+                            s.betting > 0 ? '${s.betting} بلاغ مستني تحقيقك' : 'مفيش بلاغات مفتوحة',
+                            style: AppText.body(11, color: AppColors.white.withValues(alpha: 0.8)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (s.betting > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                        decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(12)),
+                        child: Text('${s.betting}', style: AppText.h(13, color: AppColors.danger)),
+                      ),
+                    Icon(Icons.chevron_left, color: AppColors.white),
+                  ],
+                ),
+              ),
+            ),
             // كل رقم ويدجت — الضغط بيفتح القايمة بتاعته
             GridView.count(
               crossAxisCount: 2,

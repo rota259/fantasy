@@ -11,6 +11,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../cubit/tournament_cubit.dart';
 import '../data/tournaments_repository.dart';
+import '../widgets/tournament_fantasy_tab.dart';
 import '../widgets/tournament_awards_tab.dart';
 import '../widgets/tournament_bracket_view.dart';
 import '../widgets/tournament_header.dart';
@@ -18,7 +19,7 @@ import '../widgets/tournament_matches_tab.dart';
 import '../widgets/tournament_table_tab.dart';
 import '../widgets/tournament_teams_tab.dart';
 
-/// صفحة البطولة: الفرق · الماتشات · الترتيب · الشجرة · الجوايز وتوقّع البطل.
+/// صفحة البطولة: الفرق · الماتشات · الفانتازي (تشكيلة لكل بطولة) · الترتيب · الشجرة · الجوايز وتوقّع البطل.
 class TournamentScreen extends StatelessWidget {
   const TournamentScreen({super.key, required this.id});
   final String id;
@@ -55,9 +56,10 @@ class _ViewState extends State<_View> {
           final tabs = [
             ('teams', 'الفرق'),
             ('matches', 'الماتشات'),
+            ('fantasy', 'الفانتازي'),
             if (t?.format != 'knockout') ('table', 'الترتيب'),
             if (t?.hasBracket ?? false) ('bracket', 'الشجرة'),
-            ('awards', 'الجوايز 🏆'),
+            ('awards', 'الجوايز'),
           ];
           return Column(
             children: [
@@ -85,6 +87,7 @@ class _ViewState extends State<_View> {
                       key: ValueKey(_tab),
                       child: switch (_tab) {
                         'matches' => TournamentMatchesTab(state: s, runs: runs),
+                        'fantasy' => TournamentFantasyTab(tournamentId: t.id),
                         'table' => TournamentTableTab(state: s, runs: runs),
                         'bracket' => TournamentBracketView(state: s),
                         'awards' => TournamentAwardsTab(state: s),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -66,7 +67,7 @@ class MatchRatingsScreen extends StatelessWidget {
     if (s.loading) return const SkeletonList();
     if (s.players.isEmpty) {
       return Center(
-        child: Text('مفيش تشكيلة للماتش ده', style: AppText.body(13, color: AppColors.neutral600)),
+        child: EmptyState(icon: Icons.groups_outlined, title: 'مفيش تشكيلة للماتش ده'),
       );
     }
     final cubit = context.read<MatchRatingsCubit>();

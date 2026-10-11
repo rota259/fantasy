@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_mark.dart';
+import '../../../core/widgets/kha_logo.dart';
 
-/// ترويسة الدخول السوداء: علامة الخماسي + الاسم.
+/// ترويسة الدخول السوداء: لوجو الخاء والكورة + الاسم.
 class LoginHeader extends StatelessWidget {
   const LoginHeader({super.key});
 
@@ -19,7 +19,7 @@ class LoginHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(26, 34, 26, 30),
           child: Row(
             children: [
-              const PentagonMark(size: 56, stroke: 5),
+              const KhaLogo(size: 56),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -28,10 +28,10 @@ class LoginHeader extends StatelessWidget {
                     Text('الخماسي', style: AppText.h(26, color: AppColors.white)),
                     const SizedBox(height: 3),
                     Text(
-                      'FANTASY FIVE-A-SIDE',
+                      'فانتازي الغلابه',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppText.h(8, color: AppColors.neutral400, weight: FontWeight.w600, spacingEm: 0.28),
+                      style: AppText.h(11, color: AppColors.accent400, weight: FontWeight.w600),
                     ),
                   ],
                 ),

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -56,8 +58,14 @@ class ManagerMatchCubit extends Cubit<ManagerMatchState> {
   }
 
   /// إضافة لاعب جديد لفريق في الماتش (بيبقى في الفريق لحد ما المدير يحطّه في التشكيلة).
-  Future<void> addPlayerToTeam(String name, String team, String position) async {
-    await _players.addPlayer(name: name, team: team, position: position);
+  /// [photo] اختياري: بتترفع بعد ما اللاعب يتضاف (لو الرفع فشل اللاعب بيفضل متضاف من غير صورة).
+  Future<void> addPlayerToTeam(String name, String team, String position, {Uint8List? photo, String? photoExt}) async {
+    final id = await _players.addPlayer(name: name, team: team, position: position);
+    if (photo != null) {
+      try {
+        await _players.uploadPhoto(id, photo, photoExt ?? 'jpg');
+      } catch (_) {}
+    }
     final players = await _players.fetchByTeams(match.teams);
     emit(state.copyWith(players: players));
   }

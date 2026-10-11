@@ -48,7 +48,7 @@ class ScorePicker extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: AppRadius.md,
-        border: Border.all(color: onTap == null ? AppColors.divider : AppColors.black, width: 2),
+        border: Border.all(color: onTap == null ? AppColors.divider : AppColors.line, width: 1.4),
       ),
       child: Text(t, style: AppText.h(18, color: onTap == null ? AppColors.neutral400 : AppColors.ink)),
     ),

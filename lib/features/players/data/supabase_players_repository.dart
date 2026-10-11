@@ -73,9 +73,11 @@ class SupabasePlayersRepository implements PlayersRepository {
     final type = ext == 'png' ? 'image/png' : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
     final path = '$id/p_${DateTime.now().millisecondsSinceEpoch}.${ext.isEmpty ? 'jpg' : ext}';
     final storage = SupabaseService.client.storage.from('player-photos');
-    await storage.uploadBinary(path, bytes, fileOptions: FileOptions(contentType: type, upsert: true));
+    // مسار جديد كل مرة (بالوقت) → رفع عادي من غير upsert (الـ upsert محتاج صلاحيات تعديل زيادة وبيفشل)
+    await storage.uploadBinary(path, bytes, fileOptions: FileOptions(contentType: type));
     final url = storage.getPublicUrl(path);
-    await SupabaseService.table(_table).update({'image_url': url}).eq('id', id);
+    // السيرفر بيحفظ الرابط (الأدمن، أو مدير المنطقة للاعيبة فرقه)
+    await SupabaseService.client.rpc('set_player_photo', params: {'p_player': id, 'p_url': url});
     return url;
   }
 }

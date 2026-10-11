@@ -42,7 +42,8 @@ class SupabaseMatchesRepository implements MatchesRepository {
 
   @override
   Future<List<GameMatch>> fetchUpcoming() async {
-    final rows = await _mine().eq('status', 'upcoming').order('date_time').limit(50);
+    // ماتشات البطولات اللي ميعادها لسه متحددش مبتظهرش في «الجاية»
+    final rows = await _mine().eq('status', 'upcoming').eq('time_set', true).order('date_time').limit(50);
     return rows.map(GameMatch.fromMap).toList();
   }
 

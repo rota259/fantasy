@@ -54,10 +54,11 @@ void main() {
   test('الإجمالي = المعتمد بس، والباقي مبدئي', () {
     final s = MyPointsState(
       entries: [_entry(1, 1), _entry(3, 1)], // ١٠ معتمد · ٢٠ مباشر
-      bonuses: [_m('a', 'approved'), _m('p', 'pending')],
+      // بونص التحدّي بييجي محسوب من السيرفر (المعتمد بس): فرق أهداف +٥ وسلسلة +٧
+      bonuses: [(match: _m('a', 'approved'), points: 5), (match: _m('b', 'approved'), points: 7)],
     );
-    expect(s.total, 5 + 5 + MyPointsState.predictionBonus);
-    expect(s.provisional, 10 + MyPointsState.predictionBonus);
+    expect(s.total, 5 + 5 + 12);
+    expect(s.provisional, 10);
   });
 
   test('طابور المراجعة بيقرا آراء اللاعيبة', () {

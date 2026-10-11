@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -60,7 +61,7 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(switch (status) {
-            'confirmed' => 'اتأكد الحجز ✅ واتبعت إشعار للحاجز',
+            'confirmed' => 'اتأكد الحجز واتبعت إشعار للحاجز',
             'rejected' => 'اترفض الطلب واتبعت إشعار للحاجز',
             _ => 'اتلغى الحجز',
           }),
@@ -98,7 +99,7 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
                 final old = all.where((b) => !pending.contains(b) && !upcoming.contains(b)).toList();
                 if (all.isEmpty) {
                   return Center(
-                    child: Text('لسه مفيش طلبات حجز', style: AppText.body(13, color: AppColors.neutral600)),
+                    child: EmptyState(icon: Icons.inbox_outlined, title: 'لسه مفيش طلبات حجز'),
                   );
                 }
                 return ListView(
@@ -150,10 +151,10 @@ class _VenueRequestsScreenState extends State<VenueRequestsScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                if (phone != null) _btn('📞', AppColors.black, busy ? null : () => Launchers.call(phone)),
+                if (phone != null) _btn('اتصل', AppColors.black, busy ? null : () => Launchers.call(phone)),
                 if (b.isPending) ...[
-                  _btn('✅ أكّد', AppColors.accent, busy ? null : () => _set(b, 'confirmed')),
-                  _btn('❌ ارفض', AppColors.danger, busy ? null : () => _set(b, 'rejected')),
+                  _btn('أكّد', AppColors.accent, busy ? null : () => _set(b, 'confirmed')),
+                  _btn('ارفض', AppColors.danger, busy ? null : () => _set(b, 'rejected')),
                 ] else
                   _btn('إلغاء الحجز', AppColors.danger, busy ? null : () => _set(b, 'cancelled')),
               ],

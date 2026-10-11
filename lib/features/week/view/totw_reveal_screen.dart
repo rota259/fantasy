@@ -9,7 +9,7 @@ import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/fx/confetti.dart';
 import '../../../core/widgets/fx/gold_shine.dart';
 import '../../../core/widgets/motion.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../data/models/week_player.dart';
 import '../data/team_of_week.dart';
 import '../widgets/totw_pitch.dart';
@@ -148,7 +148,7 @@ class _TotwRevealScreenState extends State<TotwRevealScreen> {
         children: [
           Text(p.positionAr, style: AppText.kicker(color: Colors.white)),
           const SizedBox(height: 10),
-          GoldAvatar(player: p, size: 92),
+          GoldAvatar(player: p, size: 104, card: true),
           const SizedBox(height: 10),
           Text(
             p.name,

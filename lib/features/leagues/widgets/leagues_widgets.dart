@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_avatar.dart';
+import '../../../core/widgets/app_avatar.dart';
 import '../../badges/data/models/user_badge.dart';
 import '../data/models/league.dart';
 import '../data/models/league_standing.dart';
@@ -109,7 +109,7 @@ class StandingRow extends StatelessWidget {
             width: 26,
             child: Text('${s.rank}', style: AppText.h(14, color: me ? AppColors.accent : AppColors.neutral500)),
           ),
-          PentagonAvatar(initials: s.initials, photoUrl: s.photoUrl, size: 30),
+          AppAvatar(initials: s.initials, photoUrl: s.photoUrl, size: 30),
           const SizedBox(width: 8),
           Expanded(
             child: Text.rich(

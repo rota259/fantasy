@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
@@ -58,7 +59,7 @@ class _ManagerClaimsScreenState extends State<ManagerClaimsScreen> {
                 if (!snap.hasData) return const SkeletonList();
                 if (snap.data!.isEmpty) {
                   return Center(
-                    child: Text('مفيش طلبات دلوقتي', style: AppText.body(13, color: AppColors.neutral600)),
+                    child: EmptyState(icon: Icons.task_alt, title: 'مفيش طلبات دلوقتي'),
                   );
                 }
                 return ListView(

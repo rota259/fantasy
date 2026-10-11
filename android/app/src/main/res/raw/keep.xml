@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- أصوات الإشعارات بتتنادى بالاسم (من القنوات) — متتشالش في نسخة النشر -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/goal,@raw/whistle,@raw/lineup,@raw/soft,@raw/win" />

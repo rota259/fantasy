@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import 'pentagon_avatar.dart';
+import 'app_avatar.dart';
 
 /// أحرف أولى (بديل الصورة) جوه خماسي — نفس فريم الأفاتار في كل التطبيق.
 class InitialsTile extends StatelessWidget {
@@ -15,7 +15,7 @@ class InitialsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PentagonAvatar(
+    return AppAvatar(
       initials: text,
       photoUrl: photoUrl,
       size: size,

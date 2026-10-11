@@ -7,7 +7,7 @@ import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/splash_logo.dart';
 import '../../../core/widgets/motion.dart';
 
-/// شاشة البداية: لوجو متحرّك ثم انتقال تلقائي بعد 2.8 ثانية، أو ضغطة للتخطّي.
+/// شاشة البداية: اللوجو بيترسم (٢.٤ ثانية) ثم انتقال ناعم لوحده، أو ضغطة للتخطّي.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,13 +16,13 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 4200))
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))
     ..forward();
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 4800), _skip);
+    Future.delayed(const Duration(milliseconds: 2900), _skip);
   }
 
   void _skip() {
@@ -77,8 +77,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             Text('الخماسي', style: AppText.h(34, color: AppColors.white, spacingEm: -0.02)),
             const SizedBox(height: 6),
             Text(
-              'FANTASY · FIVE-A-SIDE',
-              style: AppText.h(9, color: AppColors.neutral400, weight: FontWeight.w600, spacingEm: 0.34),
+              'فانتازي الحتة',
+              style: AppText.h(12, color: AppColors.accent400, weight: FontWeight.w600, spacingEm: 0.1),
             ),
           ],
         ),

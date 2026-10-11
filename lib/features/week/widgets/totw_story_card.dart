@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/share/story_frame.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/pentagon_pitch.dart';
+import '../../../core/widgets/formation_pitch.dart';
 import '../data/models/week_player.dart';
 import '../data/team_of_week.dart';
 import 'totw_pitch.dart';

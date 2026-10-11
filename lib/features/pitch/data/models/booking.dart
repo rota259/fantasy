@@ -50,10 +50,10 @@ class Booking extends Equatable {
   bool get isPast => start.isBefore(DateTime.now());
 
   String get statusLabel => switch (status) {
-    'confirmed' => 'مؤكد ✅',
-    'rejected' => 'مرفوض ❌',
+    'confirmed' => 'مؤكد',
+    'rejected' => 'مرفوض',
     'cancelled' => 'ملغي',
-    _ => 'معلّق ⏳',
+    _ => 'معلّق',
   };
 
   factory Booking.fromMap(Map<String, dynamic> m) {

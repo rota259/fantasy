@@ -127,7 +127,7 @@ class _MyVenuesScreenState extends State<MyVenuesScreen> {
                           padding: const EdgeInsets.all(13),
                           decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
                           alignment: Alignment.center,
-                          child: Text('📅 طلبات الحجز على ملاعبي', style: AppText.h(13, color: AppColors.white)),
+                          child: Text('طلبات الحجز على ملاعبي', style: AppText.h(13, color: AppColors.white)),
                         ),
                       ),
                       for (final v in list) _row(v),

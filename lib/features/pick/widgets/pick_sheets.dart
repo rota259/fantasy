@@ -43,7 +43,7 @@ Future<void> showPlayerOptionsSheet(BuildContext context, RoundPickCubit cubit, 
         mainAxisSize: MainAxisSize.min,
         children: [
           _title('${p.name} · ${p.team}'),
-          _option(context, '📊 عمل إيه في الجولة', () {
+          _option(context, 'عمل إيه في الجولة', () {
             Navigator.pop(context);
             showPlayerRoundSheetFor(context, p, cubit.window);
           }, keepOpen: true),
