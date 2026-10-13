@@ -3,7 +3,7 @@
 --
 --   بيتمسح: الماتشات والأحداث والتشكيلات · اللاعيبة والفرق · تشكيلات الجولة والنقط
 --           الإشعارات · التصويتات · التوقعات · الشارات · الكروت · طلبات التوثيق والمديرين
---           الملاعب والحجوزات · المواسم · سجل العمليات · الدوريات الخاصة
+--           الملاعب والحجوزات · المواسم · سجل العمليات · الدوريات الخاصة · البطولات · بلاغات المراهنات
 --   بيفضل:   حسابات اليوزرز والأدمنز والمديرين (بأدوارهم ومناطقهم) · المناطق · الدوري العام
 --           ونقط كل الناس بترجع صفر.
 --
@@ -23,7 +23,8 @@ truncate table
   public.auction_bids, public.auctions,
   public.bookings, public.venue_reviews, public.venues,
   public.matches, public.players, public.teams,
-  public.seasons, public.organizer_requests, public.admin_log, public.app_jobs
+  public.seasons, public.organizer_requests, public.admin_log, public.app_jobs,
+  public.tournaments, public.challenge_answers, public.betting_reports
 cascade;
 
 -- الدوريات الخاصة (أعضاها بيتمسحوا معاها) — الدوري العام بيفضل

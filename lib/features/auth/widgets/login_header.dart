@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/kha_logo.dart';
+import '../../../core/widgets/brand_logo.dart';
 
-/// ترويسة الدخول السوداء: لوجو الخاء والكورة + الاسم.
+/// ترويسة الدخول السوداء: لوجو الصديري + الاسم بخط الهوية.
 class LoginHeader extends StatelessWidget {
   const LoginHeader({super.key});
 
@@ -19,13 +19,13 @@ class LoginHeader extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(26, 34, 26, 30),
           child: Row(
             children: [
-              const KhaLogo(size: 56),
+              const BibLogo.onDark(size: 60),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('الخماسي', style: AppText.h(26, color: AppColors.white)),
+                    const BrandWordmark(size: 40, color: Colors.white),
                     const SizedBox(height: 3),
                     Text(
                       'فانتازي الغلابه',

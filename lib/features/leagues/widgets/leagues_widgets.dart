@@ -55,7 +55,7 @@ class LeagueCodeBar extends StatelessWidget {
         children: [
           Expanded(child: Text('${league.name} · الترتيب', style: AppText.h(14))),
           if (league.isGlobal)
-            Text('كل اليوزرز', style: AppText.h(11, color: AppColors.accent))
+            Text(' Overall', style: AppText.h(11, color: AppColors.accent))
           else ...[
             Pressable(
               onTap: onCopy,

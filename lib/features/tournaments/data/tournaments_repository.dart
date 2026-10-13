@@ -37,7 +37,7 @@ abstract interface class TournamentsRepository {
   Future<void> predict(String id, String team);
 
   /// (منظّم البطولة) تحديد أو تغيير ميعاد ماتش — قبل ما يبدأ.
-  Future<void> setMatchTime(String matchId, DateTime time);
+  Future<void> setMatchTime(String matchId, DateTime time, int durationMin);
 
   /// فانتازي البطولة: لاعيبة فرقها ونقطهم · تشكيلتي · نقطي وترتيبي · الترتيب.
   Future<TournamentFantasy> fantasy(String id);

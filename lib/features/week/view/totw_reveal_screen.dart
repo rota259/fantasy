@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../core/notifications/sound_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -60,6 +61,7 @@ class _TotwRevealScreenState extends State<TotwRevealScreen> {
   void _next() {
     if (!mounted || _shown >= _order.length) return;
     setState(() => _shown++);
+    AppSounds.play(AppSounds.totwReveal, channel: 'reveal');
     _shown == _order.length ? HapticFeedback.heavyImpact() : HapticFeedback.lightImpact();
     if (_shown == _order.length) _timer?.cancel();
   }

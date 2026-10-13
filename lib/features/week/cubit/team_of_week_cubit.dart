@@ -100,10 +100,9 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
     }
   }
 
-  /// التجربة: تشكيلة الجولة لايف (أعلى حارس + أعلى ٤) من غير ما تستنى الإدارة.
+  /// التجربة: تشكيلة الجولة لايف — أعلى ٥ دايمًا (حارس + ٤، والتعادل بالاسم) من غير ما تستنى الإدارة.
   Future<List<WeekPlayer>?> _liveTop(WeekWindow w) async {
-    final team = TeamOfWeek.build(await _repo.pointsBetween(w.start, w.cutoff)).lineup();
-    final top = team.whereType<WeekPlayer>().toList();
+    final top = TeamOfWeek.top5(await _repo.pointsBetween(w.start, w.cutoff));
     return top.isEmpty ? null : top;
   }
 

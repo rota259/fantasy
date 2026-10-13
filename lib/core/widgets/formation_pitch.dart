@@ -12,10 +12,10 @@ class PitchToken {
 
 /// ألوان الملعب الكلاسيك: فريم · خط أبيض · نجيلة خضرا بدرجتين · لاعيبة الجولة بالدهبي.
 abstract final class PitchColors {
-  static const frame = Color(0xFF5E1520); // نبيتي غامق (ملعب تشكيلتك)
-  static const forest = Color(0xFF173F1B); // أخضر غابة غامق (تشكيلة الجولة)
-  static const grass = Color(0xFF2E7D32);
-  static const grassStripe = Color(0xFF388E3C);
+  static const frame = Color(0xFF0A3B2F); // زيتي غامق (ملعب تشكيلتك)
+  static const forest = Color(0xFF0A3B2F); // نفس الفريم (تشكيلة الجولة)
+  static const grass = Color(0xFF17805F);
+  static const grassStripe = Color(0xFF1B8C68);
   static const line = Color(0xE6FFFFFF);
   static const gold = Color(0xFFE8B931);
   static const goldDeep = Color(0xFF8A6410);

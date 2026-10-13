@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- أيقونة الإشعارات في شريط الموبايل: لوجو الخاء والكورة (أبيض — أندرويد بيلوّنها) -->
+<!-- أيقونة الإشعارات في شريط الموبايل: الصديري ورقم 5 (أبيض — أندرويد بيلوّنها) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,11 +8,19 @@
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFFFFF"
-        android:strokeWidth="13"
-        android:strokeLineCap="square"
-        android:strokeLineJoin="miter"
-        android:pathData="M24,44 H72 L32,66 Q20,73 25,83 Q30,91 48,91 H80" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M48,10a12,12 0,1 0,0 24a12,12 0,1 0,0 -24z" />
+        android:strokeWidth="6"
+        android:strokeLineJoin="round"
+        android:pathData="M33,9 H43 C45,21 55,21 57,9 H67 C67,22 73,28 81,30 V91 H19 V30 C27,28 33,22 33,9 Z" />
+    <group
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:translateX="20"
+        android:translateY="30">
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="14"
+            android:strokeLineCap="square"
+            android:pathData="M72,14 H30 V50.7 A24,24 0 1 1 33,81" />
+    </group>
 </vector>

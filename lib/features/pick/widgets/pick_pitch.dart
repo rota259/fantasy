@@ -4,9 +4,8 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/fx/gold_shine.dart';
 import '../../../core/widgets/jersey.dart';
-import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/photo_card.dart';
 import '../../../core/widgets/formation_pitch.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/round_pick_cubit.dart';
@@ -240,7 +239,7 @@ class PickPitch extends StatelessWidget {
     shine: 0,
   );
 
-  /// اللاعب على الملعب: صورته لو ليه صورة (فريم أبيض · الحارس فحمي · الكابتن دهب بيلمع)،
+  /// اللاعب على الملعب: صورته في إطار كارت لو ليه صورة (أبيض · الحارس فحمي · الكابتن دهب بيلمع)،
   /// ولو مالوش → تيشيرت بنفس الألوان.
   static Widget _shirt(Player p, bool captain, [double size = 52]) {
     final jersey = Jersey(
@@ -251,38 +250,14 @@ class PickPitch extends StatelessWidget {
     );
     final url = p.imageUrl;
     if (url == null || url.isEmpty) return jersey;
-    final ring = (size * 0.07).clamp(2.0, 4.0);
-    final inner = size - ring * 2;
-    final photo = ClipOval(
-      child: NetImage(
-        url,
-        width: inner,
-        height: inner,
-        fallback: SizedBox(width: inner, height: inner, child: jersey),
-      ),
-    );
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 3))],
-      ),
-      child: captain
-          ? GoldShine(
-              shape: const CircleBorder(),
-              padding: EdgeInsets.all(ring),
-              delay: (p.id.hashCode % 100) / 100,
-              child: photo,
-            )
-          : Container(
-              padding: EdgeInsets.all(ring),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: p.position == 'GK' ? const Color(0xFF2B2B2B) : Colors.white,
-              ),
-              child: photo,
-            ),
+    // صورة اللاعب في إطار كارت (مش دايرة): أبيض · الحارس فحمي · الكابتن دهب بيلمع
+    return PhotoCard(
+      url: url,
+      width: size * 0.92,
+      fallback: jersey,
+      gold: captain,
+      frame: p.position == 'GK' ? const Color(0xFF2B2B2B) : Colors.white,
+      phase: (p.id.hashCode % 100) / 100,
     );
   }
 

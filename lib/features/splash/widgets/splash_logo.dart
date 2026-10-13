@@ -1,27 +1,22 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-import '../../../core/widgets/kha_logo.dart';
+import '../../../core/widgets/brand_logo.dart';
 
-/// لوجو الاسبلاش: حرف الخاء ثابت، ونقطته (الكورة) بتنزل من فوق وتنطّ نطّتين وهي بتلف — وبعدها تثبت.
-/// [animation] من 0 لـ 1 على طول الاسبلاش: الكورة بتتحرك في أول ٦٥٪ والباقي ثابت.
+/// لوجو الاسبلاش + الاسم — في الآخر بيبقوا نفس شكل الهوية بالظبط (اللوجو يمين والاسم شماله):
+///   ١) الصديري بيتمايل من رقبته زي ما يكون متعلّق وبيهدى.
+///   ٢) رقم 5 بيترسم زي خط الجير على الملعب.
+///   ٣) نقطة السنتر بتنطّ في مكانها.
+///   ٤) اسم «الخماسي» بيطلع جنبه.
+/// [animation] من 0 لـ 1 على طول الاسبلاش.
 class SplashLogo extends StatelessWidget {
-  const SplashLogo({super.key, required this.animation, this.size = 172});
+  const SplashLogo({super.key, required this.animation, this.size = 96});
 
   final Animation<double> animation;
-  final double size;
+  final double size; // ارتفاع اللوجو
 
-  /// ارتفاع الكورة فوق مكانها (بوحدات اللوجو) عند وقت [t]: نزول ← نطّة عالية ← نطّة صغيرة ← ثبات.
-  static double _height(double t) {
-    double arc(double a, double b, double peak) {
-      final x = ((t - a) / (b - a)).clamp(0.0, 1.0);
-      return peak * 4 * x * (1 - x); // قوس نطّة
-    }
-
-    if (t < 0.30) return 46 * (1 - Curves.easeIn.transform(t / 0.30)); // نازلة من فوق
-    if (t < 0.48) return arc(0.30, 0.48, 13);
-    if (t < 0.60) return arc(0.48, 0.60, 5);
-    return 0;
-  }
+  static double _seg(double t, double a, double b) => ((t - a) / (b - a)).clamp(0.0, 1.0);
 
   @override
   Widget build(BuildContext context) {
@@ -29,24 +24,35 @@ class SplashLogo extends StatelessWidget {
       animation: animation,
       builder: (context, _) {
         final t = animation.value;
-        final letterIn = Curves.easeOut.transform((t / 0.18).clamp(0.0, 1.0));
-        // الكورة بتتفلطح سنّة لحظة ما تلمس الحرف
-        final squash = (t > 0.28 && t < 0.34) || (t > 0.47 && t < 0.50) ? 0.94 : 1.0;
-        return Opacity(
-          opacity: letterIn,
-          child: Transform.scale(
-            scale: 0.92 + 0.08 * letterIn,
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.diagonal3Values(1, squash, 1),
-              child: KhaLogo(
-                size: size,
-                ballDy: -_height(t),
-                ballTurns: 0.55 * Curves.easeOut.transform((t / 0.60).clamp(0.0, 1.0)),
-                ballOpacity: (t / 0.10).clamp(0.0, 1.0),
+        final appear = Curves.easeOut.transform(_seg(t, 0, 0.12));
+        // تمايل بيخفت: ±٦° وبيهدى على ٠
+        final sway = math.sin(t * math.pi * 3.2) * 0.10 * (1 - Curves.easeOut.transform(_seg(t, 0, 0.62)));
+        final draw = const Cubic(.5, 0, .3, 1).transform(_seg(t, 0.12, 0.48));
+        final spot = Curves.easeOutBack.transform(_seg(t, 0.48, 0.60));
+        final name = Curves.easeOutCubic.transform(_seg(t, 0.58, 0.80));
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          textDirection: TextDirection.rtl,
+          children: [
+            Opacity(
+              opacity: appear,
+              child: BibLogo(size: size, draw: draw, spotScale: spot, angle: sway),
+            ),
+            // الاسم بيفتح مكانه ويطلع (فاللوجو بيتزحزح يمين بنعومة)
+            ClipRect(
+              child: Align(
+                alignment: Alignment.centerRight,
+                widthFactor: name,
+                child: Opacity(
+                  opacity: name,
+                  child: Padding(
+                    padding: EdgeInsets.only(right: size * 0.22),
+                    child: BrandWordmark(size: size * 0.78),
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         );
       },
     );

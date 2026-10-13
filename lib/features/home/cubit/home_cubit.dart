@@ -64,7 +64,7 @@ class HomeCubit extends Cubit<HomeState> {
     if (kTestMode) {
       // التجربة: نجم الجولة = أعلى نقط في منطقتي لايف (من غير ما تستنى الإدارة)
       final w = WeekWindow.current();
-      final top = TeamOfWeek.build(await _week.pointsBetween(w.start, w.cutoff)).lineup().whereType<WeekPlayer>();
+      final top = TeamOfWeek.top5(await _week.pointsBetween(w.start, w.cutoff));
       return (window: w, team: await _week.publishedTeam(w) ?? top.toList());
     }
     final w = await _week.latestPublishedRound();

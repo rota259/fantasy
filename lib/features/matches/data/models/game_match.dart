@@ -27,6 +27,7 @@ class GameMatch extends Equatable {
     this.stage,
     this.winner,
     this.timeSet = true,
+    this.durationMin = 60,
   });
 
   final String id;
@@ -52,6 +53,11 @@ class GameMatch extends Equatable {
 
   /// ماتش بطولة لسه المنظّم محددش ميعاده ([dateTime] مؤقت — متعرضوش).
   final bool timeSet;
+
+  /// مدة الماتش بالدقايق (المدير بيحددها — الافتراضي ساعة). الماتش بيتقفل لوحده بعدها.
+  final int durationMin;
+
+  DateTime get endsAt => dateTime.add(Duration(minutes: durationMin));
 
   /// مدة تقييم الجمهور بعد نهاية الماتش.
   static Duration get ratingWindow => kTestMode ? const Duration(minutes: 30) : const Duration(hours: 24);
@@ -104,6 +110,7 @@ class GameMatch extends Equatable {
     stage: map['stage'] as String?,
     winner: map['winner'] as String?,
     timeSet: map['time_set'] != false,
+    durationMin: (map['duration_min'] as num?)?.toInt() ?? 60,
   );
 
   /// للكتابة: الوقت UTC عشان السيرفر يفهمه صح (من غير فرق التوقيت).
@@ -132,5 +139,6 @@ class GameMatch extends Equatable {
     stage,
     winner,
     timeSet,
+    durationMin,
   ];
 }

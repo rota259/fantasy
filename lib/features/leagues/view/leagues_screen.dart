@@ -82,7 +82,7 @@ class _LeaguesView extends StatelessWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                'دوري المناطق — منطقتك ترتيبها كام؟',
+                                'دوري المناطق — خش شوف منطقتك ترتيبها كام؟',
                                 style: AppText.h(14, color: AppColors.white),
                               ),
                             ),

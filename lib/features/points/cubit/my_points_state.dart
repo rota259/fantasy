@@ -42,7 +42,7 @@ class MyPointsState extends Equatable {
       roundsIn(s).fold(0, (t, e) => t + (kTestMode ? e.points.total : e.finalPoints.total)) +
       bonusesIn(s).fold(0, (t, b) => t + b.points);
 
-  /// المعتمد بس = نفس الإجمالي في السيرفر والترتيب.
+  /// المعتمد من كل المواسم. (إجمالي السيرفر والترتيب = الموسم الحالي بس — استخدم [totalIn] بالموسم.)
   int get total => entries.fold(0, (s, e) => s + e.finalPoints.total) + bonuses.fold(0, (t, b) => t + b.points);
 
   /// نقط لسه بتتأكد (ماتشات شغّالة أو مستنية اعتماد) — بتدخل الإجمالي لما تتعتمد.

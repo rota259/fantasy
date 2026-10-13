@@ -42,6 +42,16 @@ void main() {
     expect(t.lineup().map((p) => p?.id), ['a']);
   });
 
+  test('العرض اللايف: أعلى ٥ دايمًا — التعادل بالاسم ومفيش أماكن فاضية', () {
+    // تعادل على آخر مكان: مفيش مكان فاضي
+    final tie = TeamOfWeek.top5([_w('g', 10, 'GK'), _w('a', 20), _w('b', 15), _w('c', 12), _w('d', 8), _w('e', 8)]);
+    expect(tie.map((p) => p.id), ['g', 'a', 'b', 'c', 'd']);
+    // مفيش حارس جاب نقط واللاعيبة قليلين: بنكمّل بأعلى الباقيين
+    final few = TeamOfWeek.top5([_w('a', 5), _w('b', -1), _w('c', 0), _w('g', 0, 'GK'), _w('g2', 0, 'GK')]);
+    expect(few.map((p) => p.id), ['g', 'a', 'c', 'b', 'g2']);
+    expect(TeamOfWeek.top5([_w('a', 5), _w('b', 3)]).length, 2); // أقل من ٥ لاعيبة لعبوا أصلًا
+  });
+
   test('الحارس تحت والأعلى نقط فوق', () {
     final spots = TeamOfWeek.arrange([_w('a', 20), _w('g', 15, 'GK'), _w('c', 12), _w('d', 9), _w('e', 8)]);
     expect(spots.map((p) => p?.id), ['g', 'a', 'c', 'd', 'e']);

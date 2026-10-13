@@ -145,6 +145,7 @@ class _HomeView extends StatelessWidget {
             title: 'الخماسي',
             subtitle: 'MATCHDAY · ${snap.data?.name ?? 'الخماسي'}',
             titleLeading: const HomeLogo(),
+            brandTitle: true,
             trailing: const HomeBell(),
           ),
         ),

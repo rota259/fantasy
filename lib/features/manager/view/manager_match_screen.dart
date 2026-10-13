@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/match_clock_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -97,6 +98,7 @@ class _ViewState extends State<_View> {
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
+                    MatchClockBar(match: m),
                     Row(
                       children: [
                         for (var i = 0; i < tabs.length; i++) ...[

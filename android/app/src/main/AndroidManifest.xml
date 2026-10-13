@@ -40,7 +40,7 @@
         <!-- القناة الافتراضية لأي إشعار جاي من غير channel_id -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="khomasi_general" />
+            android:value="khomasi_general_v2" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

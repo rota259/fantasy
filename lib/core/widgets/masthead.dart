@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'brand_logo.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import 'motion.dart';
@@ -14,6 +15,7 @@ class Masthead extends StatelessWidget {
     this.onBack,
     this.trailing,
     this.titleLeading,
+    this.brandTitle = false,
   });
 
   final String title;
@@ -21,6 +23,9 @@ class Masthead extends StatelessWidget {
   final VoidCallback? onBack;
   final Widget? trailing;
   final Widget? titleLeading;
+
+  /// العنوان بخط الهوية (اسم الأبلكيشن في الرئيسية).
+  final bool brandTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +53,7 @@ class Masthead extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.h(20, color: AppColors.white),
+                  style: brandTitle ? BrandWordmark.style(26, AppColors.white) : AppText.h(20, color: AppColors.white),
                 ),
                 const SizedBox(height: 4),
                 Text(

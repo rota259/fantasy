@@ -8,6 +8,7 @@ class AppNotification extends Equatable {
     required this.body,
     required this.createdAt,
     this.kind = 'event',
+    this.sound,
     this.matchId,
     this.link,
   });
@@ -17,6 +18,7 @@ class AppNotification extends Equatable {
   final String body;
   final DateTime createdAt;
   final String kind; // lineup | match | event | status
+  final String? sound; // goal | match | lineup | round | deadline | general
   final String? matchId;
   final String? link; // الصفحة اللي بيفتحها (match:ID · challenge · totw …) — NotificationRouter
 
@@ -25,6 +27,7 @@ class AppNotification extends Equatable {
     title: (map['title'] ?? '') as String,
     body: (map['body'] ?? '') as String,
     kind: (map['kind'] ?? 'event') as String,
+    sound: map['sound'] as String?,
     matchId: map['match_id']?.toString(),
     link: map['link'] as String?,
     createdAt: DateTime.tryParse('${map['created_at']}')?.toLocal() ?? DateTime.now(),

@@ -6,7 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/jersey.dart';
-import '../../../core/widgets/net_image.dart';
+import '../../../core/widgets/photo_card.dart';
 import '../../../core/widgets/formation_pitch.dart';
 import '../data/models/week_player.dart';
 
@@ -82,8 +82,8 @@ class TotwPitch extends StatelessWidget {
   );
 }
 
-/// لاعب الجولة: لو ليه صورة على الأبلكيشن بتظهر صورته جوه فريم دهب معدني بيلمع،
-/// ولو مالوش → تيشيرت دهب عليه حروفه. [card] = مقاس كارت فيفا (مستطيل بدل الدايرة).
+/// لاعب الجولة: لو ليه صورة على الأبلكيشن بتظهر في إطار كارت دهب معدني بيلمع،
+/// ولو مالوش → تيشيرت دهب عليه حروفه. [card] = الإطار الكبير المزخرف بتاع كشف التشكيلة.
 class GoldAvatar extends StatelessWidget {
   const GoldAvatar({super.key, required this.player, required this.size, this.card = false});
   final WeekPlayer player;
@@ -96,35 +96,14 @@ class GoldAvatar extends StatelessWidget {
     final jersey = Jersey(label: player.initials, size: size * 1.12, style: JerseyStyle.gold, phase: phase);
     final url = player.imageUrl;
     if (url == null || url.isEmpty) return jersey;
-    final ring = (size * 0.07).clamp(2.5, 6.0);
-    final w = size, h = card ? size * 1.2 : size;
-    final radius = BorderRadius.circular(card ? size * 0.16 : size);
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 8, offset: Offset(0, 3))],
-      ),
-      // الفريم الدهب بيلمع، والصورة جواه (ولو الصورة ماحمّلتش → الحروف على الدهب)
-      child: GoldShine(
-        shape: RoundedRectangleBorder(borderRadius: radius),
-        padding: EdgeInsets.all(ring),
-        delay: phase,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(card ? size * 0.12 : size),
-          child: NetImage(
-            url,
-            width: w - ring * 2,
-            height: h - ring * 2,
-            fallback: SizedBox(
-              width: w - ring * 2,
-              height: h - ring * 2,
-              child: Center(
-                child: Text(player.initials, style: AppText.h(size * 0.3, color: const Color(0xFF3A2600))),
-              ),
-            ),
-          ),
-        ),
-      ),
+    // الصورة في إطار كارت دهب بيلمع — والكبير (كشف التشكيلة) إطاره مزخرف بخط داخلي
+    return PhotoCard(
+      url: url,
+      width: card ? size * 1.1 : size * 0.95,
+      gold: true,
+      ornate: card,
+      phase: phase,
+      fallback: Text(player.initials, style: AppText.h(size * 0.3, color: const Color(0xFF3A2600))),
     );
   }
 }

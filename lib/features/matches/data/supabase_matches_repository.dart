@@ -48,10 +48,31 @@ class SupabaseMatchesRepository implements MatchesRepository {
   }
 
   @override
-  Future<void> addMatch({required List<String> teams, required DateTime dateTime, required int week}) async {
-    await SupabaseService.table(
-      _table,
-    ).insert({'teams': teams, 'date_time': GameMatch.dbTime(dateTime), 'week': week, 'status': 'upcoming'});
+  Future<void> addMatch({
+    required List<String> teams,
+    required DateTime dateTime,
+    required int week,
+    int durationMin = 60,
+  }) async {
+    await SupabaseService.table(_table).insert({
+      'teams': teams,
+      'date_time': GameMatch.dbTime(dateTime),
+      'week': week,
+      'status': 'upcoming',
+      'duration_min': durationMin,
+    });
+  }
+
+  @override
+  Future<int> extendMatch(String id, int minutes) async {
+    final total = await SupabaseService.client.rpc('extend_match', params: {'p_match': id, 'p_minutes': minutes});
+    return (total as num).toInt();
+  }
+
+  @override
+  Future<void> setDuration(String id, int minutes) async {
+    final rows = await SupabaseService.table(_table).update({'duration_min': minutes}).eq('id', id).select('id');
+    _ensureWritten(rows);
   }
 
   @override
@@ -86,10 +107,17 @@ class SupabaseMatchesRepository implements MatchesRepository {
     required List<String> teams,
     required DateTime dateTime,
     required int week,
+    int? durationMin,
   }) async {
-    final rows = await SupabaseService.table(
-      _table,
-    ).update({'teams': teams, 'date_time': GameMatch.dbTime(dateTime), 'week': week}).eq('id', id).select('id');
+    final rows = await SupabaseService.table(_table)
+        .update({
+          'teams': teams,
+          'date_time': GameMatch.dbTime(dateTime),
+          'week': week,
+          if (durationMin != null) 'duration_min': durationMin,
+        })
+        .eq('id', id)
+        .select('id');
     _ensureWritten(rows);
   }
 

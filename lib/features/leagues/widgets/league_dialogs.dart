@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../../core/widgets/motion.dart';
-
-const _types = [('public', 'كلاسيك'), ('private', 'خاص')];
 
 /// نتيجة "اعمل دوري".
 typedef NewLeague = ({String name, String type});
@@ -62,7 +58,8 @@ class _NewLeagueDialog extends StatefulWidget {
 
 class _NewLeagueDialogState extends State<_NewLeagueDialog> {
   final _name = TextEditingController();
-  String _type = 'private';
+  // نوع واحد: دوري خاص بكود دعوة (مفيش فرق في الأبلكيشن بين «كلاسيك» و«خاص» فاتشال الاختيار)
+  static const _type = 'private';
 
   @override
   void dispose() {
@@ -84,27 +81,10 @@ class _NewLeagueDialogState extends State<_NewLeagueDialog> {
           maxLength: 40,
           decoration: const InputDecoration(hintText: 'اسم الدوري'),
         ),
-        Row(
-          children: [
-            for (final t in _types) ...[
-              Pressable(
-                onTap: () => setState(() => _type = t.$1),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    borderRadius: AppRadius.md,
-                    color: _type == t.$1 ? AppColors.accent : null,
-                    border: Border.all(color: _type == t.$1 ? AppColors.accent : AppColors.line, width: 1.4),
-                  ),
-                  child: Text(t.$2, style: AppText.h(12, color: _type == t.$1 ? AppColors.white : AppColors.ink)),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-          ],
+        Text(
+          'دوري ليك ولصحابك: هتاخد كود تبعتهولهم، واللي يكتبه ينضم ويبان في ترتيب الدوري بنقطه في الفانتازي.',
+          style: AppText.body(12, color: AppColors.neutral700, height: 1.5),
         ),
-        const SizedBox(height: 8),
-        Text('هتاخد كود تبعته لصحابك ينضموا بيه.', style: AppText.body(11, color: AppColors.neutral700)),
       ],
     ),
     actions: [

@@ -2442,10 +2442,18 @@ create policy "leagues read" on public.leagues for select to authenticated using
   type in ('public', 'global') or owner_id = auth.uid() or public.is_manager()
   or exists (select 1 from public.league_members lm where lm.league_id = leagues.id and lm.user_id = auth.uid())
 );
+-- كام دوري أنا عامله (دالة لوحدها: لو السياسة سألت جدول leagues نفسه بتدخل في infinite recursion
+-- وإنشاء الدوري بيفشل)
+create or replace function public.fn_my_league_count()
+returns bigint language sql stable security definer set search_path = public as $$
+  select count(*) from public.leagues where owner_id = auth.uid();
+$$;
+grant execute on function public.fn_my_league_count() to authenticated;
+
 drop policy if exists "leagues insert" on public.leagues;
 create policy "leagues insert" on public.leagues for insert to authenticated with check (
   owner_id = auth.uid() and type <> 'global' and not public.fn_is_zone_manager()
-  and (public.is_manager() or (select count(*) from public.leagues l where l.owner_id = auth.uid()) < 10)
+  and (public.is_manager() or public.fn_my_league_count() < 10)
 );
 drop policy if exists "leagues manager delete" on public.leagues;
 drop policy if exists "leagues delete" on public.leagues;
@@ -4130,6 +4138,7 @@ exception when others then null; end $$;
 -- دوال السيرفر اللي السياسات والـ triggers بتناديها (آمنة لو اتنادت مباشرة)
 grant execute on function public.is_manager() to authenticated;
 grant execute on function public.is_organizer() to authenticated;
+grant execute on function public.fn_my_league_count() to authenticated;
 grant execute on function public.fn_is_zone_manager() to authenticated;
 grant execute on function public.fn_me_active() to authenticated;
 grant execute on function public.fn_organizes(uuid) to authenticated;
@@ -5812,7 +5821,8 @@ create trigger match_time_guard before insert or update on public.matches
 for each row execute function public.trg_match_time_guard();
 
 -- (منظّم البطولة / الأدمن) تحديد أو تغيير ميعاد ماتش بطولة — قبل ما الماتش يبدأ
-create or replace function public.set_tournament_match_time(p_match uuid, p_time timestamptz)
+drop function if exists public.set_tournament_match_time(uuid, timestamptz);
+create or replace function public.set_tournament_match_time(p_match uuid, p_time timestamptz, p_duration int default 60)
 returns void language plpgsql security definer set search_path = public as $$
 declare m public.matches;
 begin
@@ -5827,13 +5837,15 @@ begin
     raise exception 'الميعاد لازم يكون بعد نص ساعة على الأقل';
   end if;
   if p_time > now() + interval '180 days' then raise exception 'الميعاد بعيد أوي'; end if;
-  update public.matches set date_time = p_time, time_set = true where id = p_match;
+  update public.matches set date_time = p_time, time_set = true, end_warned = false,
+         duration_min = least(greatest(coalesce(p_duration, 60), 20), 300)
+  where id = p_match;
   perform public.fn_notify_match(p_match, '🏆 ميعاد ماتش البطولة',
     m.teams[1] || ' ضد ' || m.teams[2] || coalesce(' · ' || m.stage, '') || ' — '
       || to_char(p_time at time zone 'Africa/Cairo', 'DD/MM HH24:MI'), 'match');
 end $$;
-revoke all on function public.set_tournament_match_time(uuid, timestamptz) from public, anon;
-grant execute on function public.set_tournament_match_time(uuid, timestamptz) to authenticated;
+revoke all on function public.set_tournament_match_time(uuid, timestamptz, int) from public, anon;
+grant execute on function public.set_tournament_match_time(uuid, timestamptz, int) to authenticated;
 
 -- ── (ب) فانتازي البطولة: كل بطولة بتشكيلة لوحدها ──
 -- أهل منطقة البطولة بيختاروا ٥ لاعيبة من فرق البطولة (حارس + ٤ · بحد أقصى ٢ من نفس الفريق) وكابتن ×٢.
@@ -6033,6 +6045,267 @@ begin
 end $$;
 revoke all on function public.send_test_push() from public, anon;
 grant execute on function public.send_test_push() to authenticated;
+
+-- ═══ 47. مدة الماتش والقفل التلقائي ═══
+-- المدير بيحدد مدة الماتش (الافتراضي ساعة). الماتش بيبدأ في ميعاده وبيتقفل لوحده لما مدته تخلص.
+-- قبل القفل بـ ١٠ دقايق بيوصل المدير إشعار، ويقدر يزوّد ربع ساعة / نص ساعة / ساعة من شاشة إدارة الماتش.
+alter table public.matches add column if not exists duration_min int not null default 60;
+alter table public.matches add column if not exists end_warned boolean not null default false;
+do $$ begin
+  alter table public.matches add constraint matches_duration check (duration_min between 20 and 300);
+exception when duplicate_object then null; end $$;
+
+-- (منظّم الماتش / الأدمن) زوّد وقت على ماتش لسه مخلصش: ١٥ · ٣٠ · ٦٠ دقيقة
+create or replace function public.extend_match(p_match uuid, p_minutes int)
+returns int language plpgsql security definer set search_path = public as $$
+declare m public.matches; v int;
+begin
+  select * into m from public.matches where id = p_match;
+  if m.id is null then raise exception 'الماتش مش موجود'; end if;
+  if not (public.is_manager() or (public.is_organizer() and m.organizer_id = auth.uid())) then
+    raise exception 'مش ماتشك';
+  end if;
+  if m.status <> 'upcoming' then raise exception 'الماتش خلص'; end if;
+  if p_minutes not in (15, 30, 60) then raise exception 'زوّد ربع ساعة أو نص ساعة أو ساعة'; end if;
+  if m.duration_min + p_minutes > 300 then raise exception 'أقصى مدة للماتش ٥ ساعات'; end if;
+  update public.matches set duration_min = duration_min + p_minutes, end_warned = false
+  where id = p_match returning duration_min into v;
+  return v;
+end $$;
+revoke all on function public.extend_match(uuid, int) from public, anon;
+grant execute on function public.extend_match(uuid, int) to authenticated;
+
+-- كل دقيقة: نبّه المدير قبل القفل بـ ١٠ دقايق · واقفل الماتشات اللي مدتها خلصت (اللي ليها تشكيلة بس)
+create or replace function public.fn_close_due_matches()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.notifications (title, body, kind, user_id, match_id)
+  select '⏱ الماتش هيقفل بعد ١٠ دقايق',
+         m.teams[1] || ' ضد ' || m.teams[2] || ' — لو لسه بتلعبوا زوّد وقت من صفحة إدارة الماتش',
+         'match', m.organizer_id, m.id
+  from public.matches m
+  where m.status = 'upcoming' and m.time_set and not m.end_warned and m.organizer_id is not null
+    and now() >= m.date_time + (m.duration_min - 10) * interval '1 minute'
+    and now() < m.date_time + m.duration_min * interval '1 minute'
+    and exists (select 1 from public.lineups l where l.match_id = m.id);
+  update public.matches m set end_warned = true
+  where m.status = 'upcoming' and m.time_set and not m.end_warned
+    and now() >= m.date_time + (m.duration_min - 10) * interval '1 minute';
+
+  update public.matches m set status = 'finished'
+  where m.status = 'upcoming' and m.time_set
+    and now() >= m.date_time + m.duration_min * interval '1 minute'
+    and exists (select 1 from public.lineups l where l.match_id = m.id);
+end $$;
+
+do $$ begin
+  perform cron.schedule('khomasi-matches', '* * * * *', 'select public.fn_close_due_matches()');
+exception when others then
+  raise notice 'pg_cron مش متاح: القفل التلقائي للماتشات محتاجه — فعّله من Database → Extensions';
+end $$;
+
+-- ═══ 48. التحديث الإجباري ═══
+-- الأدمن بيحدد أقل رقم نسخة (build) مسموح لكل منصة. الأبلكيشن بيسأل أول ما يفتح:
+-- لو نسخته أقدم → شاشة «حدّث الأبلكيشن» ومبيفتحش غير لما يتحدّث.
+create table if not exists public.app_config (
+  key   text primary key,
+  value text not null
+);
+alter table public.app_config enable row level security;
+insert into public.app_config (key, value) values
+  ('min_build_android', '0'), ('min_build_ios', '0'),
+  ('store_android', ''), ('store_ios', ''),
+  ('update_message', 'فيه نسخة جديدة من الخماسي — حدّث عشان تكمّل')
+on conflict (key) do nothing;
+
+-- (لأي حد — حتى قبل تسجيل الدخول) إعدادات النسخة
+create or replace function public.get_app_config()
+returns jsonb language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_object_agg(key, value), '{}'::jsonb) from public.app_config;
+$$;
+revoke all on function public.get_app_config() from public;
+grant execute on function public.get_app_config() to anon, authenticated;
+
+create or replace function public.set_app_config(p_key text, p_value text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_manager() then raise exception 'للأدمن بس'; end if;
+  if p_key not in ('min_build_android', 'min_build_ios', 'store_android', 'store_ios', 'update_message') then
+    raise exception 'إعداد مش معروف';
+  end if;
+  if p_key like 'min_build_%' and p_value !~ '^\d{1,6}$' then raise exception 'رقم النسخة لازم يبقى رقم'; end if;
+  if p_key like 'store_%' and p_value <> '' and p_value !~ '^https://' then raise exception 'لينك المتجر لازم يبدأ بـ https://'; end if;
+  if length(p_value) > 300 then raise exception 'القيمة طويلة'; end if;
+  insert into public.app_config (key, value) values (p_key, p_value)
+  on conflict (key) do update set value = excluded.value;
+  perform public.fn_admin_log('app_config', p_key, jsonb_build_object('value', p_value));
+end $$;
+revoke all on function public.set_app_config(text, text) from public, anon;
+grant execute on function public.set_app_config(text, text) to authenticated;
+
+-- ═══ 49. الدوري العام بيتصفّر مع كل موسم ═══
+-- إجمالي اليوزر (الدوري العام والترتيب ودوري المناطق والدوريات الخاصة) = نقط الموسم الحالي بس.
+-- أول ما موسم جديد يبدأ الكل يرجع صفر. بين موسمين (لسه مفيش موسم جديد) بيفضل ترتيب آخر موسم خلص.
+-- لو مفيش مواسم خالص، أو في وضع التجربة → كل النقط من أول يوم (زي الأول).
+-- نقط المواسم القديمة مش بتتمسح: بتفضل في صفحة «تفاصيل نقطي» باختيار الموسم.
+create or replace function public.fn_current_season()
+returns public.seasons language sql stable security definer set search_path = public as $$
+  select * from public.seasons
+  where starts_at <= now()
+  order by (now() < ends_at) desc, starts_at desc
+  limit 1;
+$$;
+
+-- بونص التوقعات (تحدّي الجولة بأنواعه + بطل البطولة) جوه فترة
+create or replace function public.fn_user_bonus_between(p_user uuid, p_from timestamptz, p_to timestamptz)
+returns int language sql stable security definer set search_path = public as $$
+  select (coalesce((select sum(s.diff_pts + s.duel_pts + s.quiz_pts + s.lowest_pts)
+                    from public.fn_challenge_scores(p_user) s
+                    where s.date_time > p_from and s.date_time <= p_to), 0)
+        + (select 10 * count(*) from public.tournament_predictions tp join public.tournaments t on t.id = tp.tournament_id
+           where tp.user_id = p_user and t.champion is not null and lower(trim(tp.team)) = lower(trim(t.champion))
+             and t.starts_at > p_from and t.starts_at <= p_to))::int;
+$$;
+
+create or replace function public.fn_user_points(p_user uuid)
+returns int language plpgsql stable security definer set search_path = public as $$
+declare s public.seasons; f timestamptz := '-infinity'; t timestamptz := 'infinity';
+begin
+  if not public.fn_test_mode() then
+    s := public.fn_current_season();
+    if s.id is not null then f := s.starts_at; t := s.ends_at; end if;
+  end if;
+  return (coalesce((select sum(case when public.fn_test_mode() then r.points else r.final_points end)
+                    from public.user_round_points r
+                    where r.user_id = p_user and r.round_end > f and r.round_end <= t), 0)
+          + coalesce((select sum(u.points) from public.user_match_points u
+                      join public.matches m on m.id = u.match_id
+                      where u.user_id = p_user and m.review_status = 'approved'
+                        and m.date_time > f and m.date_time <= t), 0)
+          + public.fn_user_bonus_between(p_user, f, t))::int;
+end $$;
+
+-- إعادة حساب إجمالي كل الناس (بداية موسم جديد أو تعديل تواريخ المواسم) — وأسهم الترتيب بتتصفّر
+create or replace function public.fn_recalc_all_totals()
+returns void language sql security definer set search_path = public as $$
+  update public.profiles set total_points = public.fn_user_points(id), prev_rank = null, badges_dirty = true;
+$$;
+
+create or replace function public.trg_seasons_recalc()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  perform public.fn_recalc_all_totals();
+  return null;
+end $$;
+drop trigger if exists seasons_recalc on public.seasons;
+create trigger seasons_recalc after insert or update or delete on public.seasons
+for each statement execute function public.trg_seasons_recalc();
+
+-- كل دقيقة (مع قفل الماتشات): لو موسم بدأ ولسه متصفّرش → صفّر الدوري وابعت إشعار للكل (مرة واحدة لكل موسم)
+create or replace function public.fn_season_tick()
+returns void language plpgsql security definer set search_path = public as $$
+declare s public.seasons;
+begin
+  if public.fn_test_mode() then return; end if;
+  s := public.fn_season_at(now());
+  if s.id is null then return; end if;
+  insert into public.app_jobs (key) values ('season_start:' || s.id) on conflict do nothing;
+  if not found then return; end if;
+  perform public.fn_recalc_all_totals();
+  insert into public.notifications (title, body, kind, audience)
+  values ('🏁 موسم جديد بدأ: ' || s.name, 'الدوري العام اتصفّر والكل بيبدأ من الأول — اعمل تشكيلتك', 'match', 'all');
+end $$;
+
+create or replace function public.fn_close_due_matches_and_season()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  perform public.fn_close_due_matches();
+  perform public.fn_season_tick();
+end $$;
+do $$ begin
+  perform cron.schedule('khomasi-matches', '* * * * *', 'select public.fn_close_due_matches_and_season()');
+exception when others then
+  raise notice 'pg_cron مش متاح: فعّله من Database → Extensions وشغّل الملف تاني';
+end $$;
+
+-- ═══ 50. نغمة كل إشعار + إشعار بداية الجولة وقبل الديدلاين وبداية الماتش ═══
+-- sound = النغمة اللي الإشعار بيشتغل بيها (في الأبلكيشن، وفي قناة أندرويد والأبلكيشن مقفول):
+--   goal الأهداف بس · match بداية ونهاية الماتش · lineup التشكيلة نزلت · round الجولة بدأت
+--   deadline قبل الديدلاين · general أي حاجة تانية
+alter table public.notifications add column if not exists sound text;
+
+-- النغمة بتتحدد لوحدها لو الإشعار جاي من غيرها (من نوعه وعنوانه — العناوين دي ثابتة في الدوال اللي فوق)
+create or replace function public.trg_notification_sound()
+returns trigger language plpgsql as $$
+begin
+  if new.sound is null or new.sound not in ('goal', 'match', 'lineup', 'round', 'deadline', 'general') then
+    new.sound := case
+      when new.kind = 'event' and (new.title like 'جوووول%' or new.title like 'جول عكسي%') then 'goal'
+      when new.kind = 'match' and new.title like 'انتهى الماتش%' then 'match'
+      when new.kind = 'lineup' then 'lineup'
+      else 'general' end;
+  end if;
+  return new;
+end $$;
+drop trigger if exists notification_sound on public.notifications;
+create trigger notification_sound before insert on public.notifications
+for each row execute function public.trg_notification_sound();
+
+alter table public.matches add column if not exists start_notified boolean not null default false;
+
+-- كل دقيقة: «الماتش بدأ» لأهل المنطقة (مرة لكل ماتش، ولو اتأخر أكتر من ربع ساعة بيتعدّى)
+create or replace function public.fn_match_start_tick()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.notifications (title, body, kind, match_id, audience, zone_id, sound)
+  select '🟢 الماتش بدأ', m.teams[1] || ' ضد ' || m.teams[2] || ' — تابع الأحداث لايف', 'match', m.id, 'zone', m.zone_id, 'match'
+  from public.matches m
+  where m.status = 'upcoming' and m.time_set and not m.start_notified and m.zone_id is not null
+    and m.date_time <= now() and m.date_time > now() - interval '15 minutes'
+    and exists (select 1 from public.lineups l where l.match_id = m.id);
+  update public.matches set start_notified = true
+  where status = 'upcoming' and time_set and not start_notified and date_time <= now();
+end $$;
+
+-- كل دقيقة (في الوضع الحقيقي): قبل الديدلاين بساعتين (السبت ١ الظهر) + الجولة بدأت (السبت ٤ العصر) — مرة لكل جولة
+create or replace function public.fn_round_tick()
+returns void language plpgsql security definer set search_path = public as $$
+declare o timestamptz; dl timestamptz; c timestamptz; st timestamptz;
+begin
+  if public.fn_test_mode() then return; end if;
+  -- الجولة اللي تشكيلاتها لسه مفتوحة
+  o := public.fn_open_round();
+  dl := public.fn_round_deadline(o);
+  if now() >= dl - interval '2 hours' and now() < dl then
+    insert into public.app_jobs (key) values ('deadline:' || to_char(o at time zone 'UTC', 'YYYYMMDDHH24'))
+    on conflict do nothing;
+    if found then
+      insert into public.notifications (title, body, kind, audience, sound, link)
+      values ('⏰ فاضل ساعتين على الديدلاين', 'ثبّت تشكيلتك والكابتن قبل السبت ٣ العصر — بعدها التشكيلة بتتقفل',
+              'lineup', 'all', 'deadline', 'team');
+    end if;
+  end if;
+  -- الجولة اللي بتتلعب دلوقتي
+  c := public.fn_week_cutoff(now());
+  st := public.fn_round_start(c);
+  if now() >= st and now() < st + interval '1 hour' then
+    insert into public.app_jobs (key) values ('round_start:' || to_char(c at time zone 'UTC', 'YYYYMMDDHH24'))
+    on conflict do nothing;
+    if found then
+      insert into public.notifications (title, body, kind, audience, sound, link)
+      values ('🟢 الجولة بدأت', 'التشكيلات اتقفلت والماتشات شغالة — تابع نقطك لايف', 'match', 'all', 'round', 'home');
+    end if;
+  end if;
+end $$;
+
+create or replace function public.fn_close_due_matches_and_season()
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  perform public.fn_match_start_tick();
+  perform public.fn_close_due_matches();
+  perform public.fn_season_tick();
+  perform public.fn_round_tick();
+end $$;
 
 -- ═══════════════════════════════════════════════════════════════
 -- خلصنا. (اختياري) خلّي نفسك مدير — بدّل الإيميل بإيميلك:

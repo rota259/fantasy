@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'features/update/update_gate.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,7 +53,8 @@ class FantasyApp extends StatelessWidget {
             theme: AppTheme.of(AppPalette.light),
             darkTheme: AppTheme.of(AppPalette.dark),
             themeAnimationDuration: const Duration(milliseconds: 250),
-            builder: (context, child) => _themed(context, child!),
+            // التحديث الإجباري فوق كل حاجة (حتى الشاشات اللي بتتفتح فوق بعض)
+            builder: (context, child) => _themed(context, UpdateGate(child: child!)),
             home: const AppRoot(),
           ),
         ),

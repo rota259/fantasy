@@ -13,7 +13,13 @@ abstract interface class MatchesRepository {
   Future<List<GameMatch>> fetchUpcoming();
 
   /// (مدير/مدير) إنشاء ماتش جديد — السيرفر بيسجّل المدير لوحده.
-  Future<void> addMatch({required List<String> teams, required DateTime dateTime, required int week});
+  /// [durationMin]: مدة الماتش بالدقايق (الافتراضي ساعة) — بيتقفل لوحده بعدها.
+  Future<void> addMatch({
+    required List<String> teams,
+    required DateTime dateTime,
+    required int week,
+    int durationMin = 60,
+  });
 
   /// (مدير) حذف ماتش — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
   Future<int> deleteMatch(String id);
@@ -31,7 +37,19 @@ abstract interface class MatchesRepository {
   Future<void> finishMatch(String id);
 
   /// (مدير) تعديل بيانات ماتش.
-  Future<void> updateMatch(String id, {required List<String> teams, required DateTime dateTime, required int week});
+  Future<void> updateMatch(
+    String id, {
+    required List<String> teams,
+    required DateTime dateTime,
+    required int week,
+    int? durationMin,
+  });
+
+  /// (منظّم الماتش) زوّد وقت: ١٥ · ٣٠ · ٦٠ دقيقة — بيرجّع المدة الجديدة كلها.
+  Future<int> extendMatch(String id, int minutes);
+
+  /// (منظّم الماتش) غيّر مدة ماتش لسه مخلصش.
+  Future<void> setDuration(String id, int minutes);
 
   /// (مدير منطقة) الديدلاين عدّى → طلب للأدمن يضيف الماتش.
   Future<void> requestLateMatch({required List<String> teams, required DateTime dateTime, String? note});

@@ -50,7 +50,7 @@ class NotificationsBadgeCubit extends Cubit<int> {
     try {
       final rows = await SupabaseService.table(
         'notifications',
-      ).select('id, title, body, kind, created_at').order('created_at', ascending: false).limit(50);
+      ).select('id, title, body, kind, sound, created_at').order('created_at', ascending: false).limit(50);
       if (!isClosed) _onData(rows);
     } catch (_) {}
   }
@@ -66,7 +66,7 @@ class NotificationsBadgeCubit extends Cubit<int> {
           if (newest == null || n.createdAt.isAfter(newest.createdAt)) newest = n;
         }
       }
-      if (newest != null) _sound.play(newest.kind);
+      if (newest != null) _sound.play(newest.kind, newest.sound);
     }
     _known
       ..clear()

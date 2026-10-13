@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../update/admin_update_screen.dart';
 import 'push_check_screen.dart';
 import '../../fairplay/view/admin_betting_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -152,6 +153,13 @@ class ManagerHubScreen extends StatelessWidget {
                   const ManagerAwardsScreen(),
                 ),
                 _group('المجتمع'),
+                _tile(
+                  context,
+                  Icons.system_update_alt_rounded,
+                  'التحديث الإجباري',
+                  'حدّد أقل نسخة مسموحة — الأقدم مبيفتحش غير لما يحدّث',
+                  const AdminUpdateScreen(),
+                ),
                 _tile(
                   context,
                   Icons.notifications_active_outlined,

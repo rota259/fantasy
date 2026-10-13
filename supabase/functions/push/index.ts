@@ -28,25 +28,16 @@ const jwt = new JWT({
 
 type Target = { token: string } | { topic: string };
 
-/** صوت الإشعار حسب نوعه (ملفات res/raw في أندرويد). */
-function soundFor(kind: string): string {
-  if (kind === "event") return "goal";
-  if (kind === "match") return "whistle";
-  if (kind === "lineup") return "lineup";
-  if (kind === "badge" || kind === "challenge" || kind === "vote") return "win";
-  return "soft";
-}
-
-/** لون الإشعار: دهبي للفوز · أحمر للأهداف · أخضر للباقي. */
-function colorFor(kind: string): string {
-  const s = soundFor(kind);
-  return s === "win" ? "#D9A92B" : s === "goal" ? "#D32F2F" : "#0F7A3F";
-}
-
-const channelFor = (kind: string) =>
-  ({ goal: "khomasi_goal", whistle: "khomasi_match", lineup: "khomasi_lineup", win: "khomasi_win" } as Record<string, string>)[
-    soundFor(kind)
-  ] ?? "khomasi_general";
+/** نغمة الإشعار: من عمود sound في الداتابيز (goal · match · lineup · round · deadline · general). */
+const SOUNDS: Record<string, { channel: string; file: string; color: string }> = {
+  goal: { channel: "khomasi_goal_v2", file: "goal", color: "#D32F2F" },
+  match: { channel: "khomasi_match_v2", file: "match", color: "#12A150" },
+  lineup: { channel: "khomasi_lineup_v2", file: "lineup", color: "#12A150" },
+  round: { channel: "khomasi_round_v2", file: "round_start", color: "#12A150" },
+  deadline: { channel: "khomasi_deadline_v2", file: "deadline", color: "#E08A00" },
+  general: { channel: "khomasi_general_v2", file: "general", color: "#12A150" },
+};
+const soundOf = (n: Record<string, string>) => SOUNDS[n.sound] ?? SOUNDS[n.kind === "lineup" ? "lineup" : "general"];
 
 async function send(target: Target, n: Record<string, string>, accessToken: string) {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
@@ -57,14 +48,14 @@ async function send(target: Target, n: Record<string, string>, accessToken: stri
         ...target,
         notification: { title: n.title, body: n.body },
         data: { kind: n.kind, match_id: n.match_id ?? "", link: n.link ?? "" }, // الضغط بيفتح الصفحة دي
-        // كل نوع بقناته وصوته (القنوات بتتعمل في MainActivity.kt — نفس تقسيمة SoundService)
+        // كل نغمة بقناتها (القنوات بتتعمل في MainActivity.kt — نفس تقسيمة AppSounds)
         android: {
           priority: "high",
           notification: {
-            channel_id: channelFor(n.kind),
-            sound: soundFor(n.kind),
+            channel_id: soundOf(n).channel,
+            sound: soundOf(n).file,
             icon: "ic_stat_khomasi", // أيقونة الخماسي بدل الأيقونة العامة
-            color: colorFor(n.kind), // لون الإشعار حسب نوعه
+            color: soundOf(n).color, // لون الإشعار حسب نوعه
             notification_priority: "PRIORITY_HIGH", // يظهر كشريط فوق الشاشة (heads-up)
             visibility: "PUBLIC", // يبان على شاشة القفل
             default_vibrate_timings: true,
@@ -87,7 +78,7 @@ Deno.serve(async (req) => {
     if (ok !== true) return json({ error: "forbidden" }, 403);
 
     const { data: n } = await supabase
-      .from("notifications").select("title, body, kind, audience, user_id, match_id, zone_id, link")
+      .from("notifications").select("title, body, kind, sound, audience, user_id, match_id, zone_id, link")
       .eq("id", id).maybeSingle();
     if (!n) return json({ error: "not found" }, 404);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/match_clock_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
@@ -32,6 +33,7 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
   late final _teamB = TextEditingController(text: widget.editing?.teamB ?? '');
   late final _week = TextEditingController(text: '${widget.editing?.week ?? 1}');
   late DateTime? _kickoff = widget.editing?.dateTime;
+  late int _duration = widget.editing?.durationMin ?? 60;
   final _note = TextEditingController();
   bool _saving = false;
 
@@ -94,6 +96,7 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
           teams: [teamA, teamB],
           dateTime: _kickoff!,
           week: week,
+          durationMin: _duration,
         );
       } else if (_asRequest) {
         await widget.matchesRepo.requestLateMatch(teams: [teamA, teamB], dateTime: _kickoff!, note: _note.text);
@@ -101,7 +104,12 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
         navigator.pop(false);
         return;
       } else {
-        await widget.matchesRepo.addMatch(teams: [teamA, teamB], dateTime: _kickoff!, week: week);
+        await widget.matchesRepo.addMatch(
+          teams: [teamA, teamB],
+          dateTime: _kickoff!,
+          week: week,
+          durationMin: _duration,
+        );
       }
       navigator.pop(true);
     } catch (e) {
@@ -155,6 +163,17 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
                     style: AppText.body(11, color: AppColors.accent700),
                   ),
                 ],
+                const SizedBox(height: 14),
+                Text('مدة الماتش', style: AppText.kicker()),
+                const SizedBox(height: 6),
+                DurationChips(value: _duration, onChanged: (d) => setState(() => _duration = d)),
+                const SizedBox(height: 6),
+                Text(
+                  k == null
+                      ? 'الماتش بيتقفل لوحده لما مدته تخلص — وتقدر تزوّد وقت وهو شغال.'
+                      : 'هيتقفل لوحده ${arabicTime(k.add(Duration(minutes: _duration)))} — وتقدر تزوّد وقت وهو شغال.',
+                  style: AppText.body(11, color: AppColors.neutral700),
+                ),
                 if (_late) ...[const SizedBox(height: 12), LateMatchNotice(isAdmin: _isAdmin, note: _note)],
                 const SizedBox(height: 16),
                 Pressable(

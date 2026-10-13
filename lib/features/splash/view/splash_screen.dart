@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/notifications/sound_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
+import '../../../core/widgets/brand_logo.dart';
+import '../../../core/widgets/motion.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/splash_logo.dart';
-import '../../../core/widgets/motion.dart';
 
-/// شاشة البداية: اللوجو بيترسم (٢.٤ ثانية) ثم انتقال ناعم لوحده، أو ضغطة للتخطّي.
+/// شاشة البداية: خلفية الهوية الفاتحة، واللوجو بيتحرّك (٢.٤ ثانية) لحد ما يبقى اللوجو والاسم جنب بعض،
+/// ثم انتقال ناعم لوحده — أو ضغطة للتخطّي.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,7 +25,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 2900), _skip);
+    _welcomeSound();
+    Future.delayed(const Duration(milliseconds: 3000), _skip);
+  }
+
+  /// نغمة الترحيب: مرة واحدة بس في عمر الأبلكيشن على الجهاز — أول مرة يتفتح بعد التنزيل
+  /// (ولو الموبايل صامت مبتطلعش، وبتتحسب إنها اشتغلت).
+  Future<void> _welcomeSound() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('welcome_sound_played') ?? false) return;
+      await prefs.setBool('welcome_sound_played', true);
+      await AppSounds.play(AppSounds.appStart);
+    } catch (_) {}
   }
 
   void _skip() {
@@ -37,68 +52,33 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
     return Pressable(
       onTap: _skip,
       child: Scaffold(
-        backgroundColor: AppColors.black,
+        backgroundColor: Brand.paper,
         body: Stack(
           alignment: Alignment.center,
           children: [
-            // اللوجو في نص الشاشة بالظبط
-            Center(child: SplashLogo(animation: _c, size: 240)),
-            // الاسم تحت المنتصف
-            Align(alignment: const Alignment(0, 0.42), child: _wordmark()),
-            Positioned(bottom: 70, child: _loadingBar()),
-            Positioned(
-              bottom: 46,
-              child: Text(
-                'اضغط للتخطّي',
-                style: AppText.h(
-                  9,
-                  weight: FontWeight.w600,
-                  spacingEm: 0.2,
-                ).copyWith(color: AppColors.white.withValues(alpha: 0.35)),
+            Center(
+              child: SplashLogo(animation: _c, size: (width * 0.24).clamp(72.0, 120.0)),
+            ),
+            Align(
+              alignment: const Alignment(0, 0.34),
+              child: AnimatedBuilder(
+                animation: _c,
+                builder: (context, child) => Opacity(opacity: ((_c.value - 0.78) / 0.2).clamp(0.0, 1.0), child: child),
+                child: Text(
+                  'فانتازي الحتة',
+                  style: AppText.h(13, color: Brand.turf, weight: FontWeight.w600),
+                ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _wordmark() {
-    final fade = ((_c.value - 0.6) / 0.4).clamp(0.0, 1.0);
-    return AnimatedBuilder(
-      animation: _c,
-      builder: (context, _) => Opacity(
-        opacity: fade,
-        child: Column(
-          children: [
-            Text('الخماسي', style: AppText.h(34, color: AppColors.white, spacingEm: -0.02)),
-            const SizedBox(height: 6),
-            Text(
-              'فانتازي الحتة',
-              style: AppText.h(12, color: AppColors.accent400, weight: FontWeight.w600, spacingEm: 0.1),
+            Positioned(
+              bottom: 46,
+              child: Text('اضغط للتخطّي', style: AppText.body(11, color: Brand.ink.withValues(alpha: 0.35))),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _loadingBar() {
-    return Container(
-      width: 120,
-      height: 3,
-      color: AppColors.white.withValues(alpha: 0.15),
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (context, _) => Align(
-          alignment: Alignment.centerRight,
-          child: FractionallySizedBox(
-            widthFactor: _c.value,
-            child: Container(color: AppColors.accent),
-          ),
         ),
       ),
     );

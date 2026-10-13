@@ -41,6 +41,23 @@ class TeamOfWeek {
     );
   }
 
+  /// أعلى ٥ دايمًا (للعرض اللايف قبل اعتماد الإدارة): أعلى حارس + أعلى ٤ لاعيبة بالنقط، والتعادل بيتحسم
+  /// بالاسم (من غير أماكن فاضية). لو مفيش حارس لعب أو اللاعيبة أقل من ٤ → بنكمّل الخمسة بأعلى الباقيين.
+  static List<WeekPlayer> top5(List<WeekPlayer> ranked) {
+    final all = [...ranked]
+      ..sort((a, b) {
+        final c = b.points.compareTo(a.points);
+        return c != 0 ? c : a.name.compareTo(b.name);
+      });
+    final gk = all.where((p) => p.position == 'GK').take(1).toList();
+    final team = [...gk, ...all.where((p) => p.position != 'GK').take(size - 1)];
+    for (final p in all) {
+      if (team.length >= size) break;
+      if (!team.contains(p)) team.add(p);
+    }
+    return team;
+  }
+
   /// نجم الجولة = الأعلى نقط في التشكيلة.
   static WeekPlayer? starOf(Iterable<WeekPlayer?> team) {
     WeekPlayer? best;

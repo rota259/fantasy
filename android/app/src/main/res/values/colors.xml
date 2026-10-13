@@ -2,6 +2,6 @@
 <resources>
     <!-- لون الأبلكيشن في الإشعارات (الأيقونة واسم الأبلكيشن) -->
     <color name="notification_accent">#12A150</color>
-    <color name="ic_launcher_background">#12A150</color>
-    <color name="launch_background">#17201B</color>
+    <color name="ic_launcher_background">#F3F2F2</color>
+    <color name="launch_background">#F3F2F2</color>
 </resources>

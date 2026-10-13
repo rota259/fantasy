@@ -422,6 +422,90 @@ select public.phone_auth_email('010100', 3);
 select public.phone_auth_email('010100', 3);
 select t.expect_fail('phone attempts are throttled', $q$select public.phone_auth_email('010100', 3)$q$);
 
+-- ── الدوري العام بيتصفّر مع الموسم ──
+create temp table _tot as select total_points as v from public.profiles where id = '00000000-0000-0000-0000-000000000001';
+select t.check('user has points before seasons', (select v > 0 from _tot));
+delete from public.seasons;
+insert into public.seasons (name, starts_at, mid_at, ends_at)
+values ('الموسم الحالي', now() - interval '60 days', now(), now() + interval '60 days');
+select t.check('current season covers the points: total unchanged',
+  (select total_points = (select v from _tot) from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
+update public.seasons set starts_at = now() - interval '90 days', mid_at = now() - interval '80 days', ends_at = now() - interval '70 days';
+select t.check('points outside the season do not count (league reset)',
+  (select total_points = 0 from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
+delete from public.seasons;
+select t.check('no seasons: all-time total is back',
+  (select total_points = (select v from _tot) from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
+
+-- ── التحديث الإجباري + مدة الماتش ──
+set role anon;
+select t.check('anyone reads app config', (select (public.get_app_config()->>'min_build_android') = '0'));
+select t.expect_fail('anon cannot set min build', $q$select public.set_app_config('min_build_android', '5')$q$);
+reset role;
+select t.as_user('00000000-0000-0000-0000-000000000002');
+set role authenticated;
+select t.expect_fail('user cannot set min build', $q$select public.set_app_config('min_build_android', '5')$q$);
+select t.expect_fail('user cannot extend a match', $q$select public.extend_match((select id from public.matches limit 1), 15)$q$);
+reset role;
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select public.set_app_config('min_build_android', '7');
+select t.expect_fail('min build must be a number', $q$select public.set_app_config('min_build_android', 'abc')$q$);
+reset role;
+select t.check('admin set the minimum build', (select (public.get_app_config()->>'min_build_android') = '7'));
+-- ماتش بدأ من ٥٥ دقيقة ومدته ساعة: تنبيه للمدير، وبعد ما المدة تخلص بيتقفل لوحده
+-- (الميعاد نسبة لدلوقتي — فالاختبار ده ممكن يقع لو اتشغّل السبت ٩ الصبح–٥ العصر: الفاصل بين الجولتين)
+create temp table _dm (id uuid);
+with ins as (
+  insert into public.matches (teams, date_time, organizer_id, zone_id)
+  values (array['نسور بدر', 'صقور بدر'], now() - interval '55 minutes', '00000000-0000-0000-0000-00000000000b',
+          (select id from public.zones where name = 'بدر'))
+  returning id)
+insert into _dm select id from ins;
+grant select on _dm to authenticated;
+insert into public.lineups (match_id, player_id, status)
+select (select id from _dm), id, 'starting' from public.players limit 2;
+select public.fn_close_due_matches();
+select t.check('organizer warned 10 minutes before the end',
+  (select count(*) = 1 from public.notifications where title like '⏱%' and match_id = (select id from _dm))
+  and (select status = 'upcoming' and end_warned from public.matches where id = (select id from _dm)));
+select t.as_user('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+select t.check('organizer extends by 15 minutes', public.extend_match((select id from _dm), 15) = 75);
+reset role;
+update public.matches set date_time = now() - interval '80 minutes' where id = (select id from _dm);
+select public.fn_close_due_matches();
+select t.check('match auto-finished when its time is up',
+  (select status = 'finished' from public.matches where id = (select id from _dm)));
+
+-- ── يوزر عادي يعمل دوري (خاص وعام) ويبقى عضو فيه ──
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+create temp table _lg as
+with ins as (insert into public.leagues (name, type, invite_code, owner_id)
+             values ('دوري صحابي', 'private', 'TESTC1', auth.uid()) returning id)
+select id from ins;
+insert into public.league_members (league_id, user_id) select id, auth.uid() from _lg;
+select t.check('user created a private league and joined it',
+  (select count(*) = 1 from public.league_members where league_id = (select id from _lg)));
+select t.check('owner sees his league standings', (select count(*) = 1 from public.league_standings((select id from _lg))));
+reset role;
+
+-- ── نغمة كل إشعار ──
+select t.check('goal notifications use the goal sound',
+  (select bool_and(sound = 'goal') from public.notifications where kind = 'event' and title like 'جوووول%'));
+select t.check('other match events use the general sound',
+  (select coalesce(bool_and(sound = 'general'), true) from public.notifications
+   where kind = 'event' and title not like 'جوووول%' and title not like 'جول عكسي%'));
+select t.check('match finished uses the match sound',
+  (select bool_and(sound = 'match') from public.notifications where title like 'انتهى الماتش%'));
+select t.check('lineup notifications use the lineup sound',
+  (select coalesce(bool_and(sound = 'lineup'), true) from public.notifications where kind = 'lineup'));
+select t.check('every notification has a sound', (select count(*) = 0 from public.notifications where sound is null));
+select public.fn_round_tick();
+select public.fn_match_start_tick();
+select public.fn_close_due_matches_and_season();
+
 -- ── حذف لاعب طلع تبديل (كان بيكسر الحذف) + حذف الكل ──
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 set role authenticated;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/widgets/kha_logo.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
@@ -63,5 +63,6 @@ class HomeLogo extends StatelessWidget {
   const HomeLogo({super.key});
 
   @override
-  Widget build(BuildContext context) => const KhaLogo(size: 34);
+  Widget build(BuildContext context) =>
+      const BibLogo(size: 38, bib: Colors.white, five: Brand.turf, spot: Colors.black);
 }
