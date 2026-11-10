@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/app_navigator.dart';
+import 'core/logging/logging.dart';
+import 'core/security/rasp.dart';
+import 'core/security/rasp_gate.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/supabase/supabase_config.dart';
 import 'core/supabase/supabase_service.dart';
@@ -20,12 +23,16 @@ import 'features/shell/view/app_root.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await Logging.install(); // السجلات + شبكة أمان الأخطاء (قبل أي حاجة تانية)
+  Rasp.start(); // حماية وقت التشغيل — في الخلفية من غير ما تأخّر الفتح
+
   // تهيئة Supabase فقط لو المفاتيح ممرّرة بـ --dart-define.
   if (SupabaseConfig.isConfigured) {
     await SupabaseService.init();
   }
 
-  await NotificationService.init();
+  // Firebase والإشعارات: مهلة قصيرة عشان الأبلكيشن ميقفش على شاشة البداية لو الخدمة اتأخرت
+  await NotificationService.init().timeout(const Duration(seconds: 4), onTimeout: () {});
 
   runApp(const FantasyApp());
 }
@@ -54,7 +61,7 @@ class FantasyApp extends StatelessWidget {
             darkTheme: AppTheme.of(AppPalette.dark),
             themeAnimationDuration: const Duration(milliseconds: 250),
             // التحديث الإجباري فوق كل حاجة (حتى الشاشات اللي بتتفتح فوق بعض)
-            builder: (context, child) => _themed(context, UpdateGate(child: child!)),
+            builder: (context, child) => _themed(context, RaspGate(child: UpdateGate(child: child!))),
             home: const AppRoot(),
           ),
         ),

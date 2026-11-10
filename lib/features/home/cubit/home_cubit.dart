@@ -60,16 +60,9 @@ class HomeCubit extends Cubit<HomeState> {
   /// بعد ما اليوزر يأكد ورقة ماتش مثلًا.
   Future<void> refresh() => _fetch();
 
-  Future<({WeekWindow window, List<WeekPlayer>? team})?> _latestTeam() async {
-    if (kTestMode) {
-      // التجربة: نجم الجولة = أعلى نقط في منطقتي لايف (من غير ما تستنى الإدارة)
-      final w = WeekWindow.current();
-      final top = TeamOfWeek.top5(await _week.pointsBetween(w.start, w.cutoff));
-      return (window: w, team: await _week.publishedTeam(w) ?? top.toList());
-    }
-    final w = await _week.latestPublishedRound();
-    return w == null ? null : (window: w, team: await _week.publishedTeam(w));
-  }
+  /// نجم جولة = الأعلى من ماتشاتها المعتمدة.
+  Future<WeekPlayer?> _starOf(WeekWindow w) async =>
+      TeamOfWeek.starOf(TeamOfWeek.top5(await _week.approvedPointsBetween(w.start, w.cutoff)));
 
   Future<void> _fetch() async {
     final userId = _userId;
@@ -79,20 +72,21 @@ class HomeCubit extends Cubit<HomeState> {
       // كل الطلبات مع بعض (مش ورا بعض) — الوقت = أبطأ طلب بس
       final open = WeekWindow.open();
       final live = WeekWindow.live();
-      final (points, upcoming, finished, team, tie, reviews, myRound, highlights) = await (
+      // الجولة اللي خلصت (نهائي) · والحالية (لايف) — في وضع التجربة جولة واحدة
+      final done = kTestMode ? win : win.previous;
+      final (points, upcoming, finished, star, liveStar, tie, reviews, myRound, highlights) = await (
         // نقط الجولة اللي بتتلعب بس (كل جولة من صفر — الإجمالي في البروفايل)
         _profiles.roundPoints(userId, live.cutoff),
         _matches.fetchUpcoming(),
         _matches.fetchFinished(),
-        // نجم الجولة = الأعلى في آخر تشكيلة جولة الإدارة اعتمدتها لمنطقتي (بيفضل لحد اللي بعدها)
-        _latestTeam().catchError((_) => null),
+        _starOf(done).catchError((_) => null),
+        kTestMode ? Future<WeekPlayer?>.value() : _starOf(win).catchError((_) => null),
         // تعادل تشكيلة الجولة اللي لسه خالصة (التصويت مفتوح ٢٠ ساعة بعدها)
         _polls.tieFor(win.previous.cutoff, userId),
         _integrity.myPendingReviews().catchError((_) => const <PendingReview>[]),
         _picks.fetchRound(userId, open.cutoff).catchError((_) => const <Pick>[]),
         _profiles.roundHighlights(live.cutoff).then<RoundHighlights?>((h) => h).catchError((_) => null),
       ).wait;
-      final star = TeamOfWeek.starOf(team?.team ?? const []);
       if (isClosed) return;
       _shown = (live, live.isFinal());
       emit(
@@ -101,9 +95,11 @@ class HomeCubit extends Cubit<HomeState> {
           points: points,
           nextMatch: upcoming.firstOrNull,
           star: star,
-          starRound: team?.window,
-          weekFinal: star != null,
-          weekLabel: (team?.window ?? win.previous).label,
+          starRound: done,
+          weekFinal: !kTestMode,
+          weekLabel: done.label,
+          liveStar: liveStar,
+          liveRound: win,
           toRate: finished.where((m) => m.ratingOpen).take(3).toList(),
           tieOpen: tie != null && tie.poll.open,
           toReview: reviews,

@@ -38,6 +38,13 @@ create function t.totw_pick(gks int, others int) returns uuid[] language sql as 
 $$;
 grant execute on function t.totw_pick(int, int) to authenticated;
 
+-- ميعاد ماتش جوه الجولة المفتوحة بعد ٣+k ساعات (وفي فاصل السبت: بعد بداية الجولة الجاية)
+-- ملحوظة: السبت من ٥ لـ ٨ الصبح الجولة الحالية مفيهاش وقت لماتش جديد — الاختبار ده ممكن يقع لو اتشغّل ساعتها.
+create function t.slot(k int) returns timestamptz language sql as $$
+  select greatest(now(), public.fn_round_start(public.fn_open_round())) + (3 + k) * interval '1 hour';
+$$;
+grant execute on function t.slot(int) to anon, authenticated;
+
 -- ── اليوزرز (البروفايل بيتعمل من trigger التسجيل) ──
 insert into auth.users (id, email, raw_user_meta_data) values
  ('00000000-0000-0000-0000-00000000000a', 'admin@t.co', jsonb_build_object('name', 'أدمن', 'phone', '0100', 'zone_id', (select id from public.zones where name = 'بدر'))),
@@ -83,7 +90,7 @@ insert into public.players (name, team, position) values
  ('ح٢', 'صقور بدر', 'GK'), ('د٢', 'صقور بدر', 'DEF'), ('و٢', 'صقور بدر', 'MID'), ('ه٣', 'صقور بدر', 'FWD'), ('ه٤', 'صقور بدر', 'FWD');
 select t.expect_fail('organizer uses a team he does not own', $q$insert into public.players (name, team, position) values ('x', 'فريق حد تاني', 'FWD')$q$);
 insert into public.matches (teams, date_time, week)
-values (array['نسور بدر', 'صقور بدر'], public.fn_open_round() - interval '6 days', 1);
+values (array['نسور بدر', 'صقور بدر'], t.slot(0), 1);
 select t.expect_fail('organizer picks fantasy', $q$select public.save_round_picks(public.fn_open_round(), '[]'::jsonb)$q$);
 reset role;
 select t.check('match got the team zone', (select zone_id = (select id from public.zones where name = 'بدر') from public.matches limit 1));
@@ -103,7 +110,7 @@ set role authenticated;
 select t.expect_fail('lineup without vice captain', $q$select public.save_round_picks(public.fn_open_round(),
   (select jsonb_agg(e - 'is_vice') from jsonb_array_elements(t.lineup()) e))$q$);
 select public.save_round_picks(public.fn_open_round(), t.lineup());
-select t.check('others picks hidden before deadline', (select count(*) = 0 from public.round_picks where user_id <> auth.uid()));
+select t.check('others picks hidden before their players lock', (select count(*) = 0 from public.round_picks where user_id <> auth.uid()));
 reset role;
 select t.check('lineup saved (7)', (select count(*) = 7 from public.round_picks where user_id = '00000000-0000-0000-0000-000000000001'));
 select t.as_user('00000000-0000-0000-0000-000000000003');
@@ -113,10 +120,16 @@ reset role;
 
 -- ── الماتش يتلعب: ننقله للجولة الشغّالة (بصلاحيات السيرفر) ونسجّل أحداث ──
 update public.matches set date_time = now() - interval '30 minutes';
-insert into public.round_picks (user_id, round_end, player_id, status, is_captain, is_vice)
-select user_id, public.fn_week_cutoff(now()), player_id, status, is_captain, is_vice from public.round_picks;
 insert into public.lineups (match_id, player_id, status)
 select (select id from public.matches limit 1), id, 'starting' from public.players;
+select t.check('lineup posted: appearance +3 per starter right away (5×3 + captain 3 = 18)',
+  (select points = 18 from public.user_round_points
+   where user_id = '00000000-0000-0000-0000-000000000001' and round_end = public.fn_week_cutoff(now())));
+update public.lineups set status = 'bench' where player_id = (select id from public.players where name = 'و١');
+select t.check('starter moved to bench: his appearance points go (15)',
+  (select points = 15 from public.user_round_points
+   where user_id = '00000000-0000-0000-0000-000000000001' and round_end = public.fn_week_cutoff(now())));
+update public.lineups set status = 'starting' where player_id = (select id from public.players where name = 'و١');
 update public.players set user_id = '00000000-0000-0000-0000-000000000001' where name = 'د١';
 update public.players set user_id = '00000000-0000-0000-0000-000000000002' where name = 'د٢';
 select t.as_user('00000000-0000-0000-0000-00000000000b');
@@ -124,8 +137,8 @@ set role authenticated;
 insert into public.events (match_id, player_id, type, minute)
 select (select id from public.matches limit 1), id, 'goal', 10 from public.players where name = 'ه١';
 reset role;
-select t.check('captain goal = 10 live points (5×2)',
-  (select points = 10 and final_points = 0 from public.user_round_points
+select t.check('captain goal (5+3)×2 + 4 starters ×3 = 28 live points',
+  (select points = 28 and final_points = 0 from public.user_round_points
    where user_id = '00000000-0000-0000-0000-000000000001' and round_end = public.fn_week_cutoff(now())));
 select t.check('total not counted before approval', (select total_points = 0 from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
 
@@ -198,7 +211,7 @@ set role authenticated;
 select public.review_match((select id from public.matches limit 1), true, null);
 reset role;
 select t.check('both teams confirmed → approved', (select review_status = 'approved' from public.matches limit 1));
-select t.check('points counted after approval (+ GK clean sheet)', (select total_points = 18 from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
+select t.check('points counted after approval (+ GK clean sheet)', (select total_points = 36 from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
 
 -- ── الحظر ──
 select t.as_user('00000000-0000-0000-0000-00000000000a');
@@ -236,46 +249,136 @@ select t.check('totw published for the zone', (select count(*) = 1 from public.t
 select t.check('totw star = GK (clean sheet 8 + assist 3)', (select (players->0->>'name') = 'ح١' from public.team_of_week));
 
 -- ── قواعد النقط ──
-select t.check('4 goals FWD = 3×5 + 7 + hat-trick 6 = 28', public.fn_score_points('FWD', 4, 0, 0, 0, 0, 0, 0, 0, 0, false) = 28);
+select t.check('4 goals FWD = 28 raw → capped 25', public.fn_score_points('FWD', 4, 0, 0, 0, 0, 0, 0, 0, 0, false) = 25);
 select t.check('GK goal = 8', public.fn_score_points('GK', 1, 0, 0, 0, 0, 0, 0, 0, 0, false) = 8);
 select t.check('4 assists = 3×3 + 5 + bonus 4 = 18', public.fn_score_points('MID', 0, 4, 0, 0, 0, 0, 0, 0, 0, false) = 18);
-select t.check('7 saves = 1 · 10 tackles = 2', public.fn_score_points('GK', 0, 0, 7, 0, 0, 10, 0, 0, 0, false) = 3);
+select t.check('7 saves = 2 · 10 tackles = 2', public.fn_score_points('GK', 0, 0, 7, 0, 0, 10, 0, 0, 0, false) = 4);
+select t.check('starter appearance = 3', public.fn_score_points('FWD', 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, true) = 3);
 select t.check('penalty save 4 · clean sheet 8', public.fn_score_points('GK', 0, 0, 0, 1, 0, 0, 0, 0, 0, true) = 12);
 select t.check('penalty miss -3 · insult -5 · own goal -2 · motm +3',
   public.fn_score_points('DEF', 0, 0, 0, 0, 1, 0, 1, 1, 1, false) = -7);
 
--- ── ماتش بعد الديدلاين: المدير بيطلب والأدمن بيوافق ──
+-- ── ديدلاين لكل لاعب + تغيير واحد ببلاش ──
+-- ماتش نسور/صقور يرجع «بدأ من نص ساعة» جوه الجولة الحالية (وبيرجع مكانه في الآخر)
+create temp table _wk1 as select id, date_time from public.matches where week = 1;
+update public.matches set date_time = now() - interval '30 minutes' where week = 1;
+insert into auth.users (id, email, raw_user_meta_data) values
+ ('00000000-0000-0000-0000-000000000005', 'u5@t.co', jsonb_build_object('name', 'يوزر٥', 'phone', '0106', 'zone_id', (select id from public.zones where name = 'بدر')));
+-- فريق تالت ملوش ماتشات (لاعيبته مش متقفلين) — ماتش نسور/صقور بدأ من نص ساعة (لاعيبته متقفلين)
+insert into public.teams (name, owner_id) values ('نمور بدر', '00000000-0000-0000-0000-00000000000b');
+insert into public.players (name, team, position, zone_id)
+select n, 'نمور بدر', pos, (select id from public.zones where name = 'بدر')
+from (values ('ح٣', 'GK'), ('د٣', 'FWD'), ('و٣', 'FWD'), ('ه٥', 'FWD'), ('ه٦', 'FWD'), ('ه٧', 'FWD'), ('ه٨', 'FWD'), ('ه٩', 'FWD'), ('ه١٠', 'FWD')) v(n, pos);
+create function t.tigers(bench2 text) returns jsonb language sql as $$
+  select jsonb_agg(jsonb_build_object('player_id', id, 'status', case when name in ('ه٧', bench2) then 'bench' else 'starting' end,
+                                      'is_captain', name = 'ه٥', 'is_vice', name = 'ه٦'))
+  from public.players where name in ('ح٣', 'د٣', 'و٣', 'ه٥', 'ه٦', 'ه٧', bench2);
+$$;
+grant execute on function t.tigers(text) to authenticated;
+-- تشكيلة يوزر٥ في الجولة اللي فاتت (هي اللي بنعدّ التغييرات منها)
+insert into public.round_picks (user_id, round_end, player_id, status, is_captain, is_vice)
+select '00000000-0000-0000-0000-000000000005', public.fn_open_round() - interval '7 days', (e->>'player_id')::uuid,
+       e->>'status', (e->>'is_captain')::boolean, (e->>'is_vice')::boolean
+from jsonb_array_elements(t.tigers('ه٨')) e;
+select t.as_user('00000000-0000-0000-0000-000000000005');
+set role authenticated;
+select public.save_round_picks(public.fn_open_round(), t.tigers('ه٨'));
+select t.check('same lineup as last round = 0 transfers', (public.my_round_state(public.fn_open_round())->>'transfers')::int = 0);
+select public.save_round_picks(public.fn_open_round(), t.tigers('ه٩'));
+select t.check('1 change = the free transfer', (public.my_round_state(public.fn_open_round())->>'transfers')::int = 1);
+select t.check('baseline = last round lineup', jsonb_array_length(public.my_round_state(public.fn_open_round())->'baseline') = 7);
+select t.check('locks: players of the started match are listed',
+  (public.my_round_state(public.fn_open_round())->'locks') ? (select id::text from public.players where name = 'ح١'));
+select t.expect_fail('adding a player whose match started', $q$select public.save_round_picks(public.fn_open_round(),
+  (select jsonb_agg(case when e->>'player_id' = (select id::text from public.players where name = 'ه٩')
+     then jsonb_set(e, '{player_id}', to_jsonb((select id from public.players where name = 'ه١'))) else e end)
+   from jsonb_array_elements(t.tigers('ه٩')) e))$q$);
+select t.check('others see a player only after he locks',
+  (select count(*) = 7 from public.round_picks where user_id = '00000000-0000-0000-0000-000000000001' and round_end = public.fn_open_round()));
+reset role;
+-- تغيير تاني = −٤ (الفريق ده ملعبش، فالنقط = −٤ بالظبط)
+select t.as_user('00000000-0000-0000-0000-000000000005');
+set role authenticated;
+select public.save_round_picks(public.fn_open_round(), (select jsonb_agg(case when e->>'player_id' = (select id::text from public.players where name = 'د٣')
+  then jsonb_set(e, '{player_id}', to_jsonb((select id from public.players where name = 'ه١٠'))) else e end)
+  from jsonb_array_elements(t.tigers('ه٩')) e));
+reset role;
+select t.check('2 changes: 1 free + 1 × −4', (select transfers = 2 from public.round_transfers
+  where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round())
+  and (select points = -4 from public.user_round_points where user_id = '00000000-0000-0000-0000-000000000005'
+       and round_end = public.fn_open_round()));
+select t.check('transfer cost rule', public.fn_transfer_cost(0, false, 1) = 0 and public.fn_transfer_cost(1, false, 1) = 0
+  and public.fn_transfer_cost(3, false, 1) = 8 and public.fn_transfer_cost(5, true, 1) = 0 and public.fn_transfer_cost(3, false, 3) = 0);
+-- المجاني بيتجمّع: جولة من غير تغييرات = ٢ الجولة الجاية · آخره ٥ · الوايلد كارد مبياكلش منه
+insert into public.round_transfers (user_id, round_end, transfers, free) values
+  ('00000000-0000-0000-0000-000000000005', timestamptz '2030-01-05 06:00+00', 0, 1),
+  ('00000000-0000-0000-0000-000000000005', timestamptz '2030-01-12 06:00+00', 1, 4),
+  ('00000000-0000-0000-0000-000000000005', timestamptz '2030-01-19 06:00+00', 0, 5);
+select t.check('free transfers bank: unused 1 → 2 next round',
+  public.fn_free_for('00000000-0000-0000-0000-000000000005', timestamptz '2030-01-12 06:00+00') = 2);
+select t.check('free transfers bank: 4 − 1 used + 1 = 4',
+  public.fn_free_for('00000000-0000-0000-0000-000000000005', timestamptz '2030-01-19 06:00+00') = 4);
+select t.check('free transfers capped at 5',
+  public.fn_free_for('00000000-0000-0000-0000-000000000005', timestamptz '2030-01-26 06:00+00') = 5);
+select t.check('no earlier round = 1 free',
+  public.fn_free_for('00000000-0000-0000-0000-000000000005', timestamptz '2029-01-01 06:00+00') = 1);
+delete from public.round_transfers where user_id = '00000000-0000-0000-0000-000000000005' and round_end > timestamptz '2029-01-01';
+-- يوزر١: كل لاعيبته اتقفلوا
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.expect_fail('moving the captain away from a locked player', $q$select public.save_round_picks(public.fn_open_round(),
+  (select jsonb_agg(jsonb_set(jsonb_set(e, '{is_captain}', to_jsonb(e->>'player_id' = (select id::text from public.players where name = 'و١'))),
+     '{is_vice}', to_jsonb(e->>'player_id' = (select id::text from public.players where name = 'ه١'))))
+   from jsonb_array_elements(t.lineup()) e))$q$);
+reset role;
+select t.check('chips: every chip (wildcard too) blocked once a player in the lineup locks',
+  public.fn_chip_blocked('00000000-0000-0000-0000-000000000001', public.fn_open_round(), 'triple') is not null
+  and public.fn_chip_blocked('00000000-0000-0000-0000-000000000001', public.fn_open_round(), 'wildcard') is not null
+  and public.fn_chip_blocked('00000000-0000-0000-0000-000000000005', public.fn_open_round(), 'triple') is null);
+-- أول الجولة: التشكيلة بتتنقل لوحدها · وقبل الماتش بساعتين إشعار القفل
+delete from public.round_picks where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round();
+delete from public.round_transfers where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round();
+delete from public.app_jobs where key like 'carry:%';
+insert into public.matches (teams, date_time, created_at, zone_id, week)
+values (array['نمور بدر', 'صقور بدر'], now() + interval '90 minutes', now() - interval '2 days', (select id from public.zones where name = 'بدر'), 8);
+select public.fn_round_tick();
+select t.check('round start: last lineup carried over', (select count(*) = 7 from public.round_picks
+  where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round()));
+select t.check('round start: the new round opens with the banked free transfers',
+  (select free >= 1 and transfers = 0 from public.round_transfers
+   where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round()));
+select t.check('2 hours before: zone told its players lock in an hour (deadline sound)',
+  (select count(*) = 1 from public.notifications where title like '⏳%' and sound = 'deadline' and audience = 'zone'));
+select public.fn_round_tick();
+select t.check('lock reminder sent once', (select count(*) = 1 from public.notifications where title like '⏳%'));
+delete from public.matches where week = 8;
+update public.matches m set date_time = w.date_time from _wk1 w where w.id = m.id;
+
+-- ── مفيش ديدلاين للجولة: أي ماتش قبل ميعاده بساعتين بيدخل على طول + إشعار لأهل المنطقة ──
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
-select t.expect_fail('late request while round open',
-  $q$select public.request_late_match(array['نسور بدر', 'صقور بدر'], public.fn_open_round() + interval '2 days')$q$);
-select t.expect_fail('late request with foreign team',
-  $q$select public.request_late_match(array['نسور بدر', 'فريق حد تاني'], public.fn_week_cutoff(now()) - interval '1 minute')$q$);
-select t.expect_fail('organizer inserts match after deadline',
-  $q$insert into public.matches (teams, date_time) values (array['نسور بدر', 'صقور بدر'], public.fn_week_cutoff(now()) - interval '1 minute')$q$);
-select t.expect_fail('organizer approves a request', $q$select public.review_late_match(gen_random_uuid(), true)$q$);
-select t.expect_fail('organizer writes request table directly',
-  $q$insert into public.late_match_requests (organizer_id, teams, date_time) values (auth.uid(), array['أ', 'ب'], now())$q$);
-select public.request_late_match(array['نسور بدر', 'صقور بدر'], public.fn_week_cutoff(now()) - interval '1 minute', 'الملعب اتأجل');
+select t.expect_fail('late requests are gone', $q$select public.request_late_match(array['نسور بدر', 'صقور بدر'], now() + interval '1 day')$q$);
+select t.expect_fail('organizer: match less than 2 hours ahead',
+  $q$insert into public.matches (teams, date_time) values (array['نسور بدر', 'صقور بدر'], now() + interval '90 minutes')$q$);
+insert into public.matches (teams, date_time, week) values (array['نسور بدر', 'صقور بدر'], t.slot(2), 7);
 reset role;
-select t.check('admins notified of late request', (select count(*) >= 1 from public.notifications where title like '⏰%'));
+select t.check('match added mid-round without approval', (select count(*) = 1 from public.matches where week = 7));
+select t.check('zone notified: new match, you can pick its players',
+  (select count(*) = 1 from public.notifications where title like 'ماتش جديد في منطقتك%' and audience = 'zone'
+     and match_id = (select id from public.matches where week = 7)));
+delete from public.matches where week = 7;
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 set role authenticated;
-select t.check('admin sees late request', (select count(*) = 1 from public.admin_late_match_requests()));
-select public.review_late_match((select id from public.admin_late_match_requests() limit 1), true);
 insert into public.matches (teams, date_time) values (array['أ', 'ب'], public.fn_week_cutoff(now()) - interval '2 minutes');
 reset role;
-select t.check('late match created for organizer',
-  (select organizer_id = '00000000-0000-0000-0000-00000000000b' and zone_id is not null
-   from public.matches where id = (select match_id from public.late_match_requests limit 1)));
-select t.check('admin adds match after deadline directly', (select count(*) = 1 from public.matches where teams = array['أ', 'ب']));
+select t.check('admin adds a match any time', (select count(*) = 1 from public.matches where teams = array['أ', 'ب']));
 
 -- ── مواعيد الجولة: [السبت ٤ العصر , السبت اللي بعده ٨ الصبح] · الديدلاين السبت ١٢ الضهر ──
 create function t.cairo(x text) returns timestamptz language sql as $$ select x::timestamp at time zone 'Africa/Cairo' $$;
 select t.check('Fri night match ends round at Sat 08:00', public.fn_week_cutoff(t.cairo('2026-10-03 07:59')) = t.cairo('2026-10-03 08:00'));
 select t.check('Sat 16:00 match is next round', public.fn_week_cutoff(t.cairo('2026-10-03 16:00')) = t.cairo('2026-10-10 08:00'));
 select t.check('round start Sat 16:00', public.fn_round_start(t.cairo('2026-10-10 08:00')) = t.cairo('2026-10-03 16:00'));
-select t.check('deadline Sat 15:00', public.fn_round_deadline(t.cairo('2026-10-10 08:00')) = t.cairo('2026-10-03 15:00'));
+select t.check('round "deadline" = its start (Sat 16:00) — real locks are per player', public.fn_round_deadline(t.cairo('2026-10-10 08:00')) = t.cairo('2026-10-03 16:00'));
 select t.check('Sat 10:00 is the gap', public.fn_in_round_gap(t.cairo('2026-10-03 10:00')));
 select t.check('Sat 08:00 / 16:00 / Fri 10:00 not gap', not public.fn_in_round_gap(t.cairo('2026-10-03 08:00'))
   and not public.fn_in_round_gap(t.cairo('2026-10-03 16:00')) and not public.fn_in_round_gap(t.cairo('2026-10-02 10:00')));
@@ -287,8 +390,8 @@ insert into auth.users (id, email, raw_user_meta_data) values
  ('00000000-0000-0000-0000-000000000004', 'u4@t.co', jsonb_build_object('name', 'يوزر٤', 'phone', '0105', 'zone_id', (select id from public.zones where name = 'الشروق')));
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
-insert into public.matches (teams, date_time, week) values (array['نسور بدر', 'صقور بدر'], public.fn_open_round() - interval '5 days', 2);
-insert into public.matches (teams, date_time, week) values (array['صقور بدر', 'نسور بدر'], public.fn_open_round() - interval '4 days', 2);
+insert into public.matches (teams, date_time, week) values (array['نسور بدر', 'صقور بدر'], t.slot(1), 2);
+insert into public.matches (teams, date_time, week) values (array['صقور بدر', 'نسور بدر'], t.slot(2), 2);
 reset role;
 create function t.ch() returns uuid language sql as $$ select id from public.matches where week = 2 order by date_time limit 1 $$;
 grant execute on function t.ch() to authenticated;
@@ -376,7 +479,6 @@ select t.check('goal notification opens the match',
 select t.check('challenge notification opens the challenge', (select bool_and(link = 'challenge') from public.notifications where kind = 'challenge'));
 select t.check('player status opens the player', (select bool_and(link like 'player:%') from public.notifications where title like 'مصاب%'));
 select t.check('confirm sheet opens the review', (select bool_and(link like 'review:%') from public.notifications where title like '📋%'));
-select t.check('late match request opens admin screen', (select bool_and(link = 'admin:late') from public.notifications where title like '⏰%'));
 
 -- ── حذف بالجملة · اللاعب عمل إيه ──
 select t.check('player round matches: GK got his clean sheet match',
@@ -513,3 +615,126 @@ select t.check('admin deletes a subbed-out player', public.delete_players(array(
 select t.check('admin deletes all players', public.delete_players(array(select id from public.players)) > 0);
 reset role;
 select t.check('no players left', (select count(*) = 0 from public.players));
+
+-- ══ السنة بدل الموسم ══
+select t.check('this year and next exist automatically', (select count(*) >= 2 from public.seasons
+  where year in (extract(year from now() at time zone 'Africa/Cairo')::int, extract(year from now() at time zone 'Africa/Cairo')::int + 1)));
+select t.check('a year runs Jan 1 → Jan 1 (Cairo), half = Jul 1', (select starts_at = t.cairo('2027-01-01 00:00')
+  and mid_at = t.cairo('2027-07-01 00:00') and ends_at = t.cairo('2028-01-01 00:00') from public.seasons where year = 2027));
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select t.expect_fail('admin cannot create seasons by hand',
+  $q$insert into public.seasons (name, starts_at, mid_at, ends_at) values ('x', now(), now() + interval '1 day', now() + interval '2 days')$q$);
+reset role;
+
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select public.send_my_test_push();
+select t.expect_fail('test push rate limit (1 per minute)', $q$select public.send_my_test_push()$q$);
+reset role;
+select t.check('test push goes to me only, with the goal sound', (select count(*) = 1 from public.notifications
+  where title = '🔔 تجربة الإشعارات' and user_id = '00000000-0000-0000-0000-000000000001' and audience = 'user' and sound = 'goal'));
+
+-- ══ تشكيلة الجولة لايف: من الماتشات المعتمدة بس + اعتماد تلقائي بعد ٤ ساعات ══
+select t.check('auto-approval window = 4 hours', public.fn_review_window() = interval '4 hours');
+select t.check('live TOTW counts approved matches only',
+  (select coalesce(sum(points), 0) from public.player_points_approved('-infinity', 'infinity'))
+  = (select coalesce(sum(x.points), 0) from public.fn_pmp('-infinity', 'infinity') x
+     join public.matches m on m.id = x.match_id and m.review_status = 'approved'));
+
+-- ══ فحص الحماية الشامل (بيفشل لو أي قسم جديد ساب حاجة مفتوحة) ══
+reset role;
+select t.check('every public table has RLS', (select count(*) = 0 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity));
+select t.check('every security definer function pins search_path', (select count(*) = 0 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.prosecdef and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')));
+select t.check('anon can call only get_app_config + log_events + phone_taken',
+  (select array_agg(p.proname::text order by p.proname) = array['get_app_config', 'log_events', 'phone_taken'] from pg_proc p
+   join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')));
+select t.check('internal definer functions are server-only',
+  (select count(*) = 13 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.prosecdef and p.proname ~ '^(fn|trg)_' and has_function_privilege('authenticated', p.oid, 'execute')));
+select t.check('anon has table rights on zones only (select)',
+  (select count(*) = 1 and bool_and(table_name = 'zones' and privilege_type = 'SELECT')
+   from information_schema.role_table_grants where table_schema = 'public' and grantee = 'anon'));
+select t.check('anon policies: zones read + public photo buckets only',
+  (select count(*) = 4 and bool_and(cmd = 'SELECT') from pg_policies where 'anon' = any(roles) or 'public' = any(roles)));
+
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.expect_fail('user recalcs everyone', $q$select public.fn_recalc_all_totals()$q$);
+select t.expect_fail('user snapshots ranks', $q$select public.fn_snapshot_ranks()$q$);
+select t.expect_fail('user runs the match tick', $q$select public.fn_close_due_matches_and_season()$q$);
+select t.expect_fail('user reads another user challenge scores', $q$select * from public.fn_challenge_scores('00000000-0000-0000-0000-000000000002')$q$);
+select t.expect_fail('user sets app config (force update)', $q$select public.set_app_config('min_build', '999')$q$);
+select t.expect_fail('user sets push url', $q$select public.set_push_url('https://evil.example')$q$);
+select t.expect_fail('user deletes users', $q$select public.admin_delete_users(array['00000000-0000-0000-0000-000000000002'::uuid])$q$);
+select t.expect_fail('user makes himself manager', $q$select public.set_user_role(auth.uid(), 'manager')$q$);
+select t.expect_fail('user bans someone', $q$select public.set_user_active('00000000-0000-0000-0000-000000000002', false)$q$);
+select t.expect_fail('user resolves betting report', $q$select public.resolve_betting_report(gen_random_uuid(), 'banned')$q$);
+select t.expect_fail('user reads phone→email', $q$select public.phone_auth_email('0102', 5)$q$);
+select t.expect_fail('user writes app_config', $q$insert into public.app_config (key, value) values ('x', 'y')$q$);
+select t.expect_fail('user inserts a notification', $q$insert into public.notifications (title, body, kind, audience) values ('x', 'y', 'event', 'all')$q$);
+select t.expect_fail('user writes team of the week', $q$insert into public.team_of_week (round_end, zone_id, players) values (now(), 0, '[]')$q$);
+select t.expect_fail('user creates a season', $q$insert into public.seasons (name, starts_at, mid_at, ends_at) values ('x', now(), now(), now())$q$);
+select t.expect_fail('user reads phones directly', $q$select phone from public.profiles$q$);
+select t.expect_fail('user reads emails directly', $q$select email from public.profiles$q$);
+reset role;
+set role anon;
+select t.expect_fail('anon reads profiles', $q$select 1 / (select count(*) from public.profiles)$q$);
+select t.expect_fail('anon reads matches', $q$select 1 / (select count(*) from public.matches)$q$);
+select t.expect_fail('anon calls an app rpc', $q$select public.my_profile()$q$);
+reset role;
+
+-- ══ السجلات (logs) ══
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select t.check('log_events stores valid events only (bad level / bad event name dropped)', public.log_events('[
+  {"timestamp":"2026-10-13T15:27:04.118Z","level":"error","event":"http.error","env":"prod","version":"1.0.0+1",
+   "request_id":"req_test_1","route":"POST /rest/v1/rpc/save_round_picks","status":500,"duration_ms":1234,
+   "error_type":"PostgrestException","message":"failed for a.user@gmail.com 01012345678",
+   "fields":{"password":"hunter2","access_token":"abc","code":"123456","screen":"pick","email":"someone@mail.com"}},
+  {"level":"shout","event":"x.y"},
+  {"level":"info","event":"Bad Name!"}]'::jsonb) = 1);
+select t.expect_fail('user reads logs directly', $q$select 1 / (select count(*) from public.app_logs)$q$);
+select t.expect_fail('user reads logs via admin rpc', $q$select * from public.admin_logs()$q$);
+select t.expect_fail('user reads log stats', $q$select public.admin_log_stats()$q$);
+select t.expect_fail('user calls the internal logger', $q$select public.fn_log('error', 'fake.event')$q$);
+select t.expect_fail('user sets log level', $q$select public.set_app_config('log_level', 'debug')$q$);
+reset role;
+select t.check('log row: server-side user id, secrets dropped, email/phone masked',
+  (select user_id = '00000000-0000-0000-0000-000000000001' and not (fields ?| array['password', 'access_token', 'code'])
+          and fields->>'screen' = 'pick' and fields->>'email' = 's***@mail.com'
+          and message not like '%a.user@gmail.com%' and message not like '%01012345678%'
+          and status = 500 and duration_ms = 1234 and client_ts is not null
+   from public.app_logs where request_id = 'req_test_1'));
+select t.as_user('00000000-0000-0000-0000-000000000001');
+set role authenticated;
+select public.log_events((select jsonb_agg(jsonb_build_object('level', 'error', 'event', 'flood.test', 'error_type', 'FloodError')) from generate_series(1, 20)))
+from generate_series(1, 5);
+reset role;
+select t.check('log rate limit: 60 per user per 5 minutes',
+  (select count(*) = 60 from public.app_logs where user_id = '00000000-0000-0000-0000-000000000001' and service = 'app'));
+select set_config('request.jwt.claim.sub', '', false);
+set role anon;
+select t.check('anon can report an error (no user id)', public.log_events('[{"level":"error","event":"auth.signup.failed"}]'::jsonb) = 1);
+reset role;
+select public.fn_log_watch();
+select t.check('error spike + new error → admin alerted once (link admin:logs)',
+  (select count(*) = 2 from public.notifications where link = 'admin:logs' and user_id = '00000000-0000-0000-0000-00000000000a'));
+select public.fn_log_watch();
+select t.check('alerts are throttled (no duplicates within 30 minutes)',
+  (select count(*) = 2 from public.notifications where link = 'admin:logs' and user_id = '00000000-0000-0000-0000-00000000000a'));
+update public.app_logs set ts = now() - interval '40 days' where event = 'flood.test';
+select public.fn_log_watch();
+select t.check('retention: logs older than 30 days are purged', (select count(*) = 0 from public.app_logs where event = 'flood.test'));
+select t.as_user('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+select t.check('admin searches logs by request id', (select count(*) = 1 from public.admin_logs(null, 'req_test_1')));
+select t.check('admin log stats', (select (public.admin_log_stats()->>'errors_24h')::int >= 1));
+select public.set_app_config('log_level', 'debug');
+select t.expect_fail('bad log level rejected', $q$select public.set_app_config('log_level', 'loud')$q$);
+reset role;
+select t.check('admin action mirrored to the central log as an audit event',
+  (select count(*) >= 1 from public.app_logs where event = 'audit.admin.app_config' and service = 'db'
+     and user_id = '00000000-0000-0000-0000-00000000000a'));

@@ -13,7 +13,11 @@ import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../squad/data/profile_repository.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../../notifications/view/notify_setup_screen.dart';
 import '../data/admin_repository.dart';
+
+part 'push_check_screen_sections.dart';
+part 'push_check_screen_sections2.dart';
 
 /// (أدمن) فحص إشعارات الموبايل: ليه الإشعار مبيوصلش والأبلكيشن مقفول؟
 /// خمس حاجات لازم يبقوا ✓ — وكل واحدة ناقصة مكتوب جنبها تتصلّح إزاي — وزرار إشعار تجربة.
@@ -25,6 +29,9 @@ class PushCheckScreen extends StatefulWidget {
 }
 
 class _PushCheckScreenState extends State<PushCheckScreen> {
+  // setState محمي (protected) — الأجزاء المنقولة لملفات تانية بتحدّث الشاشة من هنا
+  void _update(VoidCallback fn) => setState(fn);
+
   late final AdminRepository _repo = context.read<AdminRepository>();
   Map<String, dynamic>? _d;
   bool? _allowed; // إذن الإشعارات على الجهاز ده
@@ -37,41 +44,6 @@ class _PushCheckScreenState extends State<PushCheckScreen> {
   void initState() {
     super.initState();
     _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final settings = await FirebaseMessaging.instance.getNotificationSettings();
-      _allowed =
-          settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
-    } catch (_) {
-      _allowed = false;
-    }
-    try {
-      final d = await _repo.pushDiagnostics();
-      if (mounted) {
-        setState(() {
-          _d = d;
-          _error = null;
-        });
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = dbMessage(e, fallback: 'شغّل ملف الداتابيز (قسم 46) وجرّب تاني'));
-    }
-  }
-
-  Future<void> _do(Future<void> Function() action, String done) async {
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _busy = true);
-    try {
-      await action();
-      messenger.showSnackBar(SnackBar(content: Text(done)));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(dbMessage(e))));
-    }
-    await _load();
-    if (mounted) setState(() => _busy = false);
   }
 
   Future<void> _askPermission() => _do(() async {
@@ -118,89 +90,20 @@ class _PushCheckScreenState extends State<PushCheckScreen> {
     );
   }
 
-  Widget _body(Map<String, dynamic> d) {
-    final url = d['push_url'] as String?;
-    final last = ((d['last'] as List?) ?? const []).cast<Map<String, dynamic>>();
-    final lastOk = last.isNotEmpty && last.first['status'] == 200;
-    return ListView(
-      padding: const EdgeInsets.only(top: 12, bottom: 24),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Text(
-            'عشان الإشعار يوصل ويعمل صوت والأبلكيشن مقفول، الخمسة دول لازم يبقوا ✓',
-            style: AppText.body(12, color: AppColors.neutral700),
-          ),
-        ),
-        _check(
-          'إذن الإشعارات على الموبايل ده',
-          _allowed == true,
-          fix: 'الموبايل مانع الإشعارات عن الأبلكيشن',
-          action: ('اطلب الإذن', _askPermission),
-        ),
-        _check(
-          'الجهاز ده متسجّل (${d['tokens'] ?? 0} جهاز متسجّل في الكل)',
-          d['my_token'] == true,
-          fix: 'الأبلكيشن مسجّلش الجهاز — غالبًا النت كان واقع وقت الدخول',
-          action: ('سجّل الجهاز', _registerToken),
-        ),
-        _check(
-          'إضافة pg_net في الداتابيز',
-          d['pg_net'] == true,
-          fix: 'من لوحة Supabase: Database ← Extensions ← فعّل pg_net ← وشغّل ملف الداتابيز تاني',
-        ),
-        _check(
-          'رابط فانكشن الإشعارات',
-          url == _expectedUrl,
-          fix: url == null ? 'الداتابيز متعرفش تبعت لمين — دوس الزرار' : 'الرابط المتسجّل لمشروع تاني:\n$url',
-          action: ('ظبّط الرابط', () => _do(() => _repo.setPushUrl(_expectedUrl), 'الرابط اتظبط ✓')),
-        ),
-        _check(
-          'الفانكشن بترد صح',
-          lastOk,
-          fix: last.isEmpty ? 'مفيش محاولات لسه — ابعت إشعار تجربة' : _explain(last.first),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: FilledButton.icon(
-            onPressed: _busy ? null : _test,
-            icon: const Icon(Icons.notifications_active_outlined),
-            label: Text(_busy ? 'لحظة…' : 'ابعتلي إشعار تجربة'),
-          ),
-        ),
-        if (last.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
-            child: Text('آخر محاولات', style: AppText.kicker(color: AppColors.accent)),
-          ),
-          for (final r in last)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-              child: Text(
-                '${r['status'] ?? '—'} · ${r['error'] ?? r['body'] ?? ''}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textDirection: TextDirection.ltr,
-                style: AppText.body(11, color: r['status'] == 200 ? AppColors.neutral700 : AppColors.danger),
-              ),
-            ),
-        ],
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'لو الخمسة ✓ ولسه مبيوصلش والأبلكيشن مقفول: موبايلات شاومي وأوبو وريلمي وهواوي بتقفل الأبلكيشنز في الخلفية — '
-            'من إعدادات الموبايل افتح الأبلكيشن وفعّل «التشغيل التلقائي» وشيل «توفير البطارية» عنه.',
-            style: AppText.body(11, color: AppColors.neutral600, height: 1.6),
-          ),
-        ),
-      ],
-    );
+  /// الفانكشن ردت ٢٠٠ بس Firebase رفض الإرسال (ok:false · أو اتبعت لصفر جهاز من كذا).
+  static bool _fcmFailed(Map<String, dynamic> r) {
+    final body = '${r['body'] ?? ''}'.replaceAll(' ', '');
+    return body.contains('"ok":false') || RegExp(r'"sent":0,"total":[1-9]').hasMatch(body);
   }
 
   /// رد الفانكشن الغلط معناه إيه.
   static String _explain(Map<String, dynamic> r) {
     final status = r['status'];
     final text = '${r['error'] ?? ''} ${r['body'] ?? ''}'.toLowerCase();
+    if (status == 200 && _fcmFailed(r)) {
+      return 'الفانكشن شغّالة بس Firebase رفض الإرسال — غالبًا سر FIREBASE_SERVICE_ACCOUNT لمشروع Firebase تاني '
+          'غير اللي في google-services.json، أو توكن الجهاز قديم (دوس «سجّل الجهاز»).';
+    }
     if (status == 404) {
       return 'الفانكشن مش منشورة على المشروع ده — انشرها:\nnpx supabase functions deploy push --no-verify-jwt';
     }
@@ -212,35 +115,4 @@ class _PushCheckScreenState extends State<PushCheckScreen> {
     if (status == null) return 'الطلب ماوصلش للفانكشن: ${r['error'] ?? 'اتأكد من الرابط'}';
     return 'الفانكشن ردّت بـ $status';
   }
-
-  Widget _check(String title, bool ok, {required String fix, (String, Future<void> Function())? action}) => Container(
-    margin: AppDecor.tileMargin,
-    padding: const EdgeInsets.all(12),
-    decoration: AppDecor.tile,
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(ok ? Icons.check_circle : Icons.cancel, color: ok ? AppColors.accent : AppColors.danger, size: 22),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppText.h(13)),
-              if (!ok) ...[
-                const SizedBox(height: 2),
-                Text(fix, style: AppText.body(11, color: AppColors.neutral700, height: 1.5)),
-                if (action != null)
-                  TextButton(
-                    onPressed: _busy ? null : action.$2,
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
-                    child: Text(action.$1),
-                  ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
 }

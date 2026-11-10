@@ -3,15 +3,14 @@ import 'package:equatable/equatable.dart';
 import '../../../core/app_mode.dart';
 
 /// الجولة: من السبت ٤ العصر لحد السبت اللي بعده ٨ الصبح.
-///   • تشكيلات الجولة بتتقفل **السبت ٣ العصر** قبل ما تبدأ (المديرين بيكونوا نزّلوا ماتشاتهم).
+///   • مفيش ديدلاين واحد: كل لاعب بيتقفل لوحده قبل ماتشه بساعة (RoundLocks / fn_lock_at في السيرفر).
 ///   • السبت من ٨ الصبح لـ ٤ العصر فاصل بين الجولتين — مفيش ماتشات.
 ///   • أي ماتش بيتحسب في الجولة اللي ميعاده جواها: start <= date_time <= cutoff.
-/// (نفس fn_week_cutoff / fn_round_start / fn_round_deadline في السيرفر — بتوقيت الموبايل = القاهرة)
+/// (نفس fn_week_cutoff / fn_round_start في السيرفر — بتوقيت الموبايل = القاهرة)
 class WeekWindow extends Equatable {
   const WeekWindow(this.cutoff);
 
   static const startHour = 16; // ٤ العصر
-  static const deadlineHour = 15; // ٣ العصر — قبل البداية بساعة
   static const endHour = 8; // ٨ الصبح
 
   /// نهاية الجولة (السبت ٨ الصبح).
@@ -22,10 +21,6 @@ class WeekWindow extends Equatable {
 
   /// بداية الجولة (السبت اللي قبلها ٤ العصر) — في التجربة: من الأول خالص.
   DateTime get start => kTestMode ? DateTime(2000) : DateTime(cutoff.year, cutoff.month, cutoff.day - 7, startHour);
-
-  /// آخر ميعاد للتشكيلة (السبت ٣ العصر يوم البداية).
-  /// (وضع التجربة: نهاية الجولة — التشكيلة مفتوحة طولها)
-  DateTime get deadline => kTestMode ? cutoff : DateTime(cutoff.year, cutoff.month, cutoff.day - 7, deadlineHour);
 
   /// الجولة اللي فيها وقت معيّن (الافتراضي: دلوقتي = الجولة الشغّالة، أو الجاية لو إحنا في فاصل السبت).
   factory WeekWindow.current([DateTime? now]) {
@@ -43,18 +38,11 @@ class WeekWindow extends Equatable {
     return n.isBefore(cur.start) ? cur.previous : cur;
   }
 
-  /// الجولة اللي التشكيلات مفتوحة ليها: أقرب جولة ديدلاينها لسه مجاش.
-  factory WeekWindow.open([DateTime? now]) {
-    final n = now ?? DateTime.now();
-    final cur = WeekWindow.current(n);
-    return n.isBefore(cur.deadline) ? cur : cur.next;
-  }
+  /// الجولة اللي التشكيلة مفتوحة ليها = الجولة الحالية (وفي فاصل السبت: الجاية) — نفس fn_open_round.
+  factory WeekWindow.open([DateTime? now]) => WeekWindow.current(now);
 
   /// الجولة خلصت — الترتيب نهائي.
   bool isFinal([DateTime? now]) => (now ?? DateTime.now()).isAfter(cutoff);
-
-  /// التشكيلات اتقفلت (عدّى السبت ٣ العصر).
-  bool isLocked([DateTime? now]) => !(now ?? DateTime.now()).isBefore(deadline);
 
   /// الجولة بدأت (السبت ٤ العصر).
   bool hasStarted([DateTime? now]) => (now ?? DateTime.now()).isAfter(start);

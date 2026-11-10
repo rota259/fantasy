@@ -1,5 +1,6 @@
 import '../../../core/supabase/supabase_service.dart';
 import 'models/pick.dart';
+import 'models/round_locks.dart';
 import 'picks_repository.dart';
 
 /// تنفيذ PicksRepository فوق جدول round_picks + دالة save_round_picks.
@@ -24,6 +25,13 @@ class SupabasePicksRepository implements PicksRepository {
     }
     return byRound;
   }
+
+  @override
+  Future<RoundLocks> roundLocks(DateTime roundEnd) async => RoundLocks.fromMap(
+    Map<String, dynamic>.from(
+      await SupabaseService.client.rpc('my_round_state', params: {'p_round': _db(roundEnd)}) as Map,
+    ),
+  );
 
   @override
   Future<void> saveRound(DateTime roundEnd, List<Pick> picks) async {

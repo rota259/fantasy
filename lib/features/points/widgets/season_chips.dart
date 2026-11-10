@@ -11,7 +11,7 @@ class SeasonChips extends StatelessWidget {
   const SeasonChips({super.key, required this.seasons, required this.selected, required this.onSelect});
 
   final List<Season> seasons;
-  final Season? selected; // null = كل المواسم
+  final Season? selected; // null = كل السنين
   final ValueChanged<Season?> onSelect;
 
   @override
@@ -24,7 +24,7 @@ class SeasonChips extends StatelessWidget {
         children: [
           for (final s in seasons)
             _chip(s.isCurrent() ? '${s.name} · الحالي' : s.name, selected?.id == s.id, () => onSelect(s)),
-          _chip('كل المواسم', selected == null, () => onSelect(null)),
+          _chip('كل السنين', selected == null, () => onSelect(null)),
         ],
       ),
     );

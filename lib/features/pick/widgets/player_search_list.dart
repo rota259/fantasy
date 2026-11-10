@@ -103,7 +103,7 @@ class _PlayerSearchListState extends State<PlayerSearchList> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(p.name, style: AppText.h(13)),
+                Text(p.label, style: AppText.h(13)),
                 Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
               ],
             ),

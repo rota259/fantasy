@@ -9,6 +9,8 @@ import '../data/models/league.dart';
 import '../data/models/league_standing.dart';
 import '../../../core/widgets/motion.dart';
 
+part 'leagues_widgets_extra.dart';
+
 /// هيرو الترتيب العام (أسود) — الترتيب محسوب من نقاط كل المستخدمين.
 class LeaguesHero extends StatelessWidget {
   const LeaguesHero({super.key, required this.rank});
@@ -126,28 +128,6 @@ class StandingRow extends StatelessWidget {
           if ((s.moved ?? 0) != 0) _Moved(s.moved!),
           Text('${s.points}', style: AppText.h(14)),
         ],
-      ),
-    );
-  }
-}
-
-/// سهم طلع/نزل كام مركز — بيتنطّط مرة لما يظهر.
-class _Moved extends StatelessWidget {
-  const _Moved(this.n);
-  final int n;
-
-  @override
-  Widget build(BuildContext context) {
-    final up = n > 0;
-    final color = up ? AppColors.accent : AppColors.danger;
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 900),
-      curve: Curves.elasticOut,
-      builder: (_, t, c) => Transform.translate(offset: Offset(0, (1 - t) * (up ? 10 : -10)), child: c),
-      child: Padding(
-        padding: const EdgeInsetsDirectional.only(end: 8),
-        child: Text('${up ? '▲' : '▼'}${n.abs()}', style: AppText.h(11, color: color)),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/logging/app_log.dart';
 import '../../core/supabase/supabase_config.dart';
 import '../../core/supabase/supabase_service.dart';
 import '../../core/theme/app_text.dart';
@@ -60,6 +61,7 @@ class _UpdateGateState extends State<UpdateGate> with WidgetsBindingObserver {
     if (!SupabaseConfig.isConfigured) return;
     try {
       final cfg = Map<String, dynamic>.from(await SupabaseService.client.rpc('get_app_config') as Map);
+      AppLog.applyRemoteLevel(cfg['log_level']); // الأدمن بيعلّي/يوطّي مستوى السجلات من غير نسخة جديدة
       final min = int.tryParse('${cfg['min_build_${AppBuild.platform}'] ?? 0}') ?? 0;
       final mine = await AppBuild.number();
       if (!mounted) return;

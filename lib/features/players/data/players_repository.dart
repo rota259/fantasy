@@ -17,7 +17,10 @@ abstract interface class PlayersRepository {
   Future<List<Player>> fetchByTeams(List<String> teams);
 
   /// (مدير) إضافة لاعب جديد؛ بيرجّع id اللاعب.
-  Future<String> addPlayer({required String name, required String team, required String position});
+  /// لاعيبة في منطقة الفريق بنفس الاسم (قبل الإضافة).
+  Future<List<Map<String, dynamic>>> similar(String name, String team);
+
+  Future<String> addPlayer({required String name, required String team, required String position, String? nickname});
 
   /// (مدير) حذف لاعب — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
   Future<int> deletePlayer(String id);

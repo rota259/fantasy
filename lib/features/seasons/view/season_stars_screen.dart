@@ -41,7 +41,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: 'أبطال الموسم', subtitle: 'كل المناطق · SEASON', onBack: () => Navigator.pop(context)),
+          Masthead(title: 'أبطال السنة', subtitle: 'كل المناطق · YEAR', onBack: () => Navigator.pop(context)),
           Expanded(
             child: FutureBuilder<Season?>(
               future: _season,
@@ -50,11 +50,11 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
                   return const SkeletonList();
                 }
                 final s = snap.data;
-                if (s == null) return _note('لسه مفيش موسم');
+                if (s == null) return _note('لسه مفيش سنة');
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    Row(children: [_tab('النص الأول', false), const SizedBox(width: 6), _tab('الموسم كامل', true)]),
+                    Row(children: [_tab('أول ٦ شهور', false), const SizedBox(width: 6), _tab('السنة كاملة', true)]),
                     const SizedBox(height: 16),
                     _period(s, _full ? s.endsAt : s.midAt),
                   ],
@@ -70,7 +70,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
   Widget _period(Season s, DateTime until) {
     if (DateTime.now().isBefore(until)) {
       return _note(
-        'بتتعلن ${arabicWeekday(until)} ${until.day}/${until.month} — لما ${_full ? 'الموسم يخلص' : 'نص الموسم يعدّي'}',
+        'بتتعلن ${arabicWeekday(until)} ${until.day}/${until.month} — لما ${_full ? 'السنة تخلص' : 'أول ٦ شهور يعدّي'}',
       );
     }
     return FutureBuilder(
@@ -89,7 +89,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('لاعب ${_full ? 'الموسم' : 'النص الأول'}', style: AppText.kicker(color: AppColors.gold)),
+                  Text('لاعب ${_full ? 'السنة' : 'أول ٦ شهور'}', style: AppText.kicker(color: AppColors.gold)),
                   const SizedBox(height: 6),
                   Text(star.name, style: AppText.h(22, color: AppColors.white)),
                   Text('${star.team} · ${star.points} نقطة', style: AppText.body(12, color: AppColors.accent400)),
@@ -97,7 +97,7 @@ class _SeasonStarsScreenState extends State<SeasonStarsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text('تشكيلة ${_full ? 'الموسم' : 'النص الأول'}', style: AppText.kicker(color: AppColors.accent)),
+            Text('تشكيلة ${_full ? 'السنة' : 'أول ٦ شهور'}', style: AppText.kicker(color: AppColors.accent)),
             const SizedBox(height: 6),
             TotwPitch(spots: TeamOfWeek.arrange(ranked.take(TeamOfWeek.size).toList())),
             const SizedBox(height: 12),

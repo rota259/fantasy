@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../fairplay/view/admin_betting_screen.dart';
+import '../logs/view/admin_logs_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../auth/cubit/auth_cubit.dart';
@@ -7,7 +8,6 @@ import '../badges/view/badges_screen.dart';
 import '../integrity/view/admin_organizers_screen.dart';
 import '../integrity/view/admin_review_screen.dart';
 import '../integrity/view/match_review_screen.dart';
-import '../manager/view/admin_late_matches_screen.dart';
 import '../manager/view/manager_claims_screen.dart';
 import '../matches/data/matches_repository.dart';
 import '../matches/view/match_center_screen.dart';
@@ -73,9 +73,9 @@ abstract final class NotificationRouter {
         case 'admin':
           push(switch (arg) {
             'organizers' => const AdminOrganizersScreen(),
-            'late' => const AdminLateMatchesScreen(),
             'claims' => const ManagerClaimsScreen(),
             'betting' => const AdminBettingScreen(),
+            'logs' => const AdminLogsScreen(),
             _ => const AdminReviewScreen(),
           });
       }

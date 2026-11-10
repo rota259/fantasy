@@ -62,22 +62,22 @@ insert into public.events (match_id, player_id, type) select (select id from pub
 update public.matches set status = 'finished', score_a = 1, score_b = 0;
 reset role;
 select t.check('review due in 10 minutes', (select review_due < now() + interval '11 minutes' from public.matches));
-select t.check('live round points: captain goal 10 + GK clean sheet 8', (select points = 18 from public.user_round_points where user_id = '00000000-0000-0000-0000-000000000001'));
+select t.check('live round points: captain goal 10 + GK clean sheet 8 + appearance 18', (select points = 36 from public.user_round_points where user_id = '00000000-0000-0000-0000-000000000001'));
 
 -- ── جولة واحدة في التجربة: ماتش بعد أسبوعين بيتحسب في نفس التشكيلة ──
 select t.check('one test round for everything', public.fn_week_cutoff(now()) = public.fn_week_cutoff(now() + interval '30 days'));
-select t.check('test season exists (chips work)', (select count(*) = 1 from public.seasons));
+select t.check('the test round has its year (chips work)', (public.fn_season_at(public.fn_open_round())).year = 2099);
 insert into public.matches (teams, date_time, week) values (array['أ', 'ب'], now() + interval '14 days', 2);
 insert into public.lineups (match_id, player_id, status)
 select (select id from public.matches where week = 2), id, 'starting' from public.players;
 insert into public.events (match_id, player_id, type) select (select id from public.matches where week = 2), id, 'goal' from public.players where name = 'ه';
-select t.check('second match adds to the same round (captain goal +10)',
-  (select points = 28 from public.user_round_points where user_id = '00000000-0000-0000-0000-000000000001'));
+select t.check('second match adds to the same round (captain goal +10, appearance +18)',
+  (select points = 64 from public.user_round_points where user_id = '00000000-0000-0000-0000-000000000001'));
 select t.check('league total counts all points right away (no approval wait)',
-  (select total_points = 28 from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
+  (select total_points = 64 from public.profiles where id = '00000000-0000-0000-0000-000000000001'));
 insert into public.leagues (name, type) values ('الدوري العام', 'global');
-select t.check('global league: top = 28 points, ranked first',
-  (select rank = 1 and points = 28 from public.league_standings((select id from public.leagues where type = 'global')) limit 1));
+select t.check('global league: top = 64 points, ranked first',
+  (select rank = 1 and points = 64 from public.league_standings((select id from public.leagues where type = 'global')) limit 1));
 
 -- ── خماسي/سداسي: الأساسي ≤ الملعب · الفريق ≤ ٧ ──
 insert into public.players (name, team, position) values ('ز', 'أ', 'MID'), ('ح٩', 'أ', 'GK'), ('س', 'أ', 'DEF'), ('ص', 'أ', 'DEF');
@@ -100,7 +100,7 @@ select t.check('standings return movement', (select moved is not null from publi
 select t.as_user('00000000-0000-0000-0000-000000000001');
 set role authenticated;
 select t.check('round recap: points + best pick + captain',
-  (select points = 28 and best_name = 'ه' and captain_name = 'ه' and captain_points = 10 from public.my_round_recap(public.fn_week_cutoff(now()))));
+  (select points = 64 and best_name = 'ه' and captain_name = 'ه' and captain_points = 16 from public.my_round_recap(public.fn_week_cutoff(now()))));
 reset role;
 
 -- ── دوري المناطق ──

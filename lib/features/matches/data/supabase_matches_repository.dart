@@ -4,7 +4,6 @@ import '../../../core/supabase/supabase_service.dart';
 import '../../../core/zone/zone_scope.dart';
 import 'matches_repository.dart';
 import 'models/game_match.dart';
-import 'models/late_match_request.dart';
 
 /// تنفيذ MatchesRepository فوق جدول matches في Supabase.
 class SupabaseMatchesRepository implements MatchesRepository {
@@ -125,24 +124,5 @@ class SupabaseMatchesRepository implements MatchesRepository {
   Future<int> deleteMatch(String id) async {
     final rows = await SupabaseService.table(_table).delete().eq('id', id).select('id');
     return rows.length;
-  }
-
-  @override
-  Future<void> requestLateMatch({required List<String> teams, required DateTime dateTime, String? note}) async {
-    await SupabaseService.client.rpc(
-      'request_late_match',
-      params: {'p_teams': teams, 'p_when': dateTime.toUtc().toIso8601String(), 'p_note': note},
-    );
-  }
-
-  @override
-  Future<List<LateMatchRequest>> pendingLateMatches() async {
-    final rows = await SupabaseService.client.rpc('admin_late_match_requests') as List;
-    return rows.cast<Map<String, dynamic>>().map(LateMatchRequest.fromMap).toList();
-  }
-
-  @override
-  Future<void> reviewLateMatch(String requestId, bool approve) async {
-    await SupabaseService.client.rpc('review_late_match', params: {'p_req': requestId, 'p_approve': approve});
   }
 }

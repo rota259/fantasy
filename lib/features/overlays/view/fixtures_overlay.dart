@@ -21,6 +21,9 @@ import '../widgets/overlay_shell.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
+part 'fixtures_overlay_sections.dart';
+part 'fixtures_overlay_sections2.dart';
+
 /// الماتشات: القادمة (+ تابع لايف) وآخر النتايج (+ قيّم اللاعيبة).
 class FixturesOverlay extends StatelessWidget {
   const FixturesOverlay({super.key});
@@ -68,173 +71,8 @@ class _FixturesView extends StatelessWidget {
     );
   }
 
-  Widget _deadline(GameMatch m) {
-    return Container(
-      decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-      child: Row(
-        children: [
-          BlinkDot(color: AppColors.accent),
-          const SizedBox(width: 8),
-          Text(
-            'يقفل ${arabicWeekday(m.deadline)} ${arabicTime(m.deadline)} · اختر قبلها',
-            style: AppText.h(11, color: AppColors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _upcoming(BuildContext context, MatchesState s) {
-    final groups = <String, List<GameMatch>>{};
-    for (final m in s.matches) {
-      groups.putIfAbsent('${arabicWeekday(m.dateTime)} ${m.dateTime.day}/${m.dateTime.month}', () => []).add(m);
-    }
-    return [
-      for (final entry in groups.entries) ...[
-        _dayHeader(entry.key),
-        for (final (i, m) in entry.value.indexed)
-          FadeSlideIn(index: i, child: _row(context, m, s.follows.contains(m.id))),
-      ],
-      _legend(),
-    ];
-  }
-
-  Widget _empty() => Padding(
-    padding: const EdgeInsets.all(30),
-    child: Center(
-      child: EmptyState(
-        icon: Icons.event_busy_outlined,
-        title: 'مفيش ماتشات قادمة',
-        hint: 'مديرين منطقتك بينزّلوا الماتشات قبل كل جولة',
-      ),
-    ),
-  );
-
   Widget _dayHeader(String t) => Padding(
     padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
     child: Text(t, style: AppText.kicker()),
   );
-
-  Widget _row(BuildContext context, GameMatch m, bool following) {
-    final uid = userId;
-    final live = m.hasStarted && !m.isFinished;
-    return Pressable(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => MatchCenterScreen.open(context, m),
-      child: Container(
-        margin: AppDecor.tileMargin,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: AppDecor.tile,
-        child: Row(
-          children: [
-            FdrChip(m.fdr),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: '${m.teamA} ', style: AppText.h(13)),
-                        TextSpan(
-                          text: 'ضد',
-                          style: AppText.body(13, color: AppColors.neutral700),
-                        ),
-                        TextSpan(text: ' ${m.teamB}', style: AppText.h(13)),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    live
-                        ? '● لايف · ${m.scoreA ?? 0} - ${m.scoreB ?? 0}${m.isChallenge ? ' · تحدّي الجولة' : ''}'
-                        : '${arabicTime(m.dateTime)}${m.isChallenge ? ' · تحدّي الجولة' : ''}',
-                    style: AppText.body(10, color: live ? AppColors.danger : AppColors.neutral600),
-                  ),
-                ],
-              ),
-            ),
-            if (uid != null)
-              FollowButton(
-                matchId: m.id,
-                userId: uid,
-                following: following,
-                onChanged: (on) => context.read<MatchesCubit>().setFollow(m.id, on),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// ماتش خلص: النتيجة + تقييم الجمهور (مفتوح ٢٤ ساعة) أو نتيجة التقييم.
-  Widget _result(BuildContext context, GameMatch m) {
-    final uid = userId;
-    final canRate = m.ratingOpen;
-    return Pressable(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => MatchCenterScreen.open(context, m),
-      child: Container(
-        margin: AppDecor.tileMargin,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: AppDecor.tile,
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(m.teamA, textAlign: TextAlign.end, style: AppText.h(13)),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
-              child: Text(m.scoreText.isEmpty ? '—' : m.scoreText, style: AppText.h(14, color: AppColors.white)),
-            ),
-            Expanded(child: Text(m.teamB, style: AppText.h(13))),
-            if (uid != null && (canRate || m.motmDone))
-              Pressable(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MatchRatingsScreen(match: m, userId: uid),
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  color: canRate ? AppColors.accent : null,
-                  decoration: canRate
-                      ? null
-                      : BoxDecoration(
-                          borderRadius: AppRadius.md,
-                          border: Border.all(color: AppColors.line, width: 1.2),
-                        ),
-                  child: Text(
-                    canRate ? 'قيّم' : 'رجل الماتش',
-                    style: AppText.h(10, color: canRate ? AppColors.white : AppColors.ink),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _legend() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-      child: Row(
-        children: [
-          Text(
-            'FDR: ',
-            style: AppText.body(10, color: AppColors.neutral700, weight: FontWeight.w600),
-          ),
-          const FdrChip(2, size: 20),
-          Text(' سهل   ', style: AppText.body(10, color: AppColors.neutral700)),
-          const FdrChip(5, size: 20),
-          Text(' صعب', style: AppText.body(10, color: AppColors.neutral700)),
-        ],
-      ),
-    );
-  }
 }

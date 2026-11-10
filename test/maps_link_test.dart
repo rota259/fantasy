@@ -6,19 +6,19 @@ void main() {
     const url =
         'https://www.google.com/maps/place/X/@30.1,31.2,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x0!8m2!3d30.0561!4d31.3302';
     final p = MapsLink.parse(url)!;
-    expect(p.latitude, 30.0561);
-    expect(p.longitude, 31.3302);
+    expect(p.lat, 30.0561);
+    expect(p.lng, 31.3302);
   });
 
   test('لينك ?q= وبفاصلة متشفّرة', () {
     final p = MapsLink.parse('https://maps.google.com/?q=30.0444%2C31.2357')!;
-    expect(p.latitude, 30.0444);
-    expect(p.longitude, 31.2357);
+    expect(p.lat, 30.0444);
+    expect(p.lng, 31.2357);
   });
 
   test('لينك @ بس', () {
     final p = MapsLink.parse('https://www.google.com/maps/@29.9792,31.1342,15z')!;
-    expect(p.latitude, 29.9792);
+    expect(p.lat, 29.9792);
   });
 
   test('لينك مختصر مالوش إحداثيات من غير نت', () {

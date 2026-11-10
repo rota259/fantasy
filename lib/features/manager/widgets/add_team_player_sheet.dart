@@ -8,12 +8,13 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/box_field.dart';
 import '../../../core/widgets/motion.dart';
+import 'similar_players_dialog.dart';
 
 /// في الخماسي مفيش غير حارس ولاعب (اللاعب بيتخزّن FWD).
 const _positions = [('FWD', 'لاعب'), ('GK', 'حارس')];
 
 /// لاعب جديد: الاسم · حارس ولا لاعب · صورته (اختياري).
-typedef NewTeamPlayer = ({String name, String position, Uint8List? photo, String? photoExt});
+typedef NewTeamPlayer = ({String name, String? nickname, String position, Uint8List? photo, String? photoExt});
 
 /// (مدير) شيت "ضيف لاعب" لفريق — بيرجّع الاسم والمركز والصورة لو اختارها.
 Future<NewTeamPlayer?> showAddTeamPlayerSheet(BuildContext context, String team) {
@@ -35,6 +36,7 @@ class _Sheet extends StatefulWidget {
 
 class _SheetState extends State<_Sheet> {
   final _name = TextEditingController();
+  final _nick = TextEditingController();
   String _pos = 'FWD';
   Uint8List? _photo;
   String? _ext;
@@ -50,9 +52,17 @@ class _SheetState extends State<_Sheet> {
     });
   }
 
+  Future<void> _submit() async {
+    final n = _name.text.trim();
+    final nick = _nick.text.trim().isEmpty ? null : _nick.text.trim();
+    if (n.isEmpty || !await confirmNotDuplicate(context, n, widget.team, hasNickname: nick != null)) return;
+    if (mounted) Navigator.pop(context, (name: n, nickname: nick, position: _pos, photo: _photo, photoExt: _ext));
+  }
+
   @override
   void dispose() {
     _name.dispose();
+    _nick.dispose();
     super.dispose();
   }
 
@@ -92,6 +102,7 @@ class _SheetState extends State<_Sheet> {
               ),
               const SizedBox(height: 12),
               BoxField(controller: _name, hint: 'اسم اللاعب'),
+              BoxField(controller: _nick, hint: 'اسم الشهرة (اختياري) — زي «حمو»'),
               const SizedBox(height: 4),
               Wrap(
                 spacing: 8,
@@ -114,10 +125,7 @@ class _SheetState extends State<_Sheet> {
               ),
               const SizedBox(height: 14),
               Pressable(
-                onTap: () {
-                  final n = _name.text.trim();
-                  if (n.isNotEmpty) Navigator.pop(context, (name: n, position: _pos, photo: _photo, photoExt: _ext));
-                },
+                onTap: _submit,
                 child: Container(
                   decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
                   padding: const EdgeInsets.all(13),

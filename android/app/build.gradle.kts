@@ -65,3 +65,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // نفس نسخة firebase_messaging — عشان فحص التوكن في NotifyChannel.kt يشوف الكلاسات
+    implementation("com.google.firebase:firebase-messaging:25.1.2")
+}

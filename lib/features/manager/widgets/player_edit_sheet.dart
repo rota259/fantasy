@@ -9,6 +9,8 @@ import '../../players/data/models/player.dart';
 import '../cubit/manager_players_cubit.dart';
 import '../../../core/widgets/motion.dart';
 
+part 'player_edit_sheet_sections.dart';
+
 /// في الخماسي مفيش غير حارس ولاعب (اللاعب بيتخزّن FWD).
 const _positions = [('FWD', 'لاعب'), ('GK', 'حارس')];
 
@@ -32,48 +34,20 @@ class _EditSheet extends StatefulWidget {
 }
 
 class _EditSheetState extends State<_EditSheet> {
+  // setState محمي (protected) — الأجزاء المنقولة لملفات تانية بتحدّث الشاشة من هنا
+  void _update(VoidCallback fn) => setState(fn);
+
   late final _name = TextEditingController(text: widget.player.name);
   late final _team = TextEditingController(text: widget.player.team);
   late String _pos = widget.player.position == 'GK' ? 'GK' : 'FWD';
   late String? _photo = widget.player.imageUrl;
   bool _uploading = false;
 
-  Future<void> _pickPhoto() async {
-    final messenger = ScaffoldMessenger.of(context);
-    final f = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 75, maxWidth: 800);
-    if (f == null) return;
-    setState(() => _uploading = true);
-    final ext = f.name.contains('.') ? f.name.split('.').last : 'jpg';
-    final err = await widget.cubit.setPhoto(widget.player.id, await f.readAsBytes(), ext);
-    if (!mounted) return;
-    setState(() => _uploading = false);
-    if (err != null) {
-      messenger.showSnackBar(SnackBar(content: Text(err)));
-    } else {
-      final fresh = widget.cubit.state.players.where((p) => p.id == widget.player.id).firstOrNull;
-      setState(() => _photo = fresh?.imageUrl);
-    }
-  }
-
   @override
   void dispose() {
     _name.dispose();
     _team.dispose();
     super.dispose();
-  }
-
-  Future<void> _save() async {
-    final name = _name.text.trim();
-    final team = _team.text.trim();
-    final messenger = ScaffoldMessenger.of(context);
-    final navigator = Navigator.of(context);
-    if (name.isEmpty || team.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('اكتب الاسم والنادي')));
-      return;
-    }
-    final err = await widget.cubit.update(widget.player.id, name: name, team: team, position: _pos);
-    navigator.pop();
-    messenger.showSnackBar(SnackBar(content: Text(err ?? 'اتعدّل اللاعب ✓')));
   }
 
   @override
@@ -142,21 +116,4 @@ class _EditSheetState extends State<_EditSheet> {
       ),
     );
   }
-
-  Widget _field(TextEditingController c, String hint) => Container(
-    decoration: BoxDecoration(
-      borderRadius: AppRadius.md,
-      border: Border.all(color: AppColors.line, width: 1.2),
-    ),
-    child: TextField(
-      controller: c,
-      style: AppText.h(14),
-      decoration: InputDecoration(
-        isDense: true,
-        border: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
-        hintText: hint,
-      ),
-    ),
-  );
 }

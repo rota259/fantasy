@@ -12,6 +12,8 @@ class HomeState extends Equatable {
     this.starRound,
     this.weekFinal = false,
     this.weekLabel = '',
+    this.liveStar,
+    this.liveRound,
     this.toRate = const [],
     this.tieOpen = false,
     this.toReview = const [],
@@ -28,6 +30,8 @@ class HomeState extends Equatable {
   final WeekWindow? starRound; // جولة النجم (لتفاصيله)
   final bool weekFinal; // الجولة خلصت (الترتيب نهائي)
   final String weekLabel;
+  final WeekPlayer? liveStar; // الأعلى في الجولة اللي لسه شغّالة لحد دلوقتي (من الماتشات المعتمدة)
+  final WeekWindow? liveRound;
   final List<GameMatch> toRate; // ماتشات التقييم فيها مفتوح
   final bool tieOpen; // فيه تصويت تعادل على تشكيلة الجولة
   final List<PendingReview> toReview; // ماتشات لعبت فيها ومستنية تأكيدي
@@ -47,6 +51,8 @@ class HomeState extends Equatable {
     starRound,
     weekFinal,
     weekLabel,
+    liveStar,
+    liveRound,
     toRate,
     tieOpen,
     toReview,

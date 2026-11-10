@@ -1,7 +1,5 @@
-import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
-
-/// لينكات جوجل مابس: التحقق + استخراج الإحداثيات (حتى من اللينك المختصر maps.app.goo.gl).
+/// لينكات جوجل مابس: التحقق + الإحداثيات لو مكتوبة في اللينك نفسه (مفيش خرايط جوه الأبلكيشن —
+/// زرار «الموقع» بيفتح اللينك في تطبيق الخرايط).
 abstract final class MapsLink {
   MapsLink._();
 
@@ -31,7 +29,7 @@ abstract final class MapsLink {
   }
 
   /// إحداثيات من اللينك مباشرة (من غير نت). null لو مفيش.
-  static LatLng? parse(String url) {
+  static ({double lat, double lng})? parse(String url) {
     final s = Uri.decodeFull(url);
     for (final re in _patterns) {
       final m = re.firstMatch(s);
@@ -40,33 +38,8 @@ abstract final class MapsLink {
       final lng = double.tryParse(m.group(2)!);
       if (lat == null || lng == null) continue;
       if (lat.abs() > 90 || lng.abs() > 180 || (lat == 0 && lng == 0)) continue;
-      return LatLng(lat, lng);
+      return (lat: lat, lng: lng);
     }
     return null;
-  }
-
-  /// إحداثيات من أي لينك جوجل مابس — لو مختصر بيمشي ورا التحويلات لحد اللينك الكامل.
-  static Future<LatLng?> resolve(String url) async {
-    final direct = parse(url);
-    if (direct != null) return direct;
-    final client = http.Client();
-    try {
-      var current = Uri.parse(url);
-      for (var i = 0; i < 6; i++) {
-        final req = http.Request('GET', current)..followRedirects = false;
-        final res = await client.send(req).timeout(const Duration(seconds: 10));
-        final location = res.headers['location'];
-        await res.stream.drain<void>();
-        if (location == null) return null;
-        current = current.resolve(location);
-        final p = parse(current.toString());
-        if (p != null) return p;
-      }
-      return null;
-    } catch (_) {
-      return null;
-    } finally {
-      client.close();
-    }
   }
 }

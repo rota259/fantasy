@@ -8,7 +8,8 @@ const stubs = readFileSync(new URL('stubs.sql', here), 'utf8');
 // الاختبارات بتختبر القوانين الحقيقية (وضع التجربة مقفول) — إلا مع --test-mode
 const testMode = process.argv.includes('--test-mode');
 const flag = `select ${testMode}; $$;  -- TEST_MODE`;
-const migration = readFileSync(process.argv[2], 'utf8').replace('select true; $$;  -- TEST_MODE', () => flag);
+const migration = readFileSync(process.argv[2], 'utf8').replace(/select (true|false); \$\$;  -- TEST_MODE/, () => flag);
+if (!migration.includes(flag)) throw new Error('TEST_MODE flag not found in migration');
 const extra = process.argv[3] ? readFileSync(process.argv[3], 'utf8') : null;
 
 const db = new PGlite();

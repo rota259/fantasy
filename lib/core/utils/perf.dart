@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-/// بيقيس وقت تحميل حاجة ويطبعه في الكونسول (في الـ debug بس — مالوش أي أثر في نسخة المتجر).
+import '../logging/app_log.dart';
+
+/// بيقيس وقت تحميل حاجة ويسجّله (debug) (في الـ debug بس — مالوش أي أثر في نسخة المتجر).
 /// مثال في الكونسول:  ⏱ home: 320ms
 Future<T> timed<T>(String label, Future<T> Function() run) async {
   if (!kDebugMode) return run();
@@ -8,6 +10,6 @@ Future<T> timed<T>(String label, Future<T> Function() run) async {
   try {
     return await run();
   } finally {
-    debugPrint('⏱ $label: ${sw.elapsedMilliseconds}ms');
+    AppLog.debug('perf.timed', fields: {'label': label, 'ms': sw.elapsedMilliseconds});
   }
 }

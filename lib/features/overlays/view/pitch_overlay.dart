@@ -14,7 +14,6 @@ import '../../pitch/data/venues_repository.dart';
 import '../../pitch/view/my_bookings_screen.dart';
 import '../../pitch/view/venue_screen.dart';
 import '../../pitch/widgets/venue_tile.dart';
-import '../../pitch/widgets/venues_map_view.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
@@ -44,8 +43,6 @@ class _PitchView extends StatefulWidget {
 }
 
 class _PitchViewState extends State<_PitchView> {
-  bool _map = false;
-
   void _open(Venue v) {
     final userId = context.read<AuthCubit>().state.user?.id;
     if (userId == null) {
@@ -87,7 +84,6 @@ class _PitchViewState extends State<_PitchView> {
               ),
             ),
           ),
-          Row(children: [_tab('القايمة', false), _tab('الخريطة', true)]),
           Expanded(
             child: BlocBuilder<VenuesCubit, VenuesState>(
               builder: (context, s) {
@@ -101,7 +97,6 @@ class _PitchViewState extends State<_PitchView> {
                     ),
                   );
                 }
-                if (_map) return VenuesMapView(venues: s.venues, onOpen: _open);
                 return ListView(
                   padding: const EdgeInsets.only(bottom: 16),
                   children: [
@@ -112,23 +107,6 @@ class _PitchViewState extends State<_PitchView> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _tab(String label, bool map) {
-    final active = _map == map;
-    return Expanded(
-      child: Pressable(
-        onTap: () => setState(() => _map = map),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: active ? AppColors.accent : AppColors.divider, width: 3)),
-          ),
-          child: Text(label, style: AppText.h(13, color: active ? AppColors.accent : AppColors.neutral600)),
-        ),
       ),
     );
   }

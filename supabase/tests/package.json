@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node run.mjs ../migrate_all.sql smoke.sql && node run.mjs ../migrate_all.sql test_mode.sql --test-mode"
+    "test": "node run.mjs ../migrate_all.sql smoke.sql && node run.mjs ../migrate_all.sql security.sql && node run.mjs ../migrate_all.sql badr_flow.sql && node run.mjs ../migrate_all.sql test_mode.sql --test-mode"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8"

@@ -1,5 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../logging/log_http_client.dart';
+import 'secure_session_storage.dart';
 import 'supabase_config.dart';
 
 /// نقطة وصول واحدة للـ Supabase client في التطبيق كله.
@@ -12,6 +14,13 @@ abstract final class SupabaseService {
       url: SupabaseConfig.url,
       // القيمة نفسها (anon / publishable key) — الاسم الجديد في الإصدار الحديث.
       publishableKey: SupabaseConfig.anonKey,
+      // كل طلب بياخد رقم X-Request-ID وبيتسجّل (المسار · الكود · المدة) — core/logging
+      httpClient: LogHttpClient(),
+      // جلسة الدخول متشفّرة (Android Keystore / iOS Keychain) بدل ملف عادي
+      authOptions: FlutterAuthClientOptions(
+        localStorage: SecureSessionStorage('sb-${Uri.parse(SupabaseConfig.url).host.split('.').first}-auth-token'),
+        pkceAsyncStorage: const SecurePkceStorage(),
+      ),
     );
   }
 

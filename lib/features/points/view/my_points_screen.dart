@@ -99,7 +99,7 @@ class _SeasonRoundsState extends State<_SeasonRounds> {
             children: [
               Expanded(
                 child: Text(
-                  '${_season?.name ?? 'كل المواسم'} · ${rounds.length} جولة${bonuses.isEmpty ? '' : ' + بونص التوقعات'}',
+                  '${_season?.name ?? 'كل السنين'} · ${rounds.length} جولة${bonuses.isEmpty ? '' : ' + بونص التوقعات'}',
                   style: AppText.body(12, color: AppColors.neutral700),
                 ),
               ),
@@ -112,7 +112,7 @@ class _SeasonRoundsState extends State<_SeasonRounds> {
           Padding(
             padding: const EdgeInsets.all(32),
             child: Center(
-              child: Text('معملتش تشكيلة في الموسم ده', style: AppText.body(13, color: AppColors.neutral600)),
+              child: Text('معملتش تشكيلة في السنة دي', style: AppText.body(13, color: AppColors.neutral600)),
             ),
           )
         else ...[

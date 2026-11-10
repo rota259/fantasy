@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'supervisor_row.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -19,6 +20,7 @@ import '../../pitch/view/my_bookings_screen.dart';
 import '../../pitch/view/my_venues_screen.dart';
 import '../../players/data/models/player.dart';
 import '../../seasons/view/season_stars_screen.dart';
+import '../../notifications/view/notify_setup_screen.dart';
 import '../../zones/widgets/my_zone_row.dart';
 import '../../week/view/team_of_week_screen.dart';
 import '../../../core/widgets/motion.dart';
@@ -39,7 +41,7 @@ class AccountMenu extends StatelessWidget {
     return Column(
       children: [
         _row(Icons.star_border, 'تشكيلة الجولة', () => _push(context, const TeamOfWeekScreen())),
-        _row(Icons.emoji_events_outlined, 'أبطال الموسم (كل المناطق)', () => _push(context, const SeasonStarsScreen())),
+        _row(Icons.emoji_events_outlined, 'أبطال السنة (كل المناطق)', () => _push(context, const SeasonStarsScreen())),
         if (lp != null)
           _row(
             Icons.verified_outlined,
@@ -59,6 +61,7 @@ class AccountMenu extends StatelessWidget {
               () => _push(context, OrganizerRequestScreen(userId: u.id)),
             ),
         ],
+        if (u != null && !u.isManager) const SupervisorRow(),
         if (u?.isManager == true)
           _row(Icons.admin_panel_settings_outlined, 'لوحة الأدمن', () => _push(context, const ManagerHubScreen())),
         BlocBuilder<ThemeModeCubit, ThemeMode>(
@@ -69,6 +72,11 @@ class AccountMenu extends StatelessWidget {
           ),
         ),
         _row(Icons.block_outlined, 'لا للمراهنات · بلّغ', () => _push(context, const FairPlayScreen())),
+        _row(
+          Icons.notifications_active_outlined,
+          'الإشعارات على موبايلك',
+          () => _push(context, const NotifySetupScreen()),
+        ),
         _row(Icons.privacy_tip_outlined, 'سياسة الخصوصية', () => Launchers.url(AppLinks.privacy)),
         if (u != null)
           _row(

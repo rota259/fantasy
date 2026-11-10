@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../features/squad/data/profile_repository.dart';
+import '../logging/app_log.dart';
+import 'device_notify.dart';
 
 /// خدمة إشعارات FCM: تهيئة + إذن + تسجيل التوكن + الاشتراك في إشعارات الكل.
 abstract final class NotificationService {
@@ -17,7 +21,8 @@ abstract final class NotificationService {
   static Future<void> init() async {
     try {
       await Firebase.initializeApp();
-      await FirebaseMessaging.instance.requestPermission();
+      // من غير await: نافذة الإذن متوقفش فتح الأبلكيشن
+      unawaited(FirebaseMessaging.instance.requestPermission().then((_) {}, onError: (_) {}));
     } catch (_) {
       // بيفشل بهدوء على المنصّات اللي مفيهاش إعداد Firebase (زي الويب).
     }
@@ -33,7 +38,12 @@ abstract final class NotificationService {
         repo.saveFcmToken(userId, t).catchError((_) {});
       });
       await messaging.subscribeToTopic(_allTopic);
-    } catch (_) {}
+      AppLog.info('push.token.registered', fields: {'has_token': token != null});
+    } catch (e) {
+      // من غير توكن السيرفر ملوش عنوان يبعتله — ولا إشعار هيوصل الموبايل ده
+      final cause = await DeviceNotify.fcmError(); // السبب الحقيقي (Flutter بيوصّل أول سطر بس)
+      AppLog.error('push.token.failed', error: e, message: cause ?? '$e');
+    }
   }
 
   /// الاشتراك في إشعارات منطقة اليوزر (وإلغاء القديمة لو غيّرها).
@@ -56,6 +66,7 @@ abstract final class NotificationService {
     _tapsWired = true;
     try {
       FirebaseMessaging.onMessageOpenedApp.listen((m) => onTap(m.data));
+      unawaited(DeviceNotify.listenTaps(onTap)); // الإشعارات اللي الأبلكيشن حطها في الشريط وهو مفتوح
       final first = await FirebaseMessaging.instance.getInitialMessage();
       if (first != null) onTap(first.data);
     } catch (_) {}

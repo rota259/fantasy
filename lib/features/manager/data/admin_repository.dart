@@ -26,6 +26,9 @@ abstract interface class AdminRepository {
   /// نقل يوزر/مدير لمنطقة تانية.
   Future<void> setZone(String userId, int zoneId);
 
+  /// مشرف منطقة (null = شيل الإشراف).
+  Future<void> setSupervisor(String userId, int? zoneId);
+
   /// سجل عمليات الأدمنز (الأحدث الأول).
   Future<List<AdminLogEntry>> log();
 

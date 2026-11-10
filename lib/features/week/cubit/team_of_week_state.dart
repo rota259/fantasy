@@ -11,6 +11,7 @@ class TeamOfWeekState extends Equatable {
     this.tie,
     this.tied = const [],
     this.slots = 0,
+    this.fetchedAt,
   });
 
   final WeekWindow window;
@@ -20,9 +21,10 @@ class TeamOfWeekState extends Equatable {
   final PollView? tie; // تصويت التعادل على آخر مكان (لو فيه)
   final List<WeekPlayer> tied; // المتعادلين (للتصويت)
   final int slots; // كام مكان عليه تعادل
+  final DateTime? fetchedAt; // آخر تحديث (للجولة الحالية)
 
   bool get isLoading => status == TeamOfWeekStatus.loading;
-  bool get isCurrent => window == WeekWindow.current();
+  bool get isCurrent => window == WeekWindow.current(); // الجولة الحالية (لايف)
   bool get isPublished => published != null;
 
   /// الخمسة مترتّبين على الخماسي.
@@ -36,8 +38,9 @@ class TeamOfWeekState extends Equatable {
     tie: tie,
     tied: tied,
     slots: slots,
+    fetchedAt: fetchedAt,
   );
 
   @override
-  List<Object?> get props => [window, status, published, ranking, tie, tied, slots];
+  List<Object?> get props => [window, status, published, ranking, tie, tied, slots, fetchedAt];
 }

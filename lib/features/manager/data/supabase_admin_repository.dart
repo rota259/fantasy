@@ -54,6 +54,11 @@ class SupabaseAdminRepository implements AdminRepository {
   }
 
   @override
+  Future<void> setSupervisor(String userId, int? zoneId) async {
+    await SupabaseService.client.rpc('set_supervisor', params: {'p_user': userId, 'p_zone': zoneId});
+  }
+
+  @override
   Future<void> setZone(String userId, int zoneId) async {
     await SupabaseService.client.rpc('admin_set_zone', params: {'p_user': userId, 'p_zone': zoneId});
   }

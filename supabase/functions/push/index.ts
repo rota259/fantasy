@@ -6,10 +6,12 @@
 //   user  → توكن اليوزر
 //   match → توكنات متابعين الماتش
 // النشر:  npx supabase functions deploy push --no-verify-jwt --project-ref jhofyglkpwguzodbeyia
+// السجلات: سطر JSON لكل طلب + نتيجة الإرسال (اتبعت لكام · فشل ليه) — _shared/log.ts
 // السر المطلوب: FIREBASE_SERVICE_ACCOUNT  (SUPABASE_URL و SUPABASE_SERVICE_ROLE_KEY تلقائي)
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { JWT } from "npm:google-auth-library@9";
+import { makeLogger } from "../_shared/log.ts";
 
 const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
@@ -69,13 +71,26 @@ async function send(target: Target, n: Record<string, string>, accessToken: stri
 }
 
 Deno.serve(async (req) => {
+  const log = makeLogger("push", req, supabase);
   try {
+    return log.respond(await handle(req, log));
+  } catch (e) {
+    log.error("push.unhandled", {}, e);
+    return log.respond(json({ error: "internal" }, 500));
+  }
+});
+
+async function handle(req: Request, log: ReturnType<typeof makeLogger>): Promise<Response> {
+  {
     const { id, secret } = await req.json();
     if (!id || !secret) return json({ error: "bad request" }, 400);
 
     // الطلب لازم يكون جاي من الداتابيز
     const { data: ok } = await supabase.rpc("push_secret_ok", { s: secret });
-    if (ok !== true) return json({ error: "forbidden" }, 403);
+    if (ok !== true) {
+      log.warn("push.forbidden"); // حد بينادي الفانكشن من غير سر الداتابيز
+      return json({ error: "forbidden" }, 403);
+    }
 
     const { data: n } = await supabase
       .from("notifications").select("title, body, kind, sound, audience, user_id, match_id, zone_id, link")
@@ -83,15 +98,20 @@ Deno.serve(async (req) => {
     if (!n) return json({ error: "not found" }, 404);
 
     const { access_token } = await jwt.authorize();
-    if (!access_token) return json({ error: "fcm auth failed" }, 500);
+    if (!access_token) {
+      log.error("push.fcm.auth_failed");
+      return json({ error: "fcm auth failed" }, 500);
+    }
 
     if (n.audience === "all") {
       const res = await send({ topic: "all" }, n, access_token);
+      topicResult(log, "all", n.kind, res.status);
       return json({ topic: "all", ok: res.ok });
     }
     if (n.audience === "zone" && n.zone_id) {
       const topic = `zone_${n.zone_id}`;
       const res = await send({ topic }, n, access_token);
+      topicResult(log, topic, n.kind, res.status);
       return json({ topic, ok: res.ok });
     }
 
@@ -121,8 +141,13 @@ Deno.serve(async (req) => {
         await supabase.from("profiles").update({ fcm_token: null }).eq("id", t.id);
       }
     }
+    log.info("push.sent", { audience: n.audience, kind: n.kind, sent, total: tokens.length });
     return json({ sent, total: tokens.length });
-  } catch (e) {
-    return json({ error: String(e) }, 500);
   }
-});
+}
+
+/** نتيجة إرسال لـ topic (الكل أو منطقة). */
+function topicResult(log: ReturnType<typeof makeLogger>, topic: string, kind: string, status: number) {
+  if (status >= 200 && status < 300) log.info("push.sent", { topic, kind });
+  else log.error("push.fcm.failed", { topic, kind, status });
+}

@@ -18,6 +18,8 @@ import '../widgets/manager_poll_results.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
+part 'manager_awards_screen_sections.dart';
+
 /// (مدير) هدف/تصدّي الجولة: المرشّحين بلينكات الفيديو + النتايج + تصويت الموسم.
 class ManagerAwardsScreen extends StatefulWidget {
   const ManagerAwardsScreen({super.key});
@@ -27,6 +29,9 @@ class ManagerAwardsScreen extends StatefulWidget {
 }
 
 class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
+  // setState محمي (protected) — الأجزاء المنقولة لملفات تانية بتحدّث الشاشة من هنا
+  void _update(VoidCallback fn) => setState(fn);
+
   late final Future<List<Player>> _players = context.read<PlayersRepository>().fetchAll();
   final List<AwardCandidate> _cands = [AwardCandidate(), AwardCandidate()];
   String _kind = 'goal'; // goal | save
@@ -38,65 +43,6 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
       c.dispose();
     }
     super.dispose();
-  }
-
-  /// شيل مرشّح — الـ controller بيتقفل بعد ما الحقل يختفي من الشاشة.
-  void _remove(int i) {
-    final c = _cands.removeAt(i);
-    setState(() {});
-    WidgetsBinding.instance.addPostFrameCallback((_) => c.dispose());
-  }
-
-  /// التصويت بيقفل نص ليل الجمعة (آخر يوم عرض الجولة).
-  DateTime get _closesAt {
-    var w = WeekWindow.current();
-    if (DateTime.now().isAfter(w.cutoff.add(const Duration(hours: 20)))) w = w.next;
-    return w.cutoff.add(const Duration(hours: 20));
-  }
-
-  Future<void> _publish(List<Player> players) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final opts = <NewPollOption>[];
-    for (final c in _cands) {
-      final link = c.link.text.trim();
-      if (c.playerId == null) continue;
-      if (!VideoLink.isValid(link)) {
-        messenger.showSnackBar(const SnackBar(content: Text('كل مرشّح لازم يبقى معاه لينك فيديو صحيح')));
-        return;
-      }
-      final p = players.firstWhere((x) => x.id == c.playerId);
-      opts.add((label: '${p.name} · ${p.team}', playerId: p.id, videoUrl: link, matchId: null));
-    }
-    if (opts.length < 2) {
-      messenger.showSnackBar(const SnackBar(content: Text('محتاج مرشّحين اتنين على الأقل')));
-      return;
-    }
-    setState(() => _busy = true);
-    try {
-      final kind = _kind == 'goal' ? PollKind.goalWeek : PollKind.saveWeek;
-      await context.read<PollsRepository>().createAward(
-        kind,
-        _kind == 'goal' ? 'هدف الجولة' : 'تصدّي الجولة 🧤',
-        opts,
-        _closesAt,
-      );
-      messenger.showSnackBar(const SnackBar(content: Text('اتنشر التصويت ✓')));
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(dbMessage(e))));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _season() async {
-    final messenger = ScaffoldMessenger.of(context);
-    try {
-      await context.read<PollsRepository>().createSeasonAward(_kind);
-      messenger.showSnackBar(const SnackBar(content: Text('اتعمل تصويت الموسم من فايزين الجولات ✓')));
-    } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(dbMessage(e))));
-    }
   }
 
   @override
@@ -143,14 +89,14 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
                       _busy ? null : () => _publish(players),
                     ),
                     const SizedBox(height: 22),
-                    Text('آخر الموسم', style: AppText.kicker()),
+                    Text('آخر السنة', style: AppText.kicker()),
                     const SizedBox(height: 6),
                     Text(
-                      'تصويت بين كل اللي كسبوا ${_kind == 'goal' ? 'هدف' : 'تصدّي'} الجولة في الموسم.',
+                      'تصويت بين كل اللي كسبوا ${_kind == 'goal' ? 'هدف' : 'تصدّي'} الجولة في السنة دي.',
                       style: AppText.body(12, color: AppColors.neutral700),
                     ),
                     const SizedBox(height: 8),
-                    _button('اعمل تصويت ${_kind == 'goal' ? 'هدف' : 'تصدّي'} الموسم', AppColors.black, _season),
+                    _button('اعمل تصويت ${_kind == 'goal' ? 'هدف' : 'تصدّي'} السنة', AppColors.black, _season),
                   ],
                 );
               },
@@ -160,34 +106,4 @@ class _ManagerAwardsScreenState extends State<ManagerAwardsScreen> {
       ),
     );
   }
-
-  Widget _kindTab(String k, String label) {
-    final on = _kind == k;
-    return Pressable(
-      onTap: () => setState(() => _kind = k),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: AppRadius.md,
-          color: on ? AppColors.accent : null,
-          border: Border.all(color: on ? AppColors.accent : AppColors.line, width: 1.4),
-        ),
-        child: Text(label, style: AppText.h(13, color: on ? AppColors.white : AppColors.ink)),
-      ),
-    );
-  }
-
-  Widget _button(String text, Color color, VoidCallback? onTap, {bool dark = true}) => Pressable(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: AppRadius.md,
-        color: onTap == null ? AppColors.neutral500 : color,
-        border: dark ? null : Border.all(color: AppColors.line, width: 1.2),
-      ),
-      child: Text(text, style: AppText.h(13, color: dark ? AppColors.white : AppColors.ink)),
-    ),
-  );
 }

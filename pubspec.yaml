@@ -1,5 +1,5 @@
 name: fantasy_5omasi
-description: "A new Flutter project."
+description: "الخماسي — فانتازي ماتشات الخماسي في منطقتك."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -45,14 +45,15 @@ dependencies:
   firebase_core: ^4.14.0
   firebase_messaging: ^16.6.0
   audioplayers: ^6.1.0
-  flutter_map: ^8.3.2
-  latlong2: ^0.10.1
   url_launcher: ^6.3.2
   share_plus: ^13.3.0
   cached_network_image: ^3.4.1
   google_sign_in: ^7.2.0
   crypto: ^3.0.7
   package_info_plus: ^10.2.2
+  flutter_secure_storage: ^11.2.0
+  webview_flutter: ^4.14.1
+  freerasp: ^8.3.0
 
 
 dev_dependencies:

@@ -8,6 +8,9 @@ abstract interface class WeekRepository {
   /// بتتحسب على منطقتي بس، أو كل المناطق لو [allZones] (أبطال الموسم).
   Future<List<WeekPlayer>> pointsBetween(DateTime from, DateTime to, {bool allZones = false});
 
+  /// نقاط اللاعيبة من الماتشات المعتمدة بس (تشكيلة الجولة ونجمها لايف) — منطقتي.
+  Future<List<WeekPlayer>> approvedPointsBetween(DateTime from, DateTime to);
+
   /// تشكيلة الجولة المعتمدة لمنطقتي — null لو لسه الأدمن ماعتمدهاش.
   Future<List<WeekPlayer>?> publishedTeam(WeekWindow window);
 

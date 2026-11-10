@@ -72,3 +72,26 @@ npx supabase functions deploy auth-phone --no-verify-jwt --project-ref jhofyglkp
 
 وبعدها شغّل `supabase/migrate_all.sql` (قسم 44 بيقفل الدالة القديمة). مفيش أسرار محتاجة تتحط للفانكشن دي.
 لو شغّلت ملف الداتابيز قبل ما تنشر الفانكشن، الدخول بالرقم هيقف لحد ما تنشرها (الدخول بالإيميل وجوجل شغالين عادي).
+
+## ٧) CAPTCHA ضد البوتات (Cloudflare Turnstile)
+بتمنع البوتات تعمل حسابات وهمية أو تجرّب كلمات سر بالآلاف. اليوزر الحقيقي غالبًا مش هيحس بيها، ولو شاكة فيه بتطلب ضغطة واحدة.
+
+**فعّل الاتنين مع بعض** — لو فعّلتها في Supabase من غير ما الأبلكيشن يتبني بالمفتاح، الدخول هيترفض عند الكل.
+
+1. **Cloudflare** (حساب مجاني) ← Turnstile ← **Add widget**:
+   - Hostname: `rota259.github.io` (أو أي دومين بتاعك — ولو غيّرته ابني بـ `--dart-define=TURNSTILE_DOMAIN=<الدومين>`).
+   - Widget mode: **Managed**.
+   - هتاخد **Site key** (عام) و **Secret key** (سر).
+2. **Supabase** ← Authentication ← **Attack Protection** ← CAPTCHA ← Turnstile ← الصق الـ **Secret key**. السر ده بتكتبه انت هنا بس — متبعتوش لحد ولا تحطه في الكود.
+3. **ابني الأبلكيشن بالـ Site key:**
+
+```bash
+flutter build appbundle --release --obfuscate --split-debug-info=build/debug-info --dart-define=TURNSTILE_SITE_KEY=<site key>
+```
+
+4. انشر `auth-phone` تاني (بقت بتعدّي الكود لـ Supabase في الدخول برقم الموبايل).
+
+**للتجربة على الـ staging من غير حساب Cloudflare:** Cloudflare عامل مفاتيح تجربة عامة —
+Site key `1x00000000000000000000AA` مع Secret key `1x0000000000000000000000000000000AA` (بتعدّي دايمًا).
+متستخدمهمش في المشروع الأصلي.
+

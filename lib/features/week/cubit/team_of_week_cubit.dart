@@ -42,19 +42,14 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
     });
   }
 
-  /// آخر جولة خلصت — ولو لسه مااتعتمدتش ومفيش تصويت تعادل فيها، آخر واحدة اتعتمدت.
-  Future<WeekWindow> _startWindow() async {
-    if (kTestMode) return WeekWindow.current(); // التجربة: جولة واحدة
-    final last = WeekWindow.current().previous;
-    try {
-      final published = await _repo.latestPublishedRound();
-      if (published == null || published == last) return last;
-      final tie = userId == null ? null : await _polls.tieFor(last.cutoff, userId!);
-      return tie != null ? last : published;
-    } catch (_) {
-      return last;
-    }
-  }
+  /// بتفتح على الجولة اللي خلصت (نهائية) — والتاب التاني الجولة الحالية لايف.
+  Future<WeekWindow> _startWindow() async => kTestMode ? WeekWindow.current() : WeekWindow.current().previous;
+
+  /// الجولة الحالية: أعلى ٥ لحد دلوقتي من الماتشات المعتمدة (بتتغيّر لحد ما الجولة تخلص).
+  void showLive() => _fetch(WeekWindow.current(), loading: true);
+
+  /// آخر جولة خلصت (نهائية — مبتتغيّرش).
+  void showFinished() => _fetch(WeekWindow.current().previous, loading: true);
 
   void previous() => _fetch(state.window.previous, loading: true);
 
@@ -65,23 +60,13 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
   Future<void> _fetch(WeekWindow w, {bool loading = false}) async {
     if (loading) emit(TeamOfWeekState(window: w));
     try {
-      // التجربة: لو الإدارة لسه ماعتمدتش، أعلى ٥ نقط في منطقتي لايف
-      final published = await _repo.publishedTeam(w) ?? (kTestMode ? await _liveTop(w) : null);
-      var ranking = const <WeekPlayer>[];
-      PollView? tie;
-      var tied = const <WeekPlayer>[];
-      var slots = 0;
-      if (published != null) {
-        ranking = await _repo.pointsBetween(w.start, w.cutoff); // الترتيب الكامل بعد الاعتماد بس
-      } else if (w.isFinal() && userId != null) {
-        // الجولة خلصت ولسه مستنية الإدارة — لو فيه تعادل، اليوزرز بيصوّتوا
-        tie = await _polls.tieFor(w.cutoff, userId!);
-        if (tie != null) {
-          final team = TeamOfWeek.build(await _repo.pointsBetween(w.start, w.cutoff));
-          tied = team.tied;
-          slots = team.openSlots;
-        }
-      }
+      // أعلى ٥ من الماتشات المعتمدة (حارس + ٤) — أول ما ماتش يتعتمد واحد جاب أكتر بياخد المكان
+      final ranking = await _repo.approvedPointsBetween(w.start, w.cutoff);
+      final top = TeamOfWeek.top5(ranking);
+      final published = top.isEmpty ? null : top;
+      const PollView? tie = null;
+      const tied = <WeekPlayer>[];
+      const slots = 0;
       if (!isClosed && state.window == w) {
         emit(
           TeamOfWeekState(
@@ -89,6 +74,7 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
             status: TeamOfWeekStatus.ready,
             published: published,
             ranking: ranking,
+            fetchedAt: DateTime.now(),
             tie: tie,
             tied: tied,
             slots: slots,
@@ -98,12 +84,6 @@ class TeamOfWeekCubit extends Cubit<TeamOfWeekState> {
     } catch (_) {
       if (!isClosed && state.window == w) emit(state.copyWith(status: TeamOfWeekStatus.ready));
     }
-  }
-
-  /// التجربة: تشكيلة الجولة لايف — أعلى ٥ دايمًا (حارس + ٤، والتعادل بالاسم) من غير ما تستنى الإدارة.
-  Future<List<WeekPlayer>?> _liveTop(WeekWindow w) async {
-    final top = TeamOfWeek.top5(await _repo.pointsBetween(w.start, w.cutoff));
-    return top.isEmpty ? null : top;
   }
 
   /// صوت في تصويت التعادل. بيرجّع رسالة خطأ أو null.

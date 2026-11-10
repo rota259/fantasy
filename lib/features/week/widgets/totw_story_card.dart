@@ -22,7 +22,7 @@ class TotwStoryCard extends StatelessWidget {
       name: p.name,
       points: p.points,
       star: big,
-      photo: GoldAvatar(player: p, size: big ? 96 : 54),
+      photo: GoldAvatar(player: p, size: big ? 112 : 54),
     );
     return StoryFrame(
       kicker: label,
@@ -31,15 +31,28 @@ class TotwStoryCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('⭐ تشكيلة الجولة', style: AppText.h(20, color: Colors.white)),
-          const SizedBox(height: 16),
-          if (star != null) player(star, big: true),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.star_rounded, color: StoryColors.gold, size: 26),
+                const SizedBox(width: 6),
+                Text('تشكيلة الجولة', style: AppText.h(26, color: Colors.white)),
+              ],
+            ),
+          ),
           const SizedBox(height: 18),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 14,
-            runSpacing: 14,
-            children: [for (final p in rest) SizedBox(width: 80, child: player(p))],
+          if (star != null) ...[
+            player(star, big: true),
+            const SizedBox(height: 6),
+            const StoryPill('نجم الجولة', icon: Icons.star_rounded, color: StoryColors.gold),
+          ],
+          const SizedBox(height: 22),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [for (final p in rest.take(4)) Expanded(child: player(p))],
           ),
         ],
       ),

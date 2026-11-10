@@ -16,7 +16,10 @@ Future<void> showStoryShare(BuildContext context, {required Widget card, require
         mainAxisSize: MainAxisSize.min,
         children: [
           Flexible(
-            child: RepaintBoundary(key: key, child: card),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: RepaintBoundary(key: key, child: card),
+            ),
           ),
           const SizedBox(height: 14),
           Row(

@@ -1,69 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../data/maps_link.dart';
-import '../view/venue_map_picker.dart';
 import '../../../core/widgets/motion.dart';
 
-/// (مدير) موقع الملعب: لينك جوجل مابس (الأدق) — أو تحديده على الخريطة.
+part 'venue_location_field_sections.dart';
+
+/// (صاحب الملعب) موقع الملعب: لينك جوجل مابس — زرار «الموقع» بيفتحه في تطبيق الخرايط.
 class VenueLocationField extends StatefulWidget {
-  const VenueLocationField({super.key, required this.link, required this.location, required this.onLocation});
+  const VenueLocationField({super.key, required this.link});
 
   final TextEditingController link;
-  final LatLng? location;
-  final ValueChanged<LatLng?> onLocation;
 
   @override
   State<VenueLocationField> createState() => _VenueLocationFieldState();
 }
 
 class _VenueLocationFieldState extends State<VenueLocationField> {
-  bool _checking = false;
+  // setState محمي (protected) — الأجزاء المنقولة لملفات تانية بتحدّث الشاشة من هنا
+  void _update(VoidCallback fn) => setState(fn);
+
   String? _msg;
   bool _ok = false;
-
-  Future<void> _paste() async {
-    final data = await Clipboard.getData(Clipboard.kTextPlain);
-    final text = data?.text ?? '';
-    if (text.isEmpty) return;
-    widget.link.text = text;
-    await _check();
-  }
-
-  Future<void> _check() async {
-    final url = MapsLink.extractUrl(widget.link.text);
-    if (url == null || !MapsLink.isGoogleMaps(url)) {
-      setState(() {
-        _ok = false;
-        _msg = 'ده مش لينك جوجل مابس — من جوجل مابس دوس "مشاركة" وانسخ اللينك';
-      });
-      return;
-    }
-    widget.link.text = url;
-    setState(() => _checking = true);
-    final p = await MapsLink.resolve(url);
-    if (!mounted) return;
-    if (p != null) widget.onLocation(p);
-    setState(() {
-      _checking = false;
-      _ok = p != null;
-      _msg = p != null
-          ? 'اتحدد المكان من اللينك ✓'
-          : 'اللينك هيتحفظ ويفتح صح، بس مقدرتش أطلّع المكان منه — حدّده على الخريطة كمان عشان يظهر كدبوس';
-    });
-  }
-
-  Future<void> _pickOnMap() async {
-    final p = await Navigator.push<LatLng>(
-      context,
-      MaterialPageRoute(builder: (_) => VenueMapPicker(initial: widget.location)),
-    );
-    if (p != null) widget.onLocation(p);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +54,7 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
                   ),
                 ),
               ),
-              IconButton(tooltip: 'لصق', onPressed: _checking ? null : _paste, icon: const Icon(Icons.content_paste)),
+              IconButton(tooltip: 'لصق', onPressed: _paste, icon: const Icon(Icons.content_paste)),
             ],
           ),
         ),
@@ -102,9 +63,7 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
           children: [
             Expanded(
               child: Text(
-                _checking
-                    ? 'بيتحقق من اللينك…'
-                    : (_msg ?? 'من جوجل مابس: افتح الملعب ← مشاركة ← نسخ اللينك، والصقه هنا'),
+                _msg ?? 'من جوجل مابس: افتح الملعب ← مشاركة ← نسخ اللينك، والصقه هنا',
                 style: AppText.body(
                   11,
                   color: _msg == null ? AppColors.neutral600 : (_ok ? AppColors.accent : AppColors.danger),
@@ -113,7 +72,7 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
             ),
             const SizedBox(width: 8),
             Pressable(
-              onTap: _checking ? null : _check,
+              onTap: _check,
               child: Container(
                 decoration: BoxDecoration(color: AppColors.black, borderRadius: AppRadius.md),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -122,55 +81,7 @@ class _VenueLocationFieldState extends State<VenueLocationField> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Pressable(
-          onTap: _pickOnMap,
-          child: Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.md,
-              border: Border.all(color: widget.location == null ? AppColors.divider : AppColors.accent, width: 2),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  widget.location == null ? Icons.map_outlined : Icons.check_circle,
-                  color: AppColors.accent,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    widget.location == null ? 'أو حدّد مكانه على الخريطة' : 'المكان متحدد على الخريطة ✓ — دوس للتعديل',
-                    style: AppText.h(12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }
-}
-
-/// اللينك اتحفظ بس مقدرناش نطلّع منه مكان → الملعب مش هيظهر كدبوس في تاب الخريطة.
-Future<bool> confirmNoPin(BuildContext context) async {
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      backgroundColor: AppColors.bg,
-      title: Text('مقدرتش أحدد المكان من اللينك', style: AppText.h(15)),
-      content: Text(
-        'زرار "الموقع" هيفتح اللينك عادي، بس الملعب مش هيظهر في تاب الخريطة. '
-        'تقدر تحدّده على الخريطة كمان من "أو حدّد مكانه على الخريطة".',
-        style: AppText.body(13),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('أحدّده الأول')),
-        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('احفظ كده')),
-      ],
-    ),
-  );
-  return ok == true;
 }

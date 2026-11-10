@@ -1,5 +1,4 @@
 import 'models/game_match.dart';
-import 'models/late_match_request.dart';
 
 /// عقد بيانات الماتشات/الجولات.
 abstract interface class MatchesRepository {
@@ -50,13 +49,4 @@ abstract interface class MatchesRepository {
 
   /// (منظّم الماتش) غيّر مدة ماتش لسه مخلصش.
   Future<void> setDuration(String id, int minutes);
-
-  /// (مدير منطقة) الديدلاين عدّى → طلب للأدمن يضيف الماتش.
-  Future<void> requestLateMatch({required List<String> teams, required DateTime dateTime, String? note});
-
-  /// (أدمن) طلبات الماتشات المتأخرة المستنية.
-  Future<List<LateMatchRequest>> pendingLateMatches();
-
-  /// (أدمن) موافقة (الماتش بيتعمل باسم المدير) أو رفض.
-  Future<void> reviewLateMatch(String requestId, bool approve);
 }

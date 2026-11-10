@@ -6,7 +6,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/masthead.dart';
-import '../../../core/widgets/app_avatar.dart';
+import '../../../core/widgets/jersey.dart';
+import '../../../core/widgets/photo_card.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../players/data/models/player.dart';
 import '../../week/data/week_window.dart';
@@ -16,6 +17,8 @@ import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../../core/share/story_frame.dart';
+
+part 'player_fan_screen_sections.dart';
 
 /// "أنا كلاعب": اللاعب الحقيقي يشوف مين اختاره وخلّاه كابتن + يشيّر.
 class PlayerFanScreen extends StatefulWidget {
@@ -55,7 +58,13 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
                 return ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    RepaintBoundary(key: _cardKey, child: _card(s)),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: RepaintBoundary(key: _cardKey, child: _card(s)),
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Pressable(
@@ -87,56 +96,4 @@ class _PlayerFanScreenState extends State<PlayerFanScreen> {
       ),
     );
   }
-
-  /// كارت story للاعب الحقيقي: «اختارني N واحد كابتن 🔥» + أرقامه — جاهز للستوري.
-  Widget _card(FanStats s) {
-    final refCode = context.read<AuthCubit>().state.user?.refCode;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: StoryFrame(
-        kicker: _window.label,
-        refCode: refCode,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppAvatar(initials: p.initials, photoUrl: p.imageUrl, size: 110, verified: true),
-            const SizedBox(height: 10),
-            Text(p.name, style: AppText.h(26, color: AppColors.white)),
-            Text('${p.team} · ${p.positionAr}', style: AppText.body(12, color: AppColors.neutral400)),
-            const SizedBox(height: 18),
-            Text(
-              s.captains > 0 ? 'اختارني ${s.captains} واحد كابتن 🔥' : 'اختارني ${s.owners} واحد في تشكيلته ⚽',
-              textAlign: TextAlign.center,
-              style: AppText.h(24, color: const Color(0xFFF2C14E)),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              children: [
-                _stat('${s.owners}', 'اختاروني'),
-                _stat('${s.ownership.toStringAsFixed(0)}%', 'الامتلاك'),
-                _stat('${s.pointsForUsers}', 'نقطة جبتها لهم'),
-              ],
-            ),
-            if (s.posTotal > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  '#${s.posRank} بين ${p.position == 'GK' ? 'الحراس' : 'اللاعيبة'} من ${s.posTotal}',
-                  style: AppText.h(14, color: AppColors.white),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _stat(String v, String k) => Expanded(
-    child: Column(
-      children: [
-        Text(v, style: AppText.h(24, color: AppColors.accent400)),
-        Text(k, style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.7))),
-      ],
-    ),
-  );
 }

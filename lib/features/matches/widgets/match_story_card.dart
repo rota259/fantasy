@@ -28,7 +28,7 @@ class MatchStoryCard extends StatelessWidget {
             m.teams.length > i ? m.teams[i] : '',
             textAlign: TextAlign.center,
             maxLines: 2,
-            style: AppText.h(16, color: Colors.white),
+            style: AppText.h(20, color: Colors.white),
           ),
           const SizedBox(height: 10),
           for (final s in scorers(i))
@@ -52,10 +52,11 @@ class MatchStoryCard extends StatelessWidget {
           Text(
             '${m.scoreA ?? 0}  -  ${m.scoreB ?? 0}',
             textDirection: TextDirection.ltr,
-            style: AppText.h(64, color: const Color(0xFF52C487), height: 1),
+            style: AppText.h(96, color: StoryColors.lime, height: 1),
           ),
-          Text(m.isFinished ? 'النتيجة النهائية' : '🔴 لايف', style: AppText.h(13, color: Colors.white)),
-          const SizedBox(height: 18),
+          const SizedBox(height: 8),
+          StoryPill(m.isFinished ? 'النتيجة النهائية' : 'لايف', filled: !m.isFinished),
+          const SizedBox(height: 22),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [side(0), const SizedBox(width: 10), side(1)]),
         ],
       ),

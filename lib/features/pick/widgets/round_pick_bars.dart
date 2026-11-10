@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
-import '../../matches/widgets/match_format.dart';
 import '../../week/data/week_window.dart';
 import '../cubit/round_pick_cubit.dart';
 import '../../../core/widgets/motion.dart';
 
-/// شريط الديدلاين فوق التشكيلة.
+/// شريط القواعد فوق التشكيلة (مفيش ديدلاين واحد — كل لاعب بيتقفل لوحده).
 class DeadlineBar extends StatelessWidget {
   const DeadlineBar({super.key, required this.window, required this.wildcard});
 
@@ -19,16 +18,13 @@ class DeadlineBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final String text;
     var color = AppColors.accent400;
-    if (!window.isLocked()) {
-      text = 'بتقفل ${arabicWeekday(window.deadline)} ${arabicTime(window.deadline)} · ${window.label}';
-    } else if (window.hasStarted()) {
-      text = 'الجولة بدأت — التشكيلة اتقفلت';
+    if (window.isFinal()) {
+      text = 'الجولة خلصت · ${window.label}';
       color = AppColors.neutral400;
     } else if (wildcard) {
-      text = '🃏 الوايلد كارد شغّال — عدّل لحد ${arabicTime(window.start)}';
+      text = 'الوايلد كارد شغّال — كل تغييراتك في الجولة دي ببلاش';
     } else {
-      text = 'التشكيلة اتقفلت — الجولة بتبدأ ${arabicTime(window.start)}';
-      color = AppColors.neutral400;
+      text = 'كل لاعب بيتقفل قبل ماتشه بساعة · كل تغيير فوق المجاني −٤';
     }
     return Container(
       width: double.infinity,
@@ -56,6 +52,11 @@ class PickCounts extends StatelessWidget {
           Text('احتياطي ${s.benchCount}/2', style: AppText.h(13)),
           Text('كابتن ${s.captainId == null ? '✗' : '✓'}', style: AppText.h(13)),
           Text('بديل ${s.viceId == null ? '✗' : '✓'}', style: AppText.h(13)),
+          if (s.locks.baseline != null)
+            Text(
+              'تغييرات ${s.transfers}/${s.locks.free} ببلاش${s.transferCost > 0 ? ' (−${s.transferCost})' : ''}',
+              style: AppText.h(13, color: s.transferCost > 0 ? AppColors.danger : AppColors.ink),
+            ),
         ],
       ),
     );

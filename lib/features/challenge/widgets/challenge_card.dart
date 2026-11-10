@@ -11,6 +11,8 @@ import '../data/models/challenge_extras.dart';
 import 'challenge_sections.dart';
 import 'score_picker.dart';
 
+part 'challenge_card_sections.dart';
+
 /// كارت تحدّي واحد بالأنواع اللي المدير اختارها (فرق الأهداف · مين فيهم؟ · ٣ أسئلة · المعكوس):
 /// جاوب قبل الماتش بساعة، وبعده كل قسم بيقول صح ولا لأ وكسبت كام.
 class ChallengeCard extends StatefulWidget {
@@ -23,34 +25,12 @@ class ChallengeCard extends StatefulWidget {
 }
 
 class _ChallengeCardState extends State<ChallengeCard> {
+  // setState محمي (protected) — الأجزاء المنقولة لملفات تانية بتحدّث الشاشة من هنا
+  void _update(VoidCallback fn) => setState(fn);
+
   int? _a, _b; // فرق الأهداف: المختار قبل الحفظ
   ChallengeAnswers? _ans; // باقي الأنواع قبل الحفظ
   bool _saving = false;
-
-  /// حفظ كل اللي اتجاوب: فرق الأهداف (لو موجود) + باقي الأنواع.
-  Future<void> _save() async {
-    final it = widget.item;
-    final m = it.match;
-    final x = it.extras;
-    final messenger = ScaffoldMessenger.of(context);
-    final cubit = context.read<ChallengeCubit>();
-    setState(() => _saving = true);
-    String? err;
-    if (x.has(ChallengeMode.diff)) {
-      err = await cubit.predict(m, _a ?? it.mine?.scoreA ?? 0, _b ?? it.mine?.scoreB ?? 0);
-    }
-    if (err == null && x.modes.any((k) => k != ChallengeMode.diff)) {
-      err = await cubit.answer(m, _ans ?? x.mine);
-    }
-    if (!mounted) return;
-    setState(() => _saving = false);
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(err ?? 'اتسجّلت إجاباتك ✓ — تقدر تغيّرها لحد ${arabicTime(m.deadline)}'),
-        backgroundColor: err == null ? AppColors.accent : AppColors.danger,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,13 +124,4 @@ class _ChallengeCardState extends State<ChallengeCard> {
       ),
     );
   }
-
-  Widget _note(String t) => Padding(
-    padding: const EdgeInsets.all(12),
-    child: Text(
-      t,
-      textAlign: TextAlign.center,
-      style: AppText.h(13, color: AppColors.neutral700),
-    ),
-  );
 }

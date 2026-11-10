@@ -11,7 +11,7 @@ import '../../../core/theme/app_spacing.dart';
 
 /// اللاعيبة المتاحين للنقطة دي (من كل فرق المنطقة، غير المختارين).
 List<Player> _eligible(RoundPickState s, String kind) => s.players.where((p) {
-  if (s.sel.containsKey(p.id)) return false;
+  if (s.sel.containsKey(p.id) || s.isLocked(p.id)) return false; // المتقفل (ماتشه بدأ) مينفعش يدخل
   return switch (kind) {
     'gk' => p.position == 'GK',
     'out' => p.position != 'GK',
@@ -35,6 +35,7 @@ Future<void> showAddPlayerSheet(BuildContext context, RoundPickCubit cubit, Roun
 /// شيت خيارات لاعب مختار: كابتن / كابتن بديل / تبديل / شيل.
 Future<void> showPlayerOptionsSheet(BuildContext context, RoundPickCubit cubit, RoundPickState s, Player p) {
   final starting = s.sel[p.id] == 'starting';
+  final locked = s.isLocked(p.id);
   return showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.bg,
@@ -42,24 +43,33 @@ Future<void> showPlayerOptionsSheet(BuildContext context, RoundPickCubit cubit, 
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _title('${p.name} · ${p.team}'),
+          _title('${p.label} · ${p.team}'),
           _option(context, 'عمل إيه في الجولة', () {
             Navigator.pop(context);
             showPlayerRoundSheetFor(context, p, cubit.window);
           }, keepOpen: true),
-          if (starting) ...[
+          if (locked)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+              child: Text(
+                'اتقفل — ماتشه بدأ أو فاضل عليه أقل من ساعة، فمينفعش يتشال أو يتغيّر مكانه.',
+                style: AppText.body(12, color: AppColors.neutral700),
+              ),
+            )
+          else if (starting) ...[
             _option(context, 'اعمله كابتن (×٢)', () => cubit.setCaptain(p.id)),
             _option(context, 'اعمله كابتن بديل', () => cubit.setVice(p.id)),
             _option(context, 'بدّله باحتياطي', () {
               Navigator.pop(context);
               _swapSheet(context, cubit, s, p, wantStarting: false);
             }, keepOpen: true),
-          ] else
+          ] else ...[
             _option(context, 'بدّله بأساسي', () {
               Navigator.pop(context);
               _swapSheet(context, cubit, s, p, wantStarting: true);
             }, keepOpen: true),
-          _option(context, 'شيله من التشكيلة', () => cubit.removePick(p.id), danger: true),
+          ],
+          if (!locked) _option(context, 'شيله من التشكيلة', () => cubit.removePick(p.id), danger: true),
         ],
       ),
     ),
@@ -72,7 +82,7 @@ void _swapSheet(BuildContext context, RoundPickCubit cubit, RoundPickState s, Pl
   final list = <Player>[];
   s.sel.forEach((id, st) {
     final q = s.playerById(id);
-    if (st == target && q != null) list.add(q);
+    if (st == target && q != null && !s.isLocked(id)) list.add(q);
   });
   _listSheet(context, wantStarting ? 'بدّل مع أساسي' : 'بدّل مع احتياطي', list, (q) {
     cubit.swap(p.id, q.id);

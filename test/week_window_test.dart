@@ -9,7 +9,6 @@ void main() {
     final w = WeekWindow.current(DateTime(2026, 9, 23, 20));
     expect(w.cutoff, DateTime(2026, 9, 26, 8));
     expect(w.start, DateTime(2026, 9, 19, 16));
-    expect(w.deadline, DateTime(2026, 9, 19, 15));
     expect(w.isFinal(DateTime(2026, 9, 23, 20)), isFalse);
   });
 
@@ -33,15 +32,12 @@ void main() {
     expect(WeekWindow.inGap(DateTime(2026, 9, 25, 10)), isFalse); // الجمعة
   });
 
-  test('الجولة المفتوحة للتشكيلات: لحد السبت ٣ العصر (قبل بدايتها بساعة)', () {
-    // الأربع: الجولة الشغّالة اتقفلت → الجاية (تبدأ السبت ٤) مفتوحة
-    expect(WeekWindow.open(DateTime(2026, 9, 23, 20)).cutoff, DateTime(2026, 10, 3, 8));
-    // السبت ٢:٥٩ العصر: لسه مفتوحة
-    expect(WeekWindow.open(DateTime(2026, 9, 26, 14, 59)).cutoff, DateTime(2026, 10, 3, 8));
-    // السبت ٣ العصر: اتقفلت → اللي بعدها
+  test('الجولة المفتوحة للتشكيلة = الجولة الحالية (مفيش ديدلاين واحد — القفل لكل لاعب)', () {
+    // الأربع: الجولة الشغّالة نفسها مفتوحة
+    expect(WeekWindow.open(DateTime(2026, 9, 23, 20)).cutoff, DateTime(2026, 9, 26, 8));
+    // فاصل السبت (بعد ٨ الصبح): الجولة الجاية
     final noon = DateTime(2026, 9, 26, 15);
-    expect(WeekWindow.open(noon).cutoff, DateTime(2026, 10, 10, 8));
-    expect(WeekWindow(DateTime(2026, 10, 3, 8)).isLocked(noon), isTrue);
+    expect(WeekWindow.open(noon).cutoff, DateTime(2026, 10, 3, 8));
     expect(WeekWindow(DateTime(2026, 10, 3, 8)).hasStarted(noon), isFalse);
   });
 

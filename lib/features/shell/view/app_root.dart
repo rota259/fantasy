@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../notifications/widgets/notify_setup_prompt.dart';
 import '../../notifications/widgets/push_banner.dart';
 import '../../auth/view/verify_email_screen.dart';
 import '../../fairplay/view/fair_play_gate.dart';
@@ -57,6 +59,11 @@ class AppRoot extends StatelessWidget {
       if (s.user != null) LiveHub.connect(userId: s.user!.id, zoneId: s.user!.zoneId);
       if (s.user != null) {
         NotificationService.registerToken(s.user!.id, context.read<ProfileRepository>());
+        // الموبايل مانع الإشعارات أو صوتها (أو شاومي وأخواتها) → رسالة واحدة تفتح شاشة الإصلاح
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = appNavigatorKey.currentContext;
+          if (ctx != null) NotifySetupPrompt.maybeShow(ctx);
+        });
       }
       nav.login();
       // الضغط على push بيفتح صفحته (بعد ما الشاشة الرئيسية تتبني)

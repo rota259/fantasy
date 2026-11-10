@@ -22,6 +22,17 @@ class SupabaseWeekRepository implements WeekRepository {
     return rows.map((r) => WeekPlayer.fromMap(r as Map<String, dynamic>)).toList();
   }
 
+  @override
+  Future<List<WeekPlayer>> approvedPointsBetween(DateTime from, DateTime to) async {
+    final rows =
+        await SupabaseService.client.rpc(
+              'player_points_approved',
+              params: {'p_from': _db(from), 'p_to': _db(to), 'p_zone': ZoneScope.current},
+            )
+            as List;
+    return rows.map((r) => WeekPlayer.fromMap(r as Map<String, dynamic>)).toList();
+  }
+
   static String _db(DateTime t) => t.toUtc().toIso8601String();
 
   @override

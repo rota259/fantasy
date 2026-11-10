@@ -40,11 +40,22 @@ class SupabasePlayersRepository implements PlayersRepository {
   }
 
   @override
-  Future<String> addPlayer({required String name, required String team, required String position}) async {
+  Future<String> addPlayer({
+    required String name,
+    required String team,
+    required String position,
+    String? nickname,
+  }) async {
     final rows = await SupabaseService.table(
       _table,
-    ).insert({'name': name, 'team': team, 'position': position}).select('id');
+    ).insert({'name': name, 'team': team, 'position': position, 'nickname': nickname}).select('id');
     return rows.first['id'].toString();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> similar(String name, String team) async {
+    final rows = await SupabaseService.client.rpc('similar_players', params: {'p_name': name, 'p_team': team});
+    return (rows as List).cast<Map<String, dynamic>>();
   }
 
   @override

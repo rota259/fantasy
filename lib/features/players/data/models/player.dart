@@ -18,6 +18,8 @@ class Player extends Equatable {
     this.availability = 'ready',
     this.news,
     this.userId,
+    this.nickname,
+    this.nameDup = false,
   });
 
   final String id;
@@ -36,7 +38,19 @@ class Player extends Equatable {
   final String? news; // سبب الحالة
   final String? userId; // اليوزر اللي وثّق البروفايل (اللاعب الحقيقي)
 
+  final String? nickname; // اسم الشهرة («حمو»)
+  final bool nameDup; // فيه لاعب تاني في المنطقة أول اسمه زيّه (السيرفر بيحددها)
+
   bool get isVerified => userId != null;
+
+  /// الاسم للعرض: «محمد أحمد (حمو)».
+  String get label => nickname == null ? name : '$name ($nickname)';
+
+  /// اسم قصير للملعب: الشهرة لو موجودة، ولو فيه تشابه من غير شهرة: الاسم + أول كلمة من الفريق.
+  String get shortName => nickname ?? (nameDup ? '$name · ${team.split(' ').first}' : name);
+
+  /// الاسم + الفريق لو فيه تشابه: «محمد أحمد · أسود بدر».
+  String get labelWithTeam => nameDup ? '$label · $team' : label;
 
   /// المركز بالعربي للعرض.
   String get positionAr => position == 'GK' ? 'حارس' : 'لاعب'; // في الخماسي: حارس أو لاعب بس
@@ -60,8 +74,24 @@ class Player extends Equatable {
     availability: (map['availability'] ?? 'ready') as String,
     news: map['news'] as String?,
     userId: map['user_id']?.toString(),
+    nickname: map['nickname'] as String?,
+    nameDup: map['name_dup'] == true,
   );
 
   @override
-  List<Object?> get props => [id, name, team, position, price, imageUrl, totalPoints, form, availability, news, userId];
+  List<Object?> get props => [
+    id,
+    name,
+    team,
+    position,
+    price,
+    imageUrl,
+    totalPoints,
+    form,
+    availability,
+    news,
+    userId,
+    nickname,
+    nameDup,
+  ];
 }

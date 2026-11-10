@@ -12,7 +12,8 @@ abstract final class ShareCard {
     try {
       final boundary = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) throw StateError('no boundary');
-      final image = await boundary.toImage(pixelRatio: 3);
+      // عرض الصورة ١٠٨٠ (مقاس الستوري) مهما كان مقاس المعاينة على الشاشة
+      final image = await boundary.toImage(pixelRatio: (1080 / boundary.size.width).clamp(2.0, 5.0));
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
       if (bytes == null) throw StateError('no bytes');
       await SharePlus.instance.share(

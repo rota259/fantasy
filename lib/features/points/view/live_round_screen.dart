@@ -10,7 +10,6 @@ import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/status_bar.dart';
 import '../../chips/data/chips_repository.dart';
 import '../../matches/data/matches_repository.dart';
-import '../../matches/widgets/match_format.dart';
 import '../../pick/data/picks_repository.dart';
 import '../../pick/view/round_pick_view.dart';
 import '../../players/data/players_repository.dart';
@@ -21,9 +20,11 @@ import '../widgets/round_pager.dart';
 import '../widgets/round_points_body.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
+part 'live_round_screen_widgets.dart';
+
 /// من الهوم: تابين —
 ///   • نقط الجولة اللي بتتلعب: كل لاعب جاب كام، ومين لعب ومين بيلعب ومين لسه.
-///   • تشكيلة الجولة الجاية: تعملها وتغيّرها براحتك لحد الديدلاين (قبل الجولة بساعة).
+///   • تعديل التشكيلة: طول الجولة — كل لاعب بيتقفل قبل ماتشه بساعة.
 /// [ownerName] = تشكيلة يوزر تاني (من الدوري) — للفرجة بس: نقط الجولة من غير تاب التعديل.
 class LiveRoundScreen extends StatefulWidget {
   const LiveRoundScreen({super.key, required this.userId, this.startOnNext = false, this.ownerName});
@@ -77,7 +78,7 @@ class _LiveRoundScreenState extends State<LiveRoundScreen> {
                   children: [
                     _tab('نقط الجولة', !_next, () => setState(() => _next = false)),
                     const SizedBox(width: 6),
-                    _tab('تشكيلة الجولة الجاية', _next, () => setState(() => _next = true)),
+                    _tab('عدّل تشكيلتك', _next, () => setState(() => _next = true)),
                   ],
                 ),
               ),
@@ -90,7 +91,7 @@ class _LiveRoundScreenState extends State<LiveRoundScreen> {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                             child: Text(
-                              '${_open.label} · تقدر تغيّر لحد ${arabicWeekday(_open.deadline)} ${arabicTime(_open.deadline)}',
+                              '${_open.label} · كل لاعب بيتقفل قبل ماتشه بساعة',
                               style: AppText.body(11, color: AppColors.neutral700),
                             ),
                           ),
@@ -124,44 +125,4 @@ class _LiveRoundScreenState extends State<LiveRoundScreen> {
       ),
     ),
   );
-}
-
-class _LivePoints extends StatelessWidget {
-  const _LivePoints({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<LiveRoundCubit, LiveRoundState>(
-      builder: (context, s) {
-        if (s.status == LiveRoundStatus.loading) {
-          return const SkeletonList();
-        }
-        if (s.status == LiveRoundStatus.error) {
-          return Center(
-            child: Text('تعذّر التحميل', style: AppText.body(13, color: AppColors.danger)),
-          );
-        }
-        final e = s.entry;
-        if (e == null) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(28),
-              child: Text(
-                'معملتش تشكيلة للجولة دي (${s.window.label})\nاعمل تشكيلة الجولة الجاية من التاب التاني',
-                textAlign: TextAlign.center,
-                style: AppText.body(13, color: AppColors.neutral600),
-              ),
-            ),
-          );
-        }
-        return ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            RoundPager(entry: e),
-            RoundPointsBody(entry: e, players: s.players, statusFor: s.statusFor, liveTeams: s.liveTeams),
-          ],
-        );
-      },
-    );
-  }
 }

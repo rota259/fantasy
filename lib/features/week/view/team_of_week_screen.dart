@@ -24,8 +24,13 @@ import '../widgets/totw_pitch.dart';
 import '../widgets/totw_tie_section.dart';
 import 'totw_reveal_screen.dart';
 import '../../../core/widgets/motion.dart';
+import '../../matches/widgets/match_format.dart';
 
-/// تشكيلة الجولة لمنطقتك: أعلى ٥ نقط على خماسي أزرق — بتنزل بعد ما الجولة تخلص والإدارة تعتمدها.
+part 'team_of_week_screen_sections.dart';
+part 'team_of_week_tabs.dart';
+
+/// تشكيلة الجولة لمنطقتك: أعلى ٥ نقط (حارس + ٤) من الماتشات المعتمدة.
+///   تابين: «اللي خلصت» (نهائية — مبتتغيّرش) و«الحالية» (لايف لحد دلوقتي — بتتغيّر مع كل ماتش يتعتمد).
 class TeamOfWeekScreen extends StatelessWidget {
   const TeamOfWeekScreen({super.key});
 
@@ -70,15 +75,12 @@ class _View extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: BlocConsumer<TeamOfWeekCubit, TeamOfWeekState>(
-        listenWhen: (p, c) => c.published != null && p.published != c.published,
+        // الكشف الأوتوماتيك للتشكيلة النهائية بس (اللايف بتتغيّر كتير)
+        listenWhen: (p, c) => !c.isCurrent && c.published != null && p.published != c.published,
         listener: (context, s) => _reveal(context, s, auto: true),
         builder: (context, s) {
           final cubit = context.read<TeamOfWeekCubit>();
-          final (badge, badgeColor) = s.isPublished
-              ? ('معتمدة ✓', PitchColors.grass)
-              : s.isCurrent
-              ? ('الجولة شغّالة', AppColors.neutral600)
-              : ('مستنية اعتماد الإدارة', AppColors.bronze);
+          final (badge, badgeColor) = s.isCurrent ? ('لايف', AppColors.danger) : ('نهائية ✓', PitchColors.grass);
           return Column(
             children: [
               const StatusArea(),
@@ -103,6 +105,7 @@ class _View extends StatelessWidget {
                   ],
                 ),
               ),
+              _tabs(context, s),
               Container(
                 width: double.infinity,
                 color: PitchColors.forest,
@@ -117,7 +120,9 @@ class _View extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        s.window.label,
+                        s.isCurrent && s.fetchedAt != null
+                            ? '${s.window.label} · آخر تحديث ${arabicTime(s.fetchedAt!)}'
+                            : s.window.label,
                         style: AppText.body(10, color: AppColors.white.withValues(alpha: 0.7)),
                       ),
                     ),
@@ -131,106 +136,4 @@ class _View extends StatelessWidget {
       ),
     );
   }
-
-  Widget _body(BuildContext context, TeamOfWeekState s) {
-    if (s.isLoading) return const SkeletonList();
-    final cubit = context.read<TeamOfWeekCubit>();
-    if (!s.isPublished) {
-      return ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(28),
-            child: Text(
-              s.isCurrent
-                  ? 'الجولة لسه بتتلعب\nتشكيلة الجولة بتنزل بعد ما الجولة تخلص (السبت ٨ الصبح) والإدارة تعتمدها.'
-                  : 'الإدارة بتراجع تشكيلة الجولة دي — هيوصلك إشعار أول ما تنزل.',
-              textAlign: TextAlign.center,
-              style: AppText.body(13, color: AppColors.neutral700),
-            ),
-          ),
-          if (s.tie != null && s.tied.isNotEmpty)
-            TotwTieSection(
-              tied: s.tied,
-              slots: s.slots,
-              poll: s.tie,
-              onVote: (id) async {
-                final messenger = ScaffoldMessenger.of(context);
-                final err = await cubit.voteTie(id);
-                if (err != null) messenger.showSnackBar(SnackBar(content: Text(err)));
-              },
-            ),
-        ],
-      );
-    }
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Pressable(
-            onTap: () => _reveal(context, s),
-            child: GoldShine(
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.md),
-              padding: const EdgeInsets.all(12),
-              child: Center(
-                child: Text('اكشف التشكيلة وشيّرها', style: AppText.h(14, color: const Color(0xFF3A2600))),
-              ),
-            ),
-          ),
-        ),
-        TotwPitch(spots: s.spots, onTap: (p) => _open(context, p, s.window)),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
-          child: Text('ترتيب الجولة', style: AppText.h(15)),
-        ),
-        for (var i = 0; i < s.ranking.length && i < 15; i++)
-          FadeSlideIn(
-            index: i,
-            child: Pressable(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _open(context, s.ranking[i], s.window),
-              child: _row(i + 1, s.ranking[i], s.spots.any((x) => x?.id == s.ranking[i].id)),
-            ),
-          ),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  /// الضغط على لاعب = عمل إيه في الجولة (كل ماتش · ضد مين · نقطه).
-  void _open(BuildContext context, WeekPlayer p, WeekWindow w) =>
-      showPlayerMatchesSheet(context, playerId: p.id, name: p.name, team: p.team, window: w);
-
-  /// صف في الترتيب: اللي دخلوا التشكيلة بدهب بيلمع، والباقي بالأخضر.
-  Widget _row(int rank, WeekPlayer p, bool inTeam) => Container(
-    margin: AppDecor.tileMargin,
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-    decoration: inTeam
-        ? AppDecor.tile.copyWith(border: Border.all(color: const Color(0xFFC9971C), width: 1.4))
-        : AppDecor.tile,
-    child: Row(
-      children: [
-        SizedBox(
-          width: 24,
-          child: Text('$rank', style: AppText.h(13, color: PitchColors.grass)),
-        ),
-        if (inTeam)
-          GoldAvatar(player: p, size: 32)
-        else
-          Jersey(label: p.initials, size: 34, phase: (p.id.hashCode % 100) / 100),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(p.name, style: AppText.h(14)),
-              Text('${p.team} · ${p.positionAr}', style: AppText.body(10, color: AppColors.neutral700)),
-            ],
-          ),
-        ),
-        Text('${p.points}', style: AppText.h(20, color: inTeam ? AppColors.gold : null)),
-      ],
-    ),
-  );
 }
