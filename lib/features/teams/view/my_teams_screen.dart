@@ -11,14 +11,18 @@ import '../../../core/widgets/status_bar.dart';
 import '../../integrity/widgets/note_dialog.dart';
 import '../data/team.dart';
 import '../data/teams_repository.dart';
+import '../widgets/captain_matches_card.dart';
 import '../widgets/team_players_card.dart';
+import '../../organizer/widgets/captain_reviews.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
 
 /// (مدير) فرقي: كل فريق وتحته لاعيبته — من هنا بضيف الفرق واللاعيبة (بصورهم) وأحذفهم.
+/// (كابتن = يوزر عادي) [captain]: فريق واحد بس + الماتشات اللي مستنية تأكيده.
 class MyTeamsScreen extends StatefulWidget {
-  const MyTeamsScreen({super.key, required this.userId});
+  const MyTeamsScreen({super.key, required this.userId, this.captain = false});
   final String userId;
+  final bool captain;
 
   @override
   State<MyTeamsScreen> createState() => _MyTeamsScreenState();
@@ -27,6 +31,7 @@ class MyTeamsScreen extends StatefulWidget {
 class _MyTeamsScreenState extends State<MyTeamsScreen> {
   late final TeamsRepository _repo = context.read<TeamsRepository>();
   late Future<List<Team>> _future = _repo.mine(widget.userId);
+  List<Team> _teams = const [];
 
   void _reload() => setState(() {
     _future = _repo.mine(widget.userId);
@@ -44,6 +49,10 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
   }
 
   Future<void> _add() async {
+    if (widget.captain && _teams.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الكابتن ليه فريق واحد بس')));
+      return;
+    }
     final name = await showNoteDialog(context, title: 'فريق جديد', hint: 'اسم الفريق (مميّز — مثلًا: نسور بدر)');
     if (name == null || name.isEmpty || !mounted) return;
     await _run(() => _repo.create(name), 'اتضاف «$name» ✓');
@@ -57,8 +66,8 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
         children: [
           const StatusArea(),
           Masthead(
-            title: 'فرقي',
-            subtitle: 'ORGANIZER · TEAMS',
+            title: widget.captain ? 'فريقي' : 'فرقي',
+            subtitle: widget.captain ? 'CAPTAIN' : 'ORGANIZER · TEAMS',
             onBack: () => Navigator.pop(context),
             trailing: Pressable(
               onTap: _add,
@@ -79,17 +88,23 @@ class _MyTeamsScreenState extends State<MyTeamsScreen> {
                   );
                 }
                 if (!snap.hasData) return const SkeletonList();
+                _teams = snap.data!;
                 return ListView(
                   padding: const EdgeInsets.only(bottom: 24),
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        'اسم الفريق مميّز في الأبلكيشن كله ومبيتغيّرش، والماتش لازم يكون بين فريقين من فرقك. '
-                        'افتح أي فريق وضيف لاعيبته بصورهم — الصورة بتظهر في التشكيلات وتشكيلة الجولة.',
+                        widget.captain
+                            ? 'إنت كابتن فريقك: ضيف لاعيبته بصورهم. لما مدير يعمل ماتش ضدكم هيوصلك إشعار، '
+                                  'وبعد الماتش تأكيدك بيعتمد النتيجة. وبتلعب فانتازي عادي — وتقدر تختار لاعيبة فريقك كمان.'
+                            : 'اسم الفريق مميّز في الأبلكيشن كله ومبيتغيّرش، والماتش لازم يكون بين فريقين من فرقك. '
+                                  'افتح أي فريق وضيف لاعيبته بصورهم — الصورة بتظهر في التشكيلات وتشكيلة الجولة.',
                         style: AppText.body(12, color: AppColors.neutral700),
                       ),
                     ),
+                    if (widget.captain) const CaptainReviews(),
+                    if (widget.captain && snap.data!.isNotEmpty) CaptainMatchesCard(team: snap.data!.first.name),
                     if (snap.data!.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(16),

@@ -1,6 +1,12 @@
 part of 'venue_reviews_section.dart';
 
 extension _VenueReviewsSectionStateSections1 on _VenueReviewsSectionState {
+  /// تقييم قبل آخر تجديد (مبيدخلش في المتوسط).
+  bool _old(VenueReview r) {
+    final at = widget.venue.renovatedAt;
+    return at != null && r.createdAt != null && r.createdAt!.isBefore(at);
+  }
+
   /// (أدمن) مسح تقييم مسيء.
   Future<void> _remove(VenueReview r) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -87,6 +93,7 @@ extension _VenueReviewsSectionStateSections1 on _VenueReviewsSectionState {
               Row(
                 children: [
                   Expanded(child: Text(r.name.isEmpty ? 'يوزر' : r.name, style: AppText.h(12))),
+                  if (_old(r)) Text('قبل التجديد · ', style: AppText.body(10, color: AppColors.neutral600)),
                   _stars(r.stars, 13),
                   if (_isAdmin && r.userId != widget.userId)
                     Pressable(

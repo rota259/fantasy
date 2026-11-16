@@ -4,6 +4,7 @@ import '../../../core/supabase/supabase_service.dart';
 import '../../../core/zone/zone_scope.dart';
 import 'matches_repository.dart';
 import 'models/game_match.dart';
+import 'models/match_place.dart';
 
 /// تنفيذ MatchesRepository فوق جدول matches في Supabase.
 class SupabaseMatchesRepository implements MatchesRepository {
@@ -52,6 +53,7 @@ class SupabaseMatchesRepository implements MatchesRepository {
     required DateTime dateTime,
     required int week,
     int durationMin = 60,
+    MatchPlace? place,
   }) async {
     await SupabaseService.table(_table).insert({
       'teams': teams,
@@ -59,6 +61,7 @@ class SupabaseMatchesRepository implements MatchesRepository {
       'week': week,
       'status': 'upcoming',
       'duration_min': durationMin,
+      ...?place?.toWrite(),
     });
   }
 
@@ -107,6 +110,7 @@ class SupabaseMatchesRepository implements MatchesRepository {
     required DateTime dateTime,
     required int week,
     int? durationMin,
+    MatchPlace? place,
   }) async {
     final rows = await SupabaseService.table(_table)
         .update({
@@ -114,6 +118,7 @@ class SupabaseMatchesRepository implements MatchesRepository {
           'date_time': GameMatch.dbTime(dateTime),
           'week': week,
           if (durationMin != null) 'duration_min': durationMin,
+          ...?place?.toWrite(),
         })
         .eq('id', id)
         .select('id');
@@ -124,5 +129,13 @@ class SupabaseMatchesRepository implements MatchesRepository {
   Future<int> deleteMatch(String id) async {
     final rows = await SupabaseService.table(_table).delete().eq('id', id).select('id');
     return rows.length;
+  }
+
+  @override
+  Future<List<GameMatch>> upcomingForTeam(String team) async {
+    final rows = await SupabaseService.table(
+      _table,
+    ).select().eq('status', 'upcoming').contains('teams', [team]).order('date_time').limit(10);
+    return rows.map(GameMatch.fromMap).toList();
   }
 }

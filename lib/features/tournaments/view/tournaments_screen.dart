@@ -12,6 +12,7 @@ import '../../../core/widgets/status_bar.dart';
 import '../../../core/zone/zone_scope.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../matches/widgets/match_format.dart';
+import '../../pitch/data/venues_repository.dart';
 import '../data/models/tournament.dart';
 import '../data/tournaments_repository.dart';
 import '../widgets/create_tournament_sheet.dart';
@@ -27,6 +28,15 @@ class TournamentsScreen extends StatefulWidget {
 
 class _TournamentsScreenState extends State<TournamentsScreen> {
   late Future<List<Tournament>> _future = _load();
+  bool _host = false; // صاحب ملعب موثّق → يعمل بطولات
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<VenuesRepository>().amHost().then<void>((v) {
+      if (mounted) setState(() => _host = v);
+    }, onError: (Object _) {});
+  }
 
   Future<List<Tournament>> _load() async {
     final z = ZoneScope.current;
@@ -43,7 +53,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
   @override
   Widget build(BuildContext context) {
     final u = context.read<AuthCubit>().state.user;
-    final canCreate = u != null && (u.isManager || u.isOrganizer);
+    final canCreate = u != null && (u.isManager || _host);
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Column(
@@ -76,7 +86,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
                           child: EmptyState(
                             icon: Icons.emoji_events_outlined,
                             title: 'مفيش بطولات في منطقتك لسه',
-                            hint: 'مدير منطقتك يقدر يعمل بطولة — والفرق تسجّل فيها',
+                            hint: 'أصحاب الملاعب الموثّقة بيعملوا البطولات — والفرق تسجّل فيها',
                           ),
                         ),
                       for (final (i, t) in list.indexed) FadeSlideIn(index: i, child: _card(t)),
@@ -114,7 +124,8 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
               children: [
                 Text(t.name, style: AppText.h(16)),
                 Text(
-                  '${t.formatLabel} · ${t.teamCount} فرق · ${arabicWeekday(t.startsAt)} ${t.startsAt.day}/${t.startsAt.month}',
+                  '${t.venueName == null ? '' : '🏟️ ${t.venueName} · '}${t.formatLabel} · ${t.teamCount} فرق · '
+                  '${arabicWeekday(t.startsAt)} ${t.startsAt.day}/${t.startsAt.month}',
                   style: AppText.body(11, color: AppColors.neutral700),
                 ),
                 if (t.isFinished && t.champion != null)

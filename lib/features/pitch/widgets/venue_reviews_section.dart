@@ -42,11 +42,13 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
     return FutureBuilder<List<VenueReview>>(
       future: _future,
       builder: (context, snap) {
-        final list = snap.data ?? const <VenueReview>[];
+        final all = snap.data ?? const <VenueReview>[];
         VenueReview? mine;
-        for (final r in list) {
+        for (final r in all) {
           if (r.userId == widget.userId) mine = r;
         }
+        // بعد التجديد: المتوسط من التقييمات الجديدة بس (القديمة بتفضل ظاهرة بعلامة)
+        final list = all.where((r) => !_old(r)).toList();
         final avg = list.isEmpty ? 0.0 : list.fold(0, (s, r) => s + r.stars) / list.length;
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 4),
@@ -81,7 +83,11 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
                         child: FilledButton.icon(
                           onPressed: () => _review(mine),
                           icon: const Icon(Icons.star_rate_rounded),
-                          label: Text(mine == null ? 'قيّم الملعب واكتب تعليق' : 'عدّل تقييمك'),
+                          label: Text(
+                            mine == null
+                                ? 'قيّم الملعب واكتب تعليق'
+                                : (_old(mine) ? 'قيّمه بعد التجديد' : 'عدّل تقييمك'),
+                          ),
                         ),
                       ),
                     ],
@@ -91,10 +97,10 @@ class _VenueReviewsSectionState extends State<VenueReviewsSection> {
               const SizedBox(height: 6),
               if (!snap.hasData)
                 Padding(padding: EdgeInsets.all(12), child: const SkeletonList())
-              else if (list.isEmpty)
+              else if (all.isEmpty)
                 Text('لسه محدش قيّم الملعب ده', style: AppText.body(12, color: AppColors.neutral600))
               else
-                for (final r in list.take(10)) _row(r),
+                for (final r in all.take(10)) _row(r),
             ],
           ),
         );

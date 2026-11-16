@@ -89,8 +89,8 @@ insert into public.players (name, team, position) values
  ('ح١', 'نسور بدر', 'GK'), ('د١', 'نسور بدر', 'DEF'), ('و١', 'نسور بدر', 'MID'), ('ه١', 'نسور بدر', 'FWD'), ('ه٢', 'نسور بدر', 'FWD'),
  ('ح٢', 'صقور بدر', 'GK'), ('د٢', 'صقور بدر', 'DEF'), ('و٢', 'صقور بدر', 'MID'), ('ه٣', 'صقور بدر', 'FWD'), ('ه٤', 'صقور بدر', 'FWD');
 select t.expect_fail('organizer uses a team he does not own', $q$insert into public.players (name, team, position) values ('x', 'فريق حد تاني', 'FWD')$q$);
-insert into public.matches (teams, date_time, week)
-values (array['نسور بدر', 'صقور بدر'], t.slot(0), 1);
+insert into public.matches (venue_name, venue_address, teams, date_time, week)
+values ('ملعب الاختبار', 'بدر', array['نسور بدر', 'صقور بدر'], t.slot(0), 1);
 select t.expect_fail('organizer picks fantasy', $q$select public.save_round_picks(public.fn_open_round(), '[]'::jsonb)$q$);
 reset role;
 select t.check('match got the team zone', (select zone_id = (select id from public.zones where name = 'بدر') from public.matches limit 1));
@@ -100,9 +100,9 @@ select t.check('new match broadcast to zone', (select count(*) >= 1 from realtim
 -- ── اليوزرز يعملوا تشكيلة الجولة ──
 create function t.lineup() returns jsonb language sql as $$
   select jsonb_agg(jsonb_build_object('player_id', id, 'status', st, 'is_captain', cap, 'is_vice', vic)) from (
-    select id, case when name in ('ه٢', 'ه٤') then 'bench' else 'starting' end as st,
+    select id, case when name in ('و٢', 'ه٤') then 'bench' else 'starting' end as st,
            name = 'ه١' as cap, name = 'و١' as vic
-    from public.players where name in ('ح١', 'د١', 'و١', 'ه١', 'د٢', 'ه٢', 'ه٤')) x;
+    from public.players where name in ('ح١', 'د١', 'و١', 'ه١', 'د٢', 'و٢', 'ه٤')) x;
 $$;
 grant execute on function t.lineup() to authenticated;
 select t.as_user('00000000-0000-0000-0000-000000000001');
@@ -339,8 +339,8 @@ select t.check('chips: every chip (wildcard too) blocked once a player in the li
 delete from public.round_picks where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round();
 delete from public.round_transfers where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round();
 delete from public.app_jobs where key like 'carry:%';
-insert into public.matches (teams, date_time, created_at, zone_id, week)
-values (array['نمور بدر', 'صقور بدر'], now() + interval '90 minutes', now() - interval '2 days', (select id from public.zones where name = 'بدر'), 8);
+insert into public.matches (venue_name, venue_address, teams, date_time, created_at, zone_id, week)
+values ('ملعب الاختبار', 'بدر', array['نمور بدر', 'صقور بدر'], now() + interval '90 minutes', now() - interval '2 days', (select id from public.zones where name = 'بدر'), 8);
 select public.fn_round_tick();
 select t.check('round start: last lineup carried over', (select count(*) = 7 from public.round_picks
   where user_id = '00000000-0000-0000-0000-000000000005' and round_end = public.fn_open_round()));
@@ -359,8 +359,8 @@ select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
 select t.expect_fail('late requests are gone', $q$select public.request_late_match(array['نسور بدر', 'صقور بدر'], now() + interval '1 day')$q$);
 select t.expect_fail('organizer: match less than 2 hours ahead',
-  $q$insert into public.matches (teams, date_time) values (array['نسور بدر', 'صقور بدر'], now() + interval '90 minutes')$q$);
-insert into public.matches (teams, date_time, week) values (array['نسور بدر', 'صقور بدر'], t.slot(2), 7);
+  $q$insert into public.matches (venue_name, venue_address, teams, date_time) values ('ملعب الاختبار', 'بدر', array['نسور بدر', 'صقور بدر'], now() + interval '90 minutes')$q$);
+insert into public.matches (venue_name, venue_address, teams, date_time, week) values ('ملعب الاختبار', 'بدر', array['نسور بدر', 'صقور بدر'], t.slot(2), 7);
 reset role;
 select t.check('match added mid-round without approval', (select count(*) = 1 from public.matches where week = 7));
 select t.check('zone notified: new match, you can pick its players',
@@ -369,7 +369,7 @@ select t.check('zone notified: new match, you can pick its players',
 delete from public.matches where week = 7;
 select t.as_user('00000000-0000-0000-0000-00000000000a');
 set role authenticated;
-insert into public.matches (teams, date_time) values (array['أ', 'ب'], public.fn_week_cutoff(now()) - interval '2 minutes');
+insert into public.matches (venue_name, venue_address, teams, date_time) values ('ملعب الاختبار', 'بدر', array['أ', 'ب'], public.fn_week_cutoff(now()) - interval '2 minutes');
 reset role;
 select t.check('admin adds a match any time', (select count(*) = 1 from public.matches where teams = array['أ', 'ب']));
 
@@ -383,15 +383,15 @@ select t.check('Sat 10:00 is the gap', public.fn_in_round_gap(t.cairo('2026-10-0
 select t.check('Sat 08:00 / 16:00 / Fri 10:00 not gap', not public.fn_in_round_gap(t.cairo('2026-10-03 08:00'))
   and not public.fn_in_round_gap(t.cairo('2026-10-03 16:00')) and not public.fn_in_round_gap(t.cairo('2026-10-02 10:00')));
 select t.expect_fail('match in the gap (even admin)',
-  $q$insert into public.matches (teams, date_time) values (array['س', 'ص'], t.cairo('2026-10-03 10:00'))$q$);
+  $q$insert into public.matches (venue_name, venue_address, teams, date_time) values ('ملعب الاختبار', 'بدر', array['س', 'ص'], t.cairo('2026-10-03 10:00'))$q$);
 
 -- ── تحدّي الجولة: كل مدير من ماتشاته · لأهل منطقته بس · فرق الأهداف ──
 insert into auth.users (id, email, raw_user_meta_data) values
  ('00000000-0000-0000-0000-000000000004', 'u4@t.co', jsonb_build_object('name', 'يوزر٤', 'phone', '0105', 'zone_id', (select id from public.zones where name = 'الشروق')));
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
-insert into public.matches (teams, date_time, week) values (array['نسور بدر', 'صقور بدر'], t.slot(1), 2);
-insert into public.matches (teams, date_time, week) values (array['صقور بدر', 'نسور بدر'], t.slot(2), 2);
+insert into public.matches (venue_name, venue_address, teams, date_time, week) values ('ملعب الاختبار', 'بدر', array['نسور بدر', 'صقور بدر'], t.slot(1), 2);
+insert into public.matches (venue_name, venue_address, teams, date_time, week) values ('ملعب الاختبار', 'بدر', array['صقور بدر', 'نسور بدر'], t.slot(2), 2);
 reset role;
 create function t.ch() returns uuid language sql as $$ select id from public.matches where week = 2 order by date_time limit 1 $$;
 grant execute on function t.ch() to authenticated;
@@ -559,8 +559,8 @@ select t.check('admin set the minimum build', (select (public.get_app_config()->
 -- (الميعاد نسبة لدلوقتي — فالاختبار ده ممكن يقع لو اتشغّل السبت ٩ الصبح–٥ العصر: الفاصل بين الجولتين)
 create temp table _dm (id uuid);
 with ins as (
-  insert into public.matches (teams, date_time, organizer_id, zone_id)
-  values (array['نسور بدر', 'صقور بدر'], now() - interval '55 minutes', '00000000-0000-0000-0000-00000000000b',
+  insert into public.matches (venue_name, venue_address, teams, date_time, organizer_id, zone_id)
+  values ('ملعب الاختبار', 'بدر', array['نسور بدر', 'صقور بدر'], now() - interval '55 minutes', '00000000-0000-0000-0000-00000000000b',
           (select id from public.zones where name = 'بدر'))
   returning id)
 insert into _dm select id from ins;

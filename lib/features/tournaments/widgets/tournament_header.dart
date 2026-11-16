@@ -37,6 +37,8 @@ class TournamentHeader extends StatelessWidget {
                   '${t.formatLabel} · ${t.teamCount} فرق · من ${arabicWeekday(t.startsAt)} ${t.startsAt.day}/${t.startsAt.month}',
                   style: AppText.body(11, color: AppColors.neutral300),
                 ),
+                if (t.venueName != null)
+                  Text('🏟️ في ${t.venueName}', style: AppText.h(11, color: AppColors.accent400)),
                 if (t.prize != null || t.sponsor != null)
                   Text(
                     [if (t.prize != null) '🎁 ${t.prize}', if (t.sponsor != null) 'برعاية ${t.sponsor}'].join(' · '),

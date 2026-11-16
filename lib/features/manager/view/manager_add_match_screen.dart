@@ -11,6 +11,8 @@ import '../../../core/widgets/status_bar.dart';
 import '../../auth/cubit/auth_cubit.dart';
 import '../../matches/data/matches_repository.dart';
 import '../../matches/data/models/game_match.dart';
+import '../../matches/data/models/match_place.dart';
+import '../widgets/match_venue_field.dart';
 import '../../matches/widgets/match_format.dart';
 import '../../teams/widgets/team_picker_sheet.dart';
 import '../../week/data/week_window.dart';
@@ -22,9 +24,17 @@ part 'manager_add_match_screen_sections2.dart';
 /// شاشة المدير: إنشاء ماتش جديد أو تعديل ماتش (فريقين + معاد). الديدلاين = المعاد − ساعة.
 /// لو ديدلاين الجولة عدّى: الأدمن بيضيف عادي، ومدير المنطقة بيبعت طلب للإدارة.
 class ManagerAddMatchScreen extends StatefulWidget {
-  const ManagerAddMatchScreen({super.key, required this.matchesRepo, this.editing});
+  const ManagerAddMatchScreen({
+    super.key,
+    required this.matchesRepo,
+    this.editing,
+    this.initialPlace,
+    this.initialKickoff,
+  });
   final MatchesRepository matchesRepo;
   final GameMatch? editing; // لو موجود = وضع التعديل
+  final MatchPlace? initialPlace; // من حجز متأكد: الملعب والميعاد جاهزين
+  final DateTime? initialKickoff;
 
   @override
   State<ManagerAddMatchScreen> createState() => _ManagerAddMatchScreenState();
@@ -37,8 +47,9 @@ class _ManagerAddMatchScreenState extends State<ManagerAddMatchScreen> {
   late final _teamA = TextEditingController(text: widget.editing?.teamA ?? '');
   late final _teamB = TextEditingController(text: widget.editing?.teamB ?? '');
   late final _week = TextEditingController(text: '${widget.editing?.week ?? 1}');
-  late DateTime? _kickoff = widget.editing?.dateTime;
+  late DateTime? _kickoff = widget.editing?.dateTime ?? widget.initialKickoff;
   late int _duration = widget.editing?.durationMin ?? 60;
+  late MatchPlace? _place = widget.editing?.place ?? widget.initialPlace;
   bool _saving = false;
 
   bool get _isEdit => widget.editing != null;

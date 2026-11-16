@@ -67,7 +67,25 @@ extension _MyVenuesScreenStateSections1 on _MyVenuesScreenState {
                   '${v.price}ج/ساعة · ${formatHour(v.openHour)} لـ ${formatHour(v.closeHour)}',
                   style: AppText.body(10, color: AppColors.neutral700),
                 ),
+                Text(
+                  v.verified || !kVenueVerify
+                      ? '✓ تقدر تعمل بطولات وتعلن لأهل منطقتك (من صفحته 📊)'
+                      : (v.verifyRequestedAt != null ? '⏳ طلب التوثيق اتبعت' : 'مش موثّق — اطلب التوثيق من صفحته 📊'),
+                  style: AppText.body(10, color: v.verified ? AppColors.accent : AppColors.neutral600),
+                ),
               ],
+            ),
+          ),
+          Pressable(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => VenueScreen(venue: v, userId: widget.userId),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(Icons.insights_outlined, size: 20, color: AppColors.accent),
             ),
           ),
           Pressable(

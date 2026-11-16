@@ -37,4 +37,29 @@ class SupabaseLineupRepository implements LineupRepository {
       await SupabaseService.table(_table).insert(rows);
     }
   }
+
+  @override
+  Future<void> submitTeam(String matchId, Map<String, String> entries) => SupabaseService.client.rpc(
+    'submit_team_lineup',
+    params: {
+      'p_match': matchId,
+      'p_players': [
+        for (final e in entries.entries) {'player_id': e.key, 'status': e.value},
+      ],
+    },
+  );
+
+  @override
+  Future<List<TeamLineup>> teamLineups(String matchId) async {
+    final rows = await SupabaseService.table('team_lineups').select().eq('match_id', matchId);
+    return rows.map(TeamLineup.fromMap).toList();
+  }
+
+  @override
+  Future<void> applyTeam(String matchId, String team) =>
+      SupabaseService.client.rpc('apply_team_lineup', params: {'p_match': matchId, 'p_team': team});
+
+  @override
+  Future<void> remindTeam(String matchId, String team) =>
+      SupabaseService.client.rpc('remind_team_lineup', params: {'p_match': matchId, 'p_team': team});
 }

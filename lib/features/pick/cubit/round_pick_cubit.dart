@@ -16,7 +16,7 @@ part 'round_pick_state.dart';
 part 'round_pick_save.dart';
 
 /// ViewModel تشكيلة الجولة: ٧ لاعيبة من أي فرق في منطقتك — ٥ أساسي (حارس واحد) + ٢ احتياطي
-/// + كابتن وكابتن بديل (الاتنين لازم عشان تتحفظ). المدير ميقدرش يختار من فرقه.
+/// + كابتن وكابتن بديل (الاتنين لازم عشان تتحفظ). المدير ميقدرش يختار من فرقه (الكابتن عادي) · ٣ بالكتير من نفس الفريق.
 /// كل لاعب بيتقفل قبل ماتشه بساعة: أي تغيير يلمس لاعب متقفل (دخول · خروج · مكانه · الكابتن) بيتجاهل.
 class RoundPickCubit extends Cubit<RoundPickState> {
   RoundPickCubit(this._players, this._picks, this._teams, this.window, this.userId, {this.isOrganizer = false})
@@ -40,7 +40,7 @@ class RoundPickCubit extends Cubit<RoundPickState> {
         () => (
           _players.fetchMyZone(),
           _picks.fetchAllRounds(userId),
-          isOrganizer ? _teams.mine(userId) : Future.value(const <Team>[]),
+          isOrganizer ? _teams.mine(userId) : Future.value(const <Team>[]), // الكابتن يختار لاعيبة فريقه عادي
           _picks.roundLocks(window.cutoff).catchError((_) => const RoundLocks()),
         ).wait,
       );

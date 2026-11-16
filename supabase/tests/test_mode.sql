@@ -45,8 +45,8 @@ select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
 insert into public.teams (name) values ('أ'), ('ب');
 insert into public.players (name, team, position) values
- ('ح', 'أ', 'GK'), ('د', 'أ', 'DEF'), ('و', 'أ', 'MID'), ('ه', 'أ', 'FWD'), ('ه٢', 'أ', 'FWD'), ('د٢', 'ب', 'DEF'), ('ه٣', 'ب', 'FWD');
-insert into public.matches (teams, date_time, week) values (array['أ', 'ب'], now() + interval '2 minutes', 1);
+ ('ح', 'أ', 'GK'), ('د', 'أ', 'DEF'), ('و', 'أ', 'MID'), ('ه', 'أ', 'FWD'), ('ه٢', 'ب', 'FWD'), ('د٢', 'ب', 'DEF'), ('ه٣', 'ب', 'FWD');
+insert into public.matches (venue_name, venue_address, teams, date_time, week) values ('ملعب الاختبار', 'بدر', array['أ', 'ب'], now() + interval '2 minutes', 1);
 reset role;
 select t.check('match notification sent to the zone', (select count(*) = 1 from public.notifications where title like 'ماتش جديد%'));
 select t.as_user('00000000-0000-0000-0000-000000000001');
@@ -67,7 +67,7 @@ select t.check('live round points: captain goal 10 + GK clean sheet 8 + appearan
 -- ── جولة واحدة في التجربة: ماتش بعد أسبوعين بيتحسب في نفس التشكيلة ──
 select t.check('one test round for everything', public.fn_week_cutoff(now()) = public.fn_week_cutoff(now() + interval '30 days'));
 select t.check('the test round has its year (chips work)', (public.fn_season_at(public.fn_open_round())).year = 2099);
-insert into public.matches (teams, date_time, week) values (array['أ', 'ب'], now() + interval '14 days', 2);
+insert into public.matches (venue_name, venue_address, teams, date_time, week) values ('ملعب الاختبار', 'بدر', array['أ', 'ب'], now() + interval '14 days', 2);
 insert into public.lineups (match_id, player_id, status)
 select (select id from public.matches where week = 2), id, 'starting' from public.players;
 insert into public.events (match_id, player_id, type) select (select id from public.matches where week = 2), id, 'goal' from public.players where name = 'ه';
@@ -81,6 +81,9 @@ select t.check('global league: top = 64 points, ranked first',
 
 -- ── خماسي/سداسي: الأساسي ≤ الملعب · الفريق ≤ ٧ ──
 insert into public.players (name, team, position) values ('ز', 'أ', 'MID'), ('ح٩', 'أ', 'GK'), ('س', 'أ', 'DEF'), ('ص', 'أ', 'DEF');
+-- ه٢ اتنقل لفريق ب (حد ٣–٤ من نفس الفريق في الفانتازي) → لاعب خامس لـ أ في الماتش
+insert into public.players (name, team, position) values ('ع', 'أ', 'FWD');
+insert into public.lineups (match_id, player_id, status) select (select id from public.matches where week = 1), id, 'starting' from public.players where name = 'ع';
 select t.expect_fail('6th starter on a 5-a-side pitch',
   $q$insert into public.lineups (match_id, player_id, status) select (select id from public.matches where week = 1), id, 'starting' from public.players where name = 'ز'$q$);
 update public.matches set format = 6 where week = 1;
@@ -109,11 +112,13 @@ set role authenticated;
 select t.check('zone league: my zone first with my points', (select rank = 1 and mine and total >= 28 from public.zone_standings() limit 1));
 reset role;
 
--- ── البطولات ──
+-- ── البطولات (من صاحب ملعب موثّق) ──
+insert into public.venues (id, name, price, owner_id, verified) values
+ ('40000000-0000-0000-0000-000000000001', 'ملعب بدر', 200, '00000000-0000-0000-0000-00000000000b', true);
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
 create temp table _t (k text primary key, id uuid);
-insert into _t values ('league', public.create_tournament('دوري بدر', 'league', 4, 0, now() + interval '1 day'));
+insert into _t values ('league', public.create_tournament('دوري بدر', 'league', 4, 0, now() + interval '1 day', null, null, null, '40000000-0000-0000-0000-000000000001'));
 select public.add_tournament_team((select id from _t where k = 'league'), x) from unnest(array['أ', 'ب', 'ج']) x;
 select public.draw_tournament((select id from _t where k = 'league'));
 reset role;
@@ -188,7 +193,7 @@ reset role;
 -- خروج المغلوب بـ ٣ فرق: فريق واخد راحة → النهائي بيتعمل لوحده → البطل
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
-insert into _t values ('ko', public.create_tournament('كاس بدر', 'knockout', 4, 0, now() + interval '1 day'));
+insert into _t values ('ko', public.create_tournament('كاس بدر', 'knockout', 4, 0, now() + interval '1 day', null, null, null, '40000000-0000-0000-0000-000000000001'));
 select public.add_tournament_team((select id from _t where k = 'ko'), x) from unnest(array['أ', 'ب', 'ج']) x;
 select public.draw_tournament((select id from _t where k = 'ko'));
 reset role;
@@ -210,7 +215,7 @@ select t.check('knockout champion crowned', (select champion is not null and sta
 -- مجموعات: ٤ فرق في مجموعتين → كل مجموعة ماتش → خروج المغلوب
 select t.as_user('00000000-0000-0000-0000-00000000000b');
 set role authenticated;
-insert into _t values ('groups', public.create_tournament('بطولة المجموعات', 'groups', 4, 2, now() + interval '1 day'));
+insert into _t values ('groups', public.create_tournament('بطولة المجموعات', 'groups', 4, 2, now() + interval '1 day', null, null, null, '40000000-0000-0000-0000-000000000001'));
 select public.add_tournament_team((select id from _t where k = 'groups'), x) from unnest(array['أ', 'ب', 'ج', 'د']) x;
 select public.draw_tournament((select id from _t where k = 'groups'));
 reset role;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/links/deep_links.dart';
 import '../../notifications/widgets/notify_setup_prompt.dart';
 import '../../notifications/widgets/push_banner.dart';
 import '../../auth/view/verify_email_screen.dart';
@@ -66,6 +67,13 @@ class AppRoot extends StatelessWidget {
         });
       }
       nav.login();
+      // لينك بطولة/ملعب/ماتش/دوري فتح الأبلكيشن → صفحته
+      DeepLinks.listen(
+        (route) => WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = appNavigatorKey.currentContext;
+          if (ctx != null) NotificationRouter.open(ctx, link: route);
+        }),
+      );
       // الضغط على push بيفتح صفحته (بعد ما الشاشة الرئيسية تتبني)
       NotificationService.listenTaps(
         (data) => WidgetsBinding.instance.addPostFrameCallback((_) {

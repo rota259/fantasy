@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/blink_dot.dart';
+import '../../auth/cubit/auth_cubit.dart';
+import '../../pitch/data/venues_repository.dart';
+import '../../pitch/view/venue_screen.dart';
 import '../data/models/game_match.dart';
 import 'match_format.dart';
 import '../../../core/widgets/fx/flips.dart';
@@ -63,7 +67,31 @@ class MatchScoreboard extends StatelessWidget {
               ),
             ],
           ),
+          if (m.place != null)
+            GestureDetector(
+              onTap: m.place!.venueId == null ? null : () => _openVenue(context, m.place!.venueId!),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  '🏟️ ${m.place!.label}',
+                  textAlign: TextAlign.center,
+                  style: AppText.body(11, color: AppColors.neutral300),
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  static Future<void> _openVenue(BuildContext context, String id) async {
+    final nav = Navigator.of(context);
+    final u = context.read<AuthCubit>().state.user;
+    final v = await context.read<VenuesRepository>().fetchById(id);
+    if (v == null || u == null) return;
+    await nav.push(
+      MaterialPageRoute(
+        builder: (_) => VenueScreen(venue: v, userId: u.id),
       ),
     );
   }

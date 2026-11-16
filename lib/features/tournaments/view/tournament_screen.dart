@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/links/share_link_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -64,7 +65,18 @@ class _ViewState extends State<_View> {
           return Column(
             children: [
               const StatusArea(),
-              Masthead(title: t?.name ?? 'البطولة', subtitle: 'TOURNAMENT', onBack: () => Navigator.pop(context)),
+              Masthead(
+                title: t?.name ?? 'البطولة',
+                subtitle: 'TOURNAMENT',
+                onBack: () => Navigator.pop(context),
+                trailing: t == null
+                    ? null
+                    : ShareLinkButton(
+                        kind: 'tournament',
+                        id: t.id,
+                        text: '🏆 بطولة «${t.name}» في الخماسي${t.venueName == null ? '' : ' — ${t.venueName}'}',
+                      ),
+              ),
               if (s.loading)
                 const Expanded(child: SkeletonList())
               else if (t == null)

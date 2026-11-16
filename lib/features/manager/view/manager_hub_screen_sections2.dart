@@ -14,6 +14,13 @@ extension _ManagerHubScreenSections2 on ManagerHubScreen {
               padding: const EdgeInsets.only(bottom: 24),
               children: [
                 const ManagerDashboard(),
+                _tile(
+                  context,
+                  Icons.trending_up,
+                  'لوحة النمو',
+                  'كل منطقة ماشية ولا لأ: ماتشات · تشكيلات · شير',
+                  const AdminGrowthScreen(),
+                ),
                 ..._matchTiles(context, players),
                 ..._communityTiles(context, players),
                 const SizedBox(height: 24),
@@ -98,5 +105,13 @@ extension _ManagerHubScreenSections2 on ManagerHubScreen {
       'طلبات "ده أنا" — وافق أو ارفض',
       const ManagerClaimsScreen(),
     ),
+    if (kVenueVerify)
+      _tile(
+        context,
+        Icons.stadium_outlined,
+        'توثيق الملاعب',
+        'أصحاب ملاعب طالبين التوثيق — كلّمهم ووثّق',
+        const PendingVenuesScreen(),
+      ),
   ];
 }

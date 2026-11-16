@@ -35,8 +35,8 @@ update public.profiles set role = 'manager' where id = '00000000-0000-0000-0000-
 insert into public.teams (name, owner_id) values ('نسور', '00000000-0000-0000-0000-00000000000a');
 insert into public.players (id, name, team, position, zone_id) values
  ('10000000-0000-0000-0000-000000000001', 'لاعب١', 'نسور', 'FWD', (select id from public.zones where name = 'بدر'));
-insert into public.matches (id, teams, date_time, zone_id) values
- ('20000000-0000-0000-0000-000000000001', array['نسور', 'صقور'], now() + interval '1 day', (select id from public.zones where name = 'بدر'));
+insert into public.matches (id, venue_name, venue_address, teams, date_time, zone_id) values
+ ('20000000-0000-0000-0000-000000000001', 'ملعب الاختبار', 'بدر', array['نسور', 'صقور'], now() + interval '1 day', (select id from public.zones where name = 'بدر'));
 insert into public.venues (id, name, price, phone, owner_id) values
  ('30000000-0000-0000-0000-000000000001', 'ملعب يوزر٢', 200, '01000000000', '00000000-0000-0000-0000-000000000002');
 insert into public.bookings (venue_id, user_id, day, hour) values
@@ -62,7 +62,7 @@ select t.expect_fail('write chip_uses directly', $q$insert into public.chip_uses
   values (auth.uid(), 'triple', (select id from public.seasons limit 1), 1, public.fn_open_round())$q$);
 select t.expect_fail('write round_transfers (erase my −4)', $q$insert into public.round_transfers (user_id, round_end, transfers, free) values (auth.uid(), public.fn_open_round(), 0, 99)$q$);
 select t.expect_fail('add a match event', $q$insert into public.events (match_id, player_id, type) values ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', 'goal')$q$);
-select t.expect_fail('create a match as a user', $q$insert into public.matches (teams, date_time) values (array['أ', 'ب'], now() + interval '1 day')$q$);
+select t.expect_fail('create a match as a user', $q$insert into public.matches (venue_name, venue_address, teams, date_time) values ('ملعب الاختبار', 'بدر', array['أ', 'ب'], now() + interval '1 day')$q$);
 update public.matches set score_a = 9, status = 'finished' where id = '20000000-0000-0000-0000-000000000001';
 select t.expect_fail('venue owned by someone else', $q$insert into public.venues (name, price, phone, owner_id) values ('x', 1, '0100000000', '00000000-0000-0000-0000-000000000002')$q$);
 update public.venues set price = 1 where id = '30000000-0000-0000-0000-000000000001';

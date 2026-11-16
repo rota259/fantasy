@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/app_mode.dart';
+import 'match_place.dart';
 
 /// ماتش/جولة (جدول matches). اسمها GameMatch عشان Match محجوزة في Dart.
 /// الأوقات بتتخزّن UTC في السيرفر وبتتعرض بتوقيت الجهاز.
@@ -28,6 +29,7 @@ class GameMatch extends Equatable {
     this.winner,
     this.timeSet = true,
     this.durationMin = 60,
+    this.place,
   });
 
   final String id;
@@ -56,6 +58,8 @@ class GameMatch extends Equatable {
 
   /// مدة الماتش بالدقايق (المدير بيحددها — الافتراضي ساعة). الماتش بيتقفل لوحده بعدها.
   final int durationMin;
+
+  final MatchPlace? place; // الملعب
 
   DateTime get endsAt => dateTime.add(Duration(minutes: durationMin));
 
@@ -111,6 +115,7 @@ class GameMatch extends Equatable {
     winner: map['winner'] as String?,
     timeSet: map['time_set'] != false,
     durationMin: (map['duration_min'] as num?)?.toInt() ?? 60,
+    place: MatchPlace.fromMap(map),
   );
 
   /// للكتابة: الوقت UTC عشان السيرفر يفهمه صح (من غير فرق التوقيت).
@@ -140,5 +145,6 @@ class GameMatch extends Equatable {
     winner,
     timeSet,
     durationMin,
+    place,
   ];
 }

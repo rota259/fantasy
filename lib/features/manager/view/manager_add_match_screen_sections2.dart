@@ -17,9 +17,15 @@ extension _ManagerAddMatchScreenStateSections2 on _ManagerAddMatchScreenState {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                _team(_teamA, 'الفريق الأول'),
+                _team(_teamA, 'الفريق الأول', opponent: true),
                 const SizedBox(height: 10),
                 _team(_teamB, 'الفريق التاني', opponent: true),
+                const SizedBox(height: 10),
+                MatchVenueField(
+                  place: _place,
+                  zoneId: _isAdmin ? null : context.read<AuthCubit>().state.user?.zoneId,
+                  onChanged: (p) => _update(() => _place = p),
+                ),
                 const SizedBox(height: 10),
                 _field(_week, 'رقم الجولة', number: true),
                 const SizedBox(height: 12),

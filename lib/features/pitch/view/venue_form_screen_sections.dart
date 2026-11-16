@@ -46,6 +46,7 @@ extension _VenueFormScreenStateSections1 on _VenueFormScreenState {
           closeHour: _close,
           photos: _photos,
           ownerId: _ownerId,
+          logoUrl: _logo,
         ),
       );
       navigator.pop(true);

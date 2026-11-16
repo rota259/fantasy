@@ -27,6 +27,7 @@ class Booking extends Equatable {
     this.venueName,
     this.userName,
     this.userPhone,
+    this.noShows,
   });
 
   final String id;
@@ -34,12 +35,13 @@ class Booking extends Equatable {
   final String userId;
   final DateTime day; // التاريخ (من غير وقت)
   final int hour; // ساعة البداية (≥24 = بعد نص الليل)
-  final String status; // pending | confirmed | rejected | cancelled
+  final String status; // pending | confirmed | rejected | cancelled | no_show
   final String? note;
   // بيانات إضافية للعرض (من joins)
   final String? venueName;
   final String? userName;
   final String? userPhone;
+  final int? noShows; // (لصاحب الملعب) الحاجز محضرش كام مرة آخر ٦٠ يوم
 
   bool get isPending => status == 'pending';
   bool get isConfirmed => status == 'confirmed';
@@ -53,6 +55,7 @@ class Booking extends Equatable {
     'confirmed' => 'مؤكد',
     'rejected' => 'مرفوض',
     'cancelled' => 'ملغي',
+    'no_show' => 'محضرش',
     _ => 'معلّق',
   };
 
@@ -71,6 +74,7 @@ class Booking extends Equatable {
       venueName: venue?['name'] as String?,
       userName: (userName == null || userName.isEmpty) ? null : userName,
       userPhone: user?['phone'] as String?,
+      noShows: (user?['no_shows'] as num?)?.toInt(),
     );
   }
 

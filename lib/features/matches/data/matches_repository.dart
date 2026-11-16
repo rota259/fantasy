@@ -1,4 +1,5 @@
 import 'models/game_match.dart';
+import 'models/match_place.dart';
 
 /// عقد بيانات الماتشات/الجولات.
 abstract interface class MatchesRepository {
@@ -7,6 +8,9 @@ abstract interface class MatchesRepository {
 
   /// (مدير) ماتشاتي بس، الأحدث الأول.
   Future<List<GameMatch>> fetchOrganizedBy(String userId);
+
+  /// (كابتن) ماتشات فريقي الجاية.
+  Future<List<GameMatch>> upcomingForTeam(String team);
 
   /// الماتشات القادمة (upcoming) بس — في منطقتي + العامة.
   Future<List<GameMatch>> fetchUpcoming();
@@ -18,6 +22,7 @@ abstract interface class MatchesRepository {
     required DateTime dateTime,
     required int week,
     int durationMin = 60,
+    MatchPlace? place,
   });
 
   /// (مدير) حذف ماتش — بيرجّع عدد الصفوف المحذوفة (0 = مامعاكش صلاحية).
@@ -42,6 +47,7 @@ abstract interface class MatchesRepository {
     required DateTime dateTime,
     required int week,
     int? durationMin,
+    MatchPlace? place,
   });
 
   /// (منظّم الماتش) زوّد وقت: ١٥ · ٣٠ · ٦٠ دقيقة — بيرجّع المدة الجديدة كلها.

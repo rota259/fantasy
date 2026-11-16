@@ -5,6 +5,7 @@ import '../../../core/theme/app_text.dart';
 import '../cubit/match_center_cubit.dart';
 import '../match_live.dart';
 import 'match_format.dart';
+import 'share_brand_strip.dart';
 
 /// «ورقة الماتش» للشير: الفريقين والنتيجة كبيرة + الهدافين لكل فريق (الاسم مرة وجنبه الكور).
 class MatchStoryCard extends StatelessWidget {
@@ -58,6 +59,7 @@ class MatchStoryCard extends StatelessWidget {
           StoryPill(m.isFinished ? 'النتيجة النهائية' : 'لايف', filled: !m.isFinished),
           const SizedBox(height: 22),
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [side(0), const SizedBox(width: 10), side(1)]),
+          ShareBrandStrip(match: m),
         ],
       ),
     );

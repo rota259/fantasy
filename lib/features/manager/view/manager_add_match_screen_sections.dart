@@ -20,6 +20,12 @@ extension _ManagerAddMatchScreenStateSections1 on _ManagerAddMatchScreenState {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اكتب الفريقين واختر المعاد')));
       return;
     }
+    if (!_isAdmin && _place == null && widget.editing?.tournamentId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('حدد الملعب: اختاره أو اكتب اسمه وعنوانه')));
+      return;
+    }
     if (!_isAdmin && !_isEdit && _kickoff!.isBefore(DateTime.now().add(const Duration(hours: 2)))) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('الماتش لازم يتعمل قبل ميعاده بساعتين على الأقل — عشان الناس تلحق تختار لاعيبته')),
@@ -46,6 +52,7 @@ extension _ManagerAddMatchScreenStateSections1 on _ManagerAddMatchScreenState {
           dateTime: _kickoff!,
           week: week,
           durationMin: _duration,
+          place: _place,
         );
       } else {
         await widget.matchesRepo.addMatch(
@@ -53,6 +60,7 @@ extension _ManagerAddMatchScreenStateSections1 on _ManagerAddMatchScreenState {
           dateTime: _kickoff!,
           week: week,
           durationMin: _duration,
+          place: _place,
         );
       }
       navigator.pop(true);
@@ -84,7 +92,7 @@ extension _ManagerAddMatchScreenStateSections1 on _ManagerAddMatchScreenState {
               child: Text(
                 c.text.isEmpty
                     ? opponent
-                          ? '$hint (فريقك أو فريق كابتن تاني)'
+                          ? '$hint (فريقك أو فريق أي كابتن في منطقتك)'
                           : '$hint (من فرقك)'
                     : c.text,
                 style: AppText.h(14, color: c.text.isEmpty ? AppColors.neutral600 : AppColors.ink),

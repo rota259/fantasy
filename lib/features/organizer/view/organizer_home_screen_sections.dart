@@ -100,13 +100,6 @@ extension _OrganizerHomeScreenSections1 on OrganizerHomeScreen {
                     ),
                   ),
                 ),
-                _tile(
-                  context,
-                  Icons.shield_outlined,
-                  'فرقي ولاعيبتي',
-                  'ضيف فرقك، وجوّه كل فريق ضيف لاعيبته بصورهم',
-                  () => _push(context, MyTeamsScreen(userId: user.id)),
-                ),
               ],
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),

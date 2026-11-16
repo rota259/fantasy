@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import '../../../core/app_mode.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/supabase/db_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text.dart';
 import '../../matches/widgets/match_format.dart';
+import '../../auth/cubit/auth_cubit.dart';
+import '../../pitch/data/models/venue.dart';
+import '../../pitch/data/venues_repository.dart';
 import '../data/tournaments_repository.dart';
 
-/// بطولة جديدة: الاسم · النظام · عدد الفرق (والمجموعات) · البداية · الجايزة والراعي. بيرجّع الـ id.
+part 'create_tournament_sheet_parts.dart';
+
+/// بطولة جديدة في ملعب موثّق: الملعب · الاسم · النظام · عدد الفرق (والمجموعات) · البداية · الجايزة والراعي. بيرجّع الـ id.
 Future<String?> showCreateTournamentSheet(BuildContext context) => showModalBottomSheet<String>(
   context: context,
   isScrollControlled: true,
@@ -31,6 +37,16 @@ class _CreateSheetState extends State<_CreateSheet> {
   int _groups = 2;
   DateTime _start = DateTime.now().add(const Duration(days: 3));
   bool _busy = false;
+  late final Future<List<Venue>> _venues;
+  String? _venue;
+
+  void _set(VoidCallback fn) => setState(fn);
+
+  @override
+  void initState() {
+    super.initState();
+    _venues = _loadVenues();
+  }
 
   @override
   void dispose() {
@@ -40,22 +56,13 @@ class _CreateSheetState extends State<_CreateSheet> {
     super.dispose();
   }
 
-  Future<void> _pickDate() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: _start,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (d == null || !mounted) return;
-    final t = await showTimePicker(context: context, initialTime: const TimeOfDay(hour: 20, minute: 0));
-    if (t == null) return;
-    setState(() => _start = DateTime(d.year, d.month, d.day, t.hour, t.minute));
-  }
-
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
     final nav = Navigator.of(context);
+    if (_venue == null) {
+      messenger.showSnackBar(const SnackBar(content: Text('اختار الملعب')));
+      return;
+    }
     if (_name.text.trim().length < 2) {
       messenger.showSnackBar(const SnackBar(content: Text('اكتب اسم البطولة')));
       return;
@@ -70,6 +77,7 @@ class _CreateSheetState extends State<_CreateSheet> {
         startsAt: _start,
         prize: _prize.text,
         sponsor: _sponsor.text,
+        venueId: _venue,
       );
       nav.pop(id);
     } catch (e) {
@@ -89,7 +97,9 @@ class _CreateSheetState extends State<_CreateSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('بطولة جديدة', style: AppText.h(18)),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            _venuePicker(),
+            const SizedBox(height: 8),
             TextField(
               controller: _name,
               decoration: const InputDecoration(hintText: 'اسم البطولة (مثلًا كاس بدر)'),
@@ -137,13 +147,4 @@ class _CreateSheetState extends State<_CreateSheet> {
       ),
     );
   }
-
-  Widget _stepper(String label, int v, int min, int max, ValueChanged<int> onChanged) => Row(
-    children: [
-      Expanded(child: Text(label, style: AppText.h(13))),
-      IconButton(onPressed: v > min ? () => onChanged(v - 1) : null, icon: const Icon(Icons.remove_circle_outline)),
-      Text('$v', style: AppText.h(16)),
-      IconButton(onPressed: v < max ? () => onChanged(v + 1) : null, icon: const Icon(Icons.add_circle_outline)),
-    ],
-  );
 }

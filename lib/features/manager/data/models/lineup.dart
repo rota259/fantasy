@@ -13,3 +13,23 @@ class Lineup extends Equatable {
   @override
   List<Object?> get props => [playerId, status];
 }
+
+/// تشكيلة بعتها كابتن فريق للماتش (team_lineups) — المدير بيطبّقها.
+class TeamLineup {
+  const TeamLineup({required this.team, required this.starters, required this.bench, required this.applied});
+
+  final String team;
+  final int starters;
+  final int bench;
+  final bool applied;
+
+  factory TeamLineup.fromMap(Map<String, dynamic> m) {
+    final players = (m['players'] as List? ?? const []).cast<Map>();
+    return TeamLineup(
+      team: (m['team'] ?? '') as String,
+      starters: players.where((p) => p['status'] == 'starting').length,
+      bench: players.where((p) => p['status'] == 'bench').length,
+      applied: m['applied'] == true,
+    );
+  }
+}

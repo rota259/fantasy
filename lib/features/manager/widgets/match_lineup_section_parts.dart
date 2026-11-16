@@ -71,11 +71,13 @@ extension _MatchLineupSectionSections1 on MatchLineupSection {
                 subtitle: Text(p.positionAr, style: AppText.body(11)),
                 onTap: () => Navigator.pop(c, p),
               ),
-            ListTile(
-              leading: Icon(Icons.person_add_alt, color: AppColors.accent),
-              title: Text('+ ضيف لاعب جديد للفريق', style: AppText.h(13, color: AppColors.accent)),
-              onTap: () => Navigator.pop(c, 'new'),
-            ),
+            // الكابتن هو اللي بيضيف لاعيبة فريقه — الأدمن بس يقدر من هنا
+            if (context.read<AuthCubit>().state.user?.isManager ?? false)
+              ListTile(
+                leading: Icon(Icons.person_add_alt, color: AppColors.accent),
+                title: Text('+ ضيف لاعب جديد للفريق', style: AppText.h(13, color: AppColors.accent)),
+                onTap: () => Navigator.pop(c, 'new'),
+              ),
           ],
         ),
       ),

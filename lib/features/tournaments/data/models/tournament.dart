@@ -17,6 +17,8 @@ class Tournament extends Equatable {
     this.sponsor,
     this.champion,
     this.createdBy,
+    this.venueId,
+    this.venueName,
   });
 
   final String id;
@@ -31,6 +33,8 @@ class Tournament extends Equatable {
   final String? sponsor;
   final String? champion;
   final String? createdBy;
+  final String? venueId; // الملعب اللي البطولة بتتلعب فيه
+  final String? venueName;
 
   bool get isRegistration => status == 'registration';
   bool get isRunning => status == 'running';
@@ -62,6 +66,8 @@ class Tournament extends Equatable {
     sponsor: m['sponsor'] as String?,
     champion: m['champion'] as String?,
     createdBy: m['created_by']?.toString(),
+    venueId: m['venue_id']?.toString(),
+    venueName: (m['venue'] as Map?)?['name'] as String?,
   );
 
   @override

@@ -16,7 +16,7 @@ abstract interface class TournamentsRepository {
   /// توقّعي للبطل (null = لسه) + كام واحد توقّع كل فريق.
   Future<(String?, Map<String, int>)> predictions(String id, String userId);
 
-  /// (مدير/أدمن) بطولة جديدة — بيرجّع الـ id.
+  /// (صاحب ملعب موثّق أو الأدمن) بطولة جديدة في ملعب [venueId] — بيرجّع الـ id.
   Future<String> create({
     required String name,
     required String format,
@@ -26,6 +26,7 @@ abstract interface class TournamentsRepository {
     String? prize,
     String? sponsor,
     int? zoneId,
+    String? venueId,
   });
 
   Future<void> addTeam(String id, String team);

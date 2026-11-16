@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../../core/links/share_link_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,7 +16,10 @@ import '../data/models/venue.dart';
 import '../widgets/booking_sheets.dart';
 import '../widgets/slot_grid.dart';
 import '../widgets/venue_contact_bar.dart';
+import '../widgets/venue_confirm_card.dart';
 import '../widgets/venue_gallery.dart';
+import '../widgets/venue_news_section.dart';
+import '../widgets/venue_stats_section.dart';
 import '../widgets/venue_reviews_section.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/fx/skeleton.dart';
@@ -71,7 +75,16 @@ class _VenueScreenState extends State<VenueScreen> {
       body: Column(
         children: [
           const StatusArea(),
-          Masthead(title: v.name, subtitle: 'احجز ملعبك', onBack: () => Navigator.pop(context)),
+          Masthead(
+            title: v.name,
+            subtitle: 'احجز ملعبك',
+            onBack: () => Navigator.pop(context),
+            trailing: ShareLinkButton(
+              kind: 'venue',
+              id: v.id,
+              text: '🏟️ ${v.name} على الخماسي — احجز وشوف أسطورة الملعب',
+            ),
+          ),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
@@ -79,6 +92,9 @@ class _VenueScreenState extends State<VenueScreen> {
                 VenueGallery(photos: v.photos),
                 _info(),
                 VenueContactBar(venue: v),
+                if (v.ownerId == widget.userId) VenueConfirmCard(venueId: v.id),
+                VenueNewsSection(venue: v, isOwner: v.ownerId == widget.userId),
+                VenueStatsSection(venueId: v.id, isOwner: v.ownerId == widget.userId),
                 VenueReviewsSection(venue: v, userId: widget.userId),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),

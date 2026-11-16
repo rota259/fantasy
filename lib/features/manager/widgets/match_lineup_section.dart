@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../core/widgets/motion.dart';
 import '../../../core/widgets/selection_bar.dart';
+import '../../auth/cubit/auth_cubit.dart';
 import '../../matches/data/models/game_match.dart';
 import '../../players/data/models/player.dart';
 import '../cubit/manager_match_cubit.dart';
 import 'add_team_player_sheet.dart';
+import 'captain_lineups_banner.dart';
 import 'team_lineup_pitch.dart';
 
 part 'match_lineup_section_parts.dart';
@@ -42,6 +45,7 @@ class MatchLineupSection extends StatelessWidget {
           style: AppText.body(11, color: AppColors.neutral700),
         ),
         const SizedBox(height: 12),
+        CaptainLineupsBanner(matchId: match.id, teams: match.teams, onApplied: cubit.load),
         _team(context, match.teamA),
         const SizedBox(height: 18),
         _team(context, match.teamB),

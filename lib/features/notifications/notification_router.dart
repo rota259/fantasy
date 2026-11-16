@@ -9,12 +9,18 @@ import '../integrity/view/admin_organizers_screen.dart';
 import '../integrity/view/admin_review_screen.dart';
 import '../integrity/view/match_review_screen.dart';
 import '../manager/view/manager_claims_screen.dart';
+import '../manager/view/manager_match_screen.dart';
+import '../leagues/data/leagues_repository.dart';
 import '../matches/data/matches_repository.dart';
 import '../matches/view/match_center_screen.dart';
 import '../players/data/players_repository.dart';
 import '../shell/cubit/app_nav_cubit.dart';
 import '../week/view/team_of_week_screen.dart';
+import '../teams/view/my_teams_screen.dart';
 import '../tournaments/view/tournament_screen.dart';
+import '../pitch/data/venues_repository.dart';
+import '../pitch/view/venue_screen.dart';
+import '../pitch/view/pending_venues_screen.dart';
 
 /// الإشعار بيفتح صفحته: [link] جاي من السيرفر (fn_notification_link) — زي match:ID أو challenge أو totw.
 /// نفس الدالة للضغط على الإشعار جوه الأبلكيشن أو على الـ push.
@@ -37,10 +43,14 @@ abstract final class NotificationRouter {
 
     try {
       switch (kind) {
-        case 'match' || 'review':
+        case 'match' || 'review' || 'manage':
           final m = (await context.read<MatchesRepository>().fetchByIds([arg])).firstOrNull;
-          if (m == null) throw StateError('match');
-          push(kind == 'match' ? MatchCenterScreen(match: m) : MatchReviewScreen(match: m));
+          if (m == null || !context.mounted) throw StateError('match');
+          push(switch (kind) {
+            'match' => MatchCenterScreen(match: m),
+            'review' => MatchReviewScreen(match: m),
+            _ => ManagerMatchScreen.of(context, m), // الكابتن بعت التشكيلة
+          });
         case 'player':
           final p = (await context.read<PlayersRepository>().fetchByIds([arg])).firstOrNull;
           if (p == null) throw StateError('player');
@@ -65,6 +75,19 @@ abstract final class NotificationRouter {
           });
         case 'tournament':
           push(TournamentScreen(id: arg));
+        case 'join': // لينك دوري بكود
+          await context.read<LeaguesRepository>().joinByCode(arg);
+          home();
+          nav.setTab(AppTab.leagues);
+          messenger?.showSnackBar(const SnackBar(content: Text('دخلت الدوري ✓')));
+        case 'captain': // الكابتن: ابعت تشكيلة فريقك
+          final u = context.read<AuthCubit>().state.user;
+          if (u != null) push(MyTeamsScreen(userId: u.id, captain: true));
+        case 'venue':
+          final u = context.read<AuthCubit>().state.user;
+          final v = await context.read<VenuesRepository>().fetchById(arg);
+          if (v == null || u == null) throw StateError('venue');
+          push(VenueScreen(venue: v, userId: u.id));
         case 'totw':
           push(const TeamOfWeekScreen());
         case 'badges':
@@ -76,6 +99,7 @@ abstract final class NotificationRouter {
             'claims' => const ManagerClaimsScreen(),
             'betting' => const AdminBettingScreen(),
             'logs' => const AdminLogsScreen(),
+            'venues' => const PendingVenuesScreen(),
             _ => const AdminReviewScreen(),
           });
       }

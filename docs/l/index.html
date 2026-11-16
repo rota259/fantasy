@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>الخماسي</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg: #0F2A1D; --ink: #F4F6EE; --lime: #C6F24E; --quiet: #9DBBA6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+         background: var(--bg); color: var(--ink); font-family: Tahoma, 'Segoe UI', sans-serif; padding: 24px; }
+  main { max-width: 420px; width: 100%; text-align: center; }
+  h1 { font-size: 30px; margin: 0 0 8px; }
+  p { color: var(--quiet); font-size: 15px; line-height: 1.6; margin: 0 0 24px; }
+  a.btn { display: block; padding: 14px; border-radius: 14px; font-weight: 700; text-decoration: none; margin-bottom: 12px; }
+  .open { background: var(--lime); color: var(--bg); }
+  .get { border: 1.5px solid var(--quiet); color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>⚽ الخماسي</h1>
+  <p id="what">فانتازي ماتشات الخماسي في منطقتك</p>
+  <a class="btn open" id="open" href="#">افتح في الأبلكيشن</a>
+  <a class="btn get" id="get" href="#">نزّل الأبلكيشن</a>
+</main>
+<script>
+  // لازم يفضل زي AppLinks.package في lib/core/app_links.dart
+  var PKG = 'com.example.fantasy_5omasi';
+  var STORE = 'https://play.google.com/store/apps/details?id=' + PKG;
+  var q = new URLSearchParams(location.search);
+  var t = q.get('t') || '', id = q.get('id') || '';
+  var ok = /^(tournament|venue|match|join)$/.test(t) && /^[A-Za-z0-9-]{1,64}$/.test(id);
+  var labels = { tournament: 'بطولة على الخماسي', venue: 'ملعب على الخماسي', match: 'ماتش على الخماسي', join: 'دوري صحابك على الخماسي' };
+  if (ok) document.getElementById('what').textContent = labels[t];
+  var query = ok ? '?t=' + t + '&id=' + encodeURIComponent(id) : '';
+  var scheme = 'khomasi://open' + query;
+  var intent = 'intent://open' + query + '#Intent;scheme=khomasi;package=' + PKG +
+               ';S.browser_fallback_url=' + encodeURIComponent(STORE) + ';end';
+  var android = /Android/i.test(navigator.userAgent);
+  document.getElementById('open').href = android ? intent : scheme;
+  document.getElementById('get').href = STORE;
+  if (android && ok) location.href = intent;   // أندرويد: يفتح الأبلكيشن على طول، أو المتجر لو مش متسطّب
+</script>
+</body>
+</html>

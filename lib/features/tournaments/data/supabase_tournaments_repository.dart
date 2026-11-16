@@ -5,6 +5,7 @@ import 'tournaments_repository.dart';
 
 /// تنفيذ TournamentsRepository فوق جداول البطولات ودوالها.
 class SupabaseTournamentsRepository implements TournamentsRepository {
+  static const _cols = '*, venue:venues(name)';
   static Future<List<Map<String, dynamic>>> _rpc(String fn, [Map<String, dynamic>? p]) async =>
       (await SupabaseService.client.rpc(fn, params: p) as List).cast<Map<String, dynamic>>();
 
@@ -12,13 +13,13 @@ class SupabaseTournamentsRepository implements TournamentsRepository {
   Future<List<Tournament>> list(int zoneId) async {
     final rows = await SupabaseService.table(
       'tournaments',
-    ).select().eq('zone_id', zoneId).order('created_at', ascending: false).limit(50);
+    ).select(_cols).eq('zone_id', zoneId).order('created_at', ascending: false).limit(50);
     return rows.map(Tournament.fromMap).toList();
   }
 
   @override
   Future<Tournament?> byId(String id) async {
-    final row = await SupabaseService.table('tournaments').select().eq('id', id).maybeSingle();
+    final row = await SupabaseService.table('tournaments').select(_cols).eq('id', id).maybeSingle();
     return row == null ? null : Tournament.fromMap(row);
   }
 
@@ -75,6 +76,7 @@ class SupabaseTournamentsRepository implements TournamentsRepository {
     String? prize,
     String? sponsor,
     int? zoneId,
+    String? venueId,
   }) async {
     final id = await SupabaseService.client.rpc(
       'create_tournament',
@@ -87,6 +89,7 @@ class SupabaseTournamentsRepository implements TournamentsRepository {
         'p_prize': prize,
         'p_sponsor': sponsor,
         'p_zone': zoneId,
+        'p_venue': venueId,
       },
     );
     return id.toString();

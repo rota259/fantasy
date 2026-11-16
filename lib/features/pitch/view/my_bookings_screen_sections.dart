@@ -36,8 +36,21 @@ extension _MyBookingsScreenStateSections1 on _MyBookingsScreenState {
     }
   }
 
+  /// (مدير منطقة) حجز متأكد → ماتش جديد بالملعب والميعاد جاهزين.
+  void _makeMatch(Booking b) => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ManagerAddMatchScreen(
+        matchesRepo: context.read<MatchesRepository>(),
+        initialPlace: MatchPlace(name: b.venueName ?? 'ملعب', venueId: b.venueId),
+        initialKickoff: b.start,
+      ),
+    ),
+  );
+
   Widget _row(Booking b) {
     final canCancel = b.isActive && !b.isPast;
+    final canMatch = b.isConfirmed && !b.isPast && (context.read<AuthCubit>().state.user?.isOrganizer ?? false);
     return Container(
       margin: AppDecor.tileMargin,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
@@ -54,6 +67,18 @@ extension _MyBookingsScreenStateSections1 on _MyBookingsScreenState {
               ],
             ),
           ),
+          if (canMatch)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Pressable(
+                onTap: () => _makeMatch(b),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(color: AppColors.accent, borderRadius: AppRadius.md),
+                  child: Text('اعمل الماتش', style: AppText.h(11, color: AppColors.white)),
+                ),
+              ),
+            ),
           if (canCancel)
             Pressable(
               onTap: () => _cancel(b),

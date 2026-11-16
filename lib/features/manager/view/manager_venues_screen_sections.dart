@@ -45,6 +45,20 @@ extension _ManagerVenuesScreenStateSections1 on _ManagerVenuesScreenState {
     }
   }
 
+  /// توثيق الملعب: صاحبه يقدر يعمل بطولات ويعلن لأهل منطقته.
+  Future<void> _verify(Venue v) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await _repo.verify(v.id, !v.verified);
+      _reload();
+      messenger.showSnackBar(
+        SnackBar(content: Text(v.verified ? 'اتشال التوثيق' : 'اتوثّق الملعب ✓ — وصل لصاحبه إشعار')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
   Widget _row(Venue v) {
     return Pressable(
       behavior: HitTestBehavior.opaque,
@@ -76,12 +90,29 @@ extension _ManagerVenuesScreenStateSections1 on _ManagerVenuesScreenState {
                     [
                       if (!v.hasAnyLocation) 'من غير موقع' else if (!v.hasLocation) 'لينك بس (مش ظاهر على الخريطة)',
                       v.ownerId == null ? 'الإدارة بيأكّد الحجز' : 'ليه صاحب',
+                      if (kVenueVerify && !v.verified && v.verifyRequestedAt != null) '⏳ طالب توثيق',
                     ].join(' · '),
                     style: AppText.body(10, color: v.hasAnyLocation ? AppColors.neutral600 : AppColors.danger),
                   ),
                 ],
               ),
             ),
+            if (kVenueVerify)
+              Pressable(
+                onTap: () => _verify(v),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: v.verified ? AppColors.accent : null,
+                    borderRadius: AppRadius.sm,
+                    border: Border.all(color: AppColors.accent),
+                  ),
+                  child: Text(
+                    v.verified ? 'موثّق ✓' : 'وثّق',
+                    style: AppText.h(11, color: v.verified ? AppColors.white : AppColors.accent),
+                  ),
+                ),
+              ),
             Pressable(
               onTap: () => _delete(v),
               child: Padding(

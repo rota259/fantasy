@@ -14,6 +14,7 @@ import '../data/venues_repository.dart';
 import '../widgets/owner_picker.dart';
 import '../widgets/venue_form_fields.dart';
 import '../widgets/venue_location_field.dart';
+import '../widgets/venue_logo_field.dart';
 import '../widgets/venue_photos_editor.dart';
 import '../../../core/widgets/motion.dart';
 
@@ -45,6 +46,7 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   late int _open = _v?.openHour ?? 16;
   late int _close = _v?.closeHour ?? 24;
   late List<String> _photos = [...?_v?.photos];
+  late String? _logo = _v?.logoUrl;
   // ملعب جديد من يوزر عادي → هو صاحبه
   late String? _ownerId = _v?.ownerId ?? (widget.isManager ? null : widget.userId);
   bool _saving = false;
@@ -79,6 +81,8 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
                   photos: _photos,
                   onChanged: (p) => setState(() => _photos = p),
                 ),
+                FieldLabel('اللوجو'),
+                VenueLogoField(userId: widget.userId, url: _logo, onChanged: (u) => setState(() => _logo = u)),
                 FieldLabel('البيانات'),
                 BoxField(controller: _name, hint: 'اسم الملعب'),
                 BoxField(controller: _phone, hint: 'تليفون الملعب (للاتصال والواتساب)', keyboard: TextInputType.phone),

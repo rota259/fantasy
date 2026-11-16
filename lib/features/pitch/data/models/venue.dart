@@ -18,6 +18,11 @@ class Venue extends Equatable {
     this.photos = const [],
     this.ownerId,
     this.mapsUrl,
+    this.zoneId,
+    this.verified = false,
+    this.renovatedAt,
+    this.verifyRequestedAt,
+    this.logoUrl,
   });
 
   final String id;
@@ -34,6 +39,11 @@ class Venue extends Equatable {
   final List<String> photos; // روابط الصور
   final String? ownerId; // صاحب الملعب (بيأكّد الحجوزات)
   final String? mapsUrl; // لينك جوجل مابس (الأدق)
+  final int? zoneId; // من صاحب الملعب (السيرفر)
+  final bool verified; // الأدمن وثّقه: يعمل بطولات ويعلن لأهل المنطقة
+  final DateTime? renovatedAt; // آخر تجديد — التقييم بيبدأ من الأول بعده
+  final DateTime? verifyRequestedAt; // صاحبه طلب التوثيق ولسه مستني
+  final String? logoUrl; // لوجو الملعب — بيظهر على كروت الشير
 
   /// عنده إحداثيات (بيظهر كدبوس على خريطة التطبيق).
   bool get hasLocation => lat != null && lng != null;
@@ -59,6 +69,13 @@ class Venue extends Equatable {
     photos: List<String>.from(m['photos'] ?? const []),
     ownerId: m['owner_id']?.toString(),
     mapsUrl: m['maps_url'] as String?,
+    zoneId: (m['zone_id'] as num?)?.toInt(),
+    verified: m['verified'] == true,
+    renovatedAt: m['renovated_at'] == null ? null : DateTime.tryParse(m['renovated_at'].toString())?.toLocal(),
+    logoUrl: m['logo_url'] as String?,
+    verifyRequestedAt: m['verify_requested_at'] == null
+        ? null
+        : DateTime.tryParse(m['verify_requested_at'].toString())?.toLocal(),
   );
 
   /// الأعمدة القابلة للكتابة (للإضافة/التعديل).
@@ -76,6 +93,7 @@ class Venue extends Equatable {
     'photos': photos,
     'owner_id': ownerId,
     'maps_url': mapsUrl,
+    'logo_url': logoUrl,
   };
 
   @override
@@ -94,5 +112,10 @@ class Venue extends Equatable {
     photos,
     ownerId,
     mapsUrl,
+    zoneId,
+    verified,
+    renovatedAt,
+    verifyRequestedAt,
+    logoUrl,
   ];
 }

@@ -46,7 +46,10 @@ extension _LeaguesViewSections1 on _LeaguesView {
         league: l,
         onCopy: () {
           Clipboard.setData(ClipboardData(text: l.inviteCode));
-          ShareCard.text('انضم لدوري «${l.name}» في الخماسي ⚽ — الكود: ${l.inviteCode}');
+          ShareCard.text(
+            'انضم لدوري «${l.name}» في الخماسي ⚽ — الكود: ${l.inviteCode}\n'
+            '${DeepLinks.url('join', l.inviteCode)}',
+          );
         },
         onLeave: () => _leave(context, sel.league.ownerId == userId, l.name, () => cubit.leaveOrDelete(l)),
         isOwner: l.ownerId == userId,

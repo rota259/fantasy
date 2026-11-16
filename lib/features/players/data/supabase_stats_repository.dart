@@ -1,6 +1,7 @@
 import '../../../core/supabase/supabase_service.dart';
 import '../../week/data/week_window.dart';
 import 'models/player_gw_stat.dart';
+import 'models/player_match.dart';
 import 'stats_repository.dart';
 
 /// تنفيذ StatsRepository فوق جدول player_round_stats (محسوب مسبقًا كل ١٠ دقايق) + player_history.
@@ -17,5 +18,11 @@ class SupabaseStatsRepository implements StatsRepository {
   Future<List<({int gw, int points})>> history(String playerId) async {
     final rows = await SupabaseService.client.rpc('player_history', params: {'p': playerId}) as List;
     return [for (final r in rows) (gw: (r['gw'] as num).toInt(), points: (r['points'] as num).toInt())];
+  }
+
+  @override
+  Future<List<PlayerMatch>> matches(String playerId) async {
+    final rows = await SupabaseService.client.rpc('player_matches', params: {'p': playerId}) as List;
+    return [for (final r in rows) PlayerMatch.fromMap(Map<String, dynamic>.from(r as Map))];
   }
 }

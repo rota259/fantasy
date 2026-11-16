@@ -7,6 +7,7 @@ import '../../auth/cubit/auth_cubit.dart';
 import '../../claims/widgets/claim_button.dart';
 import '../../shell/cubit/app_nav_cubit.dart';
 import '../widgets/overlay_shell.dart';
+import '../widgets/player_matches_section.dart';
 import '../widgets/player_stats_section.dart';
 import '../widgets/player_widgets.dart';
 
@@ -49,6 +50,7 @@ class PlayerOverlay extends StatelessWidget {
         if (userId != null) ClaimButton(player: player, userId: userId),
         PlayerStatGrid(player: player),
         PlayerStatsSection(playerId: player.id),
+        PlayerMatchesSection(playerId: player.id),
       ],
     );
   }

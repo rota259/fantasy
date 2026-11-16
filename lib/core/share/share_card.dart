@@ -4,11 +4,18 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../supabase/supabase_service.dart';
+
 /// مشاركة كارت (صورة من أي widget ملفوف في RepaintBoundary بالـ key ده) + نص.
 abstract final class ShareCard {
   ShareCard._();
 
+  /// كل شير بيتعدّ في لوحة النمو (من غير ما يعطّل الشير لو فشل).
+  static void _count(String kind) =>
+      SupabaseService.client.rpc('log_share', params: {'p_kind': kind}).catchError((_) => null);
+
   static Future<void> share(GlobalKey key, String text) async {
+    _count('card');
     try {
       final boundary = key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) throw StateError('no boundary');
@@ -28,5 +35,8 @@ abstract final class ShareCard {
     }
   }
 
-  static Future<void> text(String text) => SharePlus.instance.share(ShareParams(text: text));
+  static Future<void> text(String text) {
+    _count('text');
+    return SharePlus.instance.share(ShareParams(text: text));
+  }
 }

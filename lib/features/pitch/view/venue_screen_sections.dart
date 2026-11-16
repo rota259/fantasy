@@ -47,6 +47,8 @@ extension _VenueScreenStateSections1 on _VenueScreenState {
         Row(
           children: [
             Expanded(child: Text(v.name, style: AppText.h(20))),
+            if (v.verified) Icon(Icons.verified, size: 18, color: AppColors.accent),
+            const SizedBox(width: 6),
             Text('${v.price} جنيه/ساعة', style: AppText.h(14, color: AppColors.accent)),
           ],
         ),

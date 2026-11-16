@@ -19,6 +19,7 @@ extension _VenueRequestsScreenStateSections1 on _VenueRequestsScreenState {
           content: Text(switch (status) {
             'confirmed' => 'اتأكد الحجز واتبعت إشعار للحاجز',
             'rejected' => 'اترفض الطلب واتبعت إشعار للحاجز',
+            'no_show' => 'اتسجّل إنه محضرش — مرتين في ٦٠ يوم والحجز بيتوقف عنده',
             _ => 'اتلغى الحجز',
           }),
         ),
@@ -51,7 +52,14 @@ extension _VenueRequestsScreenStateSections1 on _VenueRequestsScreenState {
             '${b.userName ?? 'يوزر'}${phone != null ? ' · $phone' : ''}',
             style: AppText.body(12, color: AppColors.neutral700),
           ),
+          if ((b.noShows ?? 0) > 0)
+            Text('⚠️ محضرش ${b.noShows} مرة آخر ٦٠ يوم', style: AppText.h(11, color: AppColors.danger)),
           if (b.note != null) Text('«${b.note}»', style: AppText.body(12)),
+          // الميعاد عدّى والحاجز مجاش → «محضرش» (حجزين في ٦٠ يوم = الحجز موقوف عنده)
+          if (b.isPast && b.isConfirmed) ...[
+            const SizedBox(height: 8),
+            Row(children: [_btn('محضرش', AppColors.danger, busy ? null : () => _set(b, 'no_show'))]),
+          ],
           if (!b.isPast && b.isActive) ...[
             const SizedBox(height: 8),
             Row(

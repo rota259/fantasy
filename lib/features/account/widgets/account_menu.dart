@@ -20,6 +20,7 @@ import '../../pitch/view/my_bookings_screen.dart';
 import '../../pitch/view/my_venues_screen.dart';
 import '../../players/data/models/player.dart';
 import '../../seasons/view/season_stars_screen.dart';
+import '../../teams/view/my_teams_screen.dart';
 import '../../notifications/view/notify_setup_screen.dart';
 import '../../zones/widgets/my_zone_row.dart';
 import '../../week/view/team_of_week_screen.dart';
@@ -53,6 +54,12 @@ class AccountMenu extends StatelessWidget {
           MyZoneRow(zoneId: u.zoneId, editable: !u.isOrganizer), // المدير بتنقله الإدارة
           _row(Icons.stadium_outlined, 'ملاعبي (ضيف ملعبك)', () => _push(context, MyVenuesScreen(userId: u.id))),
           _row(Icons.event_available_outlined, 'حجوزاتي', () => _push(context, MyBookingsScreen(userId: u.id))),
+          if (u.role == 'user')
+            _row(
+              Icons.shield_outlined,
+              'فريقي (أنا الكابتن)',
+              () => _push(context, MyTeamsScreen(userId: u.id, captain: true)),
+            ),
           if (u.refCode != null && !u.isOrganizer) _invite(context, u.refCode!),
           if (u.role == 'user')
             _row(
